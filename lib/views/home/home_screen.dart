@@ -7,7 +7,8 @@ import '../profile/profile_screen.dart';
 import '../../widgets/bottom_nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
-  static String routeName = 'HomeScreen';
+  static String routeName = 'Home';
+  static String routePath = '/home';
   const HomeScreen({super.key});
 
   @override

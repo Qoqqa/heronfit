@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:heronfit/views/home/home_screen.dart';
 import 'views/splash_screen.dart';
+import 'views/home/home_screen.dart';
+import 'views/onboarding/onboarding_hero.dart';
+import 'views/auth/login_widget.dart';
 import 'core/theme.dart';
 
 class HeronFitApp extends StatelessWidget {
@@ -12,6 +16,11 @@ class HeronFitApp extends StatelessWidget {
       title: 'HeronFit',
       theme: HeronFitTheme.lightTheme,  // Apply custom theme
       home: SplashScreenWidget(),  // Start with SplashScreen
+      routes: {
+        '/home': (context) => const HomeScreen(),
+        '/onboarding': (context) => const OnboardingWidget(),
+        '/login': (context) => const LoginWidget(),
+      },
     );
   }
 }

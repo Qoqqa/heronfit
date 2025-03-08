@@ -97,8 +97,8 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                       Padding(
                         padding: const EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 16.0),
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).pushNamed('/onboarding_features');
+                            onPressed: () {
+                            Navigator.of(context).pushNamed('/home');
                           },
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 48.0),
