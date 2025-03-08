@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import '../booking/booking_screen.dart';
-import '../workout/workout_screen.dart';
+import '../workout/workout_widget.dart';
 import '../progress/progress_screen.dart';
 import '../profile/profile_screen.dart';
 import '../../widgets/bottom_nav_bar.dart';
@@ -21,7 +21,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static final List<Widget> _pages = <Widget>[
     const HomeContentScreen(),
     const BookingScreen(),
-    const WorkoutScreen(),
+    const WorkoutWidget(),
     const ProgressScreen(),
     const ProfileScreen(),
   ];
