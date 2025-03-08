@@ -11,7 +11,7 @@ class HeronFitApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'HeronFit',
       theme: HeronFitTheme.lightTheme,  // Apply custom theme
-      home: SplashScreen(),  // Start with SplashScreen
+      home: SplashScreenWidget(),  // Start with SplashScreen
     );
   }
 }
