@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import 'home/home_screen.dart';
+import 'onboarding/onboarding_hero.dart';
 
 class SplashScreenWidget extends StatefulWidget {
   const SplashScreenWidget({super.key});
@@ -19,7 +20,7 @@ class _SplashScreenWidgetState extends State<SplashScreenWidget> {
     super.initState();
     Timer(const Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        MaterialPageRoute(builder: (context) => const OnboardingWidget()),
       );
     });
   }
@@ -55,7 +56,7 @@ class _SplashScreenWidgetState extends State<SplashScreenWidget> {
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(8.0),
                               child: Image.asset(
-                                'assets/logo_heronfit.png',
+                                'assets/images/logo_heronfit.png',
                                 width: double.infinity,
                                 height: 100.0,
                                 fit: BoxFit.contain,
