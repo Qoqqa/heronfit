@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
+import 'package:heronfit/core/theme.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -22,8 +23,8 @@ class BottomNavBar extends StatelessWidget {
         BottomNavigationBarItem(icon: Icon(IconlyBold.profile), label: 'Profile'),
       ],
       currentIndex: currentIndex,
-      selectedItemColor: Colors.blue,
-      unselectedItemColor: Colors.grey,
+      selectedItemColor: HeronFitTheme.primary,
+      unselectedItemColor: HeronFitTheme.textMuted,
       onTap: onTap,
     );
   }
