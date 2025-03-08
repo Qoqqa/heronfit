@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import 'home/home_screen.dart';
 import 'onboarding/onboarding_hero.dart';
+import 'onboarding/onboarding_features.dart';
 
 class SplashScreenWidget extends StatefulWidget {
   const SplashScreenWidget({super.key});
