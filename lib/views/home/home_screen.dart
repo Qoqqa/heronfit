@@ -1,24 +1,5 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'HeronFit',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const HomeScreen(),
-    );
-  }
-}
+import 'package:iconly/iconly.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -50,11 +31,11 @@ class _HomeScreenState extends State<HomeScreen> {
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Booking'),
-          BottomNavigationBarItem(icon: Icon(Icons.fitness_center), label: 'Workout'),
-          BottomNavigationBarItem(icon: Icon(Icons.show_chart), label: 'Progress'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+          BottomNavigationBarItem(icon: Icon(IconlyBold.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(IconlyBold.calendar), label: 'Booking'),
+          BottomNavigationBarItem(icon: Icon(IconlyBold.work), label: 'Workout'),
+          BottomNavigationBarItem(icon: Icon(IconlyBold.chart), label: 'Progress'),
+          BottomNavigationBarItem(icon: Icon(IconlyBold.profile), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
@@ -74,7 +55,12 @@ class PlaceholderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title Screen', style: TextStyle(fontSize: 24))),
+      body: Center(
+        child: Text(
+          '$title Screen',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+      ),
     );
   }
 }
