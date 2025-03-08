@@ -29,7 +29,7 @@ class _SplashScreenState extends State<SplashScreen> {
           'HeronFit',
           style: TextStyle(
             fontSize: 32,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w900,
             color: Colors.white,
             fontFamily: 'Poppins',
           ),

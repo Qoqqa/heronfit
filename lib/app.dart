@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'views/splash_screen.dart';  // Import SplashScreen
+import 'views/splash_screen.dart';
+import 'core/theme.dart';
 
 class HeronFitApp extends StatelessWidget {
   const HeronFitApp({super.key});
@@ -9,7 +10,7 @@ class HeronFitApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'HeronFit',
-      theme: ThemeData.light(),  // Apply default light theme
+      theme: HeronFitTheme.lightTheme,  // Apply custom theme
       home: SplashScreen(),  // Start with SplashScreen
     );
   }

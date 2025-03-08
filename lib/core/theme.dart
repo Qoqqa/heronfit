@@ -5,11 +5,30 @@ class HeronFitTheme {
   static ThemeData lightTheme = ThemeData(
     primaryColor: primary,
     scaffoldBackgroundColor: bgLight,
-    textTheme: GoogleFonts.poppinsTextTheme(),
-    fontFamily: GoogleFonts.poppins().fontFamily, // Apply Poppins font
+    textTheme: textTheme, 
+    colorScheme: ColorScheme.light(
+      primary: primary,
+      secondary: primaryDark,
+      background: bgLight,
+      onBackground: textPrimary,
+      surface: Colors.white,
+      onSurface: textPrimary,
+      error: error,
+      onError: Colors.white,
+    ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: primary,
+      elevation: 0,
+      iconTheme: const IconThemeData(color: Colors.white),
+      titleTextStyle: textTheme.titleLarge?.copyWith(color: Colors.white),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      selectedItemColor: primary,
+      unselectedItemColor: textMuted,
+    ),
   );
 
-  // Colors
+  // ✅ Colors
   static const Color primary = Color(0xFF2F27CE);
   static const Color primaryDark = Color(0xFF443DFF);
   static const Color bgLight = Color(0xFFFBFBFE);
@@ -24,7 +43,7 @@ class HeronFitTheme {
   static const Color warning = Color(0xFFFFB74D);
   static const Color info = Color(0xFF4FC3F7);
 
-  // Typography (Based on Material Design 3)
+  // ✅ Typography (Material Design 3)
   static final TextTheme textTheme = TextTheme(
     displayLarge: GoogleFonts.poppins(fontSize: 57, fontWeight: FontWeight.w700, color: textPrimary),
     displayMedium: GoogleFonts.poppins(fontSize: 45, fontWeight: FontWeight.w700, color: textPrimary),
