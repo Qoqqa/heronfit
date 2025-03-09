@@ -48,7 +48,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
         body: SafeArea(
           top: true,
           child: Padding(
-            padding: EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(16.0), // Reduced padding
             child: Column(
               mainAxisSize: MainAxisSize.max,
               children: [
@@ -56,266 +56,182 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                   child: SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start, // Align all children to the left
                       children: [
                         // Image container
-                        Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 300.0,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.background,
-                                boxShadow: [
-                                  BoxShadow(
-                                    blurRadius: 40.0,
-                                    color: Colors.black.withOpacity(0.1),
-                                    offset: Offset(0.0, 10.0),
-                                  )
-                                ],
-                                borderRadius: BorderRadius.circular(8.0),
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 2.0,
-                                ),
-                              ),
-                              child: Padding(
-                                padding: EdgeInsets.all(4.0),
-                                child: InkWell(
-                                  onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      PageTransition(
-                                        type: PageTransitionType.fade,
-                                        child: _ExpandedImageView(
-                                          image: Image.network(
-                                            widget.exercise.images.isNotEmpty
-                                                ? widget.exercise.images.first
-                                                : '',
-                                            fit: BoxFit.contain,
-                                          ),
-                                          tag: widget.exercise.images.isNotEmpty
-                                              ? widget.exercise.images.first
-                                              : '',
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Hero(
-                                    tag: widget.exercise.images.isNotEmpty
-                                        ? widget.exercise.images.first
-                                        : '',
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      child: Image.network(
-                                        widget.exercise.images.isNotEmpty
-                                            ? widget.exercise.images.first
-                                            : '',
-                                        width: double.infinity,
-                                        height: 300.0,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return Center(
-                                            child: Icon(
+                                                // Image container in exercise_details_screen.dart
+                        Container(
+                          width: double.infinity,
+                          height: 250.0,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.background,
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 10.0,
+                                color: Colors.black.withOpacity(0.1),
+                                offset: Offset(0.0, 5.0),
+                              )
+                            ],
+                            borderRadius: BorderRadius.circular(8.0),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 2.0,
+                            ),
+                          ),
+                          child: widget.exercise.imageUrl.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(6.0),
+                                  child: Image.network(
+                                    widget.exercise.imageUrl,
+                                    width: double.infinity,
+                                    height: 250.0,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print('Error loading image: $error');
+                                      print('Image URL: ${widget.exercise.imageUrl}');
+                                      return Center(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
                                               Icons.fitness_center,
                                               size: 60,
                                               color: Theme.of(context).colorScheme.primary,
                                             ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16.0),
-                        
-                        // Exercise details
-                        Column(
-                          mainAxisSize: MainAxisSize.max,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
-                              mainAxisSize: MainAxisSize.max,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 8.0),
-                                  child: Text(
-                                    _capitalizeWords(widget.exercise.name),
-                                    style: TextStyle(
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
-                                  ),
-                                ),
-                                // First row of details
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: 'Target Muscle: ',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onBackground,
-                                              fontSize: 14.0,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: widget.exercise.primaryMuscles.isNotEmpty
-                                                ? _capitalizeWords(widget.exercise.primaryMuscles.first)
-                                                : 'None',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onBackground,
-                                              fontSize: 14.0,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(width: 12.0),
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: 'Equipment: ',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onBackground,
-                                              fontSize: 14.0,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: widget.exercise.equipment.isNotEmpty
-                                                ? _capitalizeWords(widget.exercise.equipment)
-                                                : 'None',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onBackground,
-                                              fontSize: 14.0,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                
-                                // Second row of details
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    RichText(
-                                      text: TextSpan(
-                                        children: [
-                                          TextSpan(
-                                            text: 'Body Part: ',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onBackground,
-                                              fontSize: 14.0,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: widget.exercise.category.isNotEmpty
-                                                ? _capitalizeWords(widget.exercise.category)
-                                                : 'None',
-                                            style: TextStyle(
-                                              color: Theme.of(context).colorScheme.onBackground,
-                                              fontSize: 14.0,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    SizedBox(width: 12.0),
-                                    Flexible(
-                                      child: RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: 'Secondary Muscles: ',
+                                            SizedBox(height: 8),
+                                            Text(
+                                              'No image available',
                                               style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onBackground,
-                                                fontSize: 14.0,
+                                                color: Theme.of(context).colorScheme.primary,
                                               ),
                                             ),
-                                            TextSpan(
-                                              text: widget.exercise.secondaryMuscles.isNotEmpty
-                                                  ? _capitalizeWords(widget.exercise.secondaryMuscles.join(', '))
-                                                  : 'None',
-                                              style: TextStyle(
-                                                color: Theme.of(context).colorScheme.onBackground,
-                                                fontSize: 14.0,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            )
                                           ],
                                         ),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 2,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8.0),
-                            Divider(
-                              thickness: 2.0,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            SizedBox(height: 8.0),
-                            
-                            // Instructions section
-                            Text(
-                              'Instructions',
-                              style: TextStyle(
-                                fontSize: 18.0,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                            ),
-                            SizedBox(height: 8.0),
-                            ListView.builder(
-                              physics: NeverScrollableScrollPhysics(),
-                              shrinkWrap: true,
-                              itemCount: widget.exercise.instructions.length,
-                              itemBuilder: (context, index) {
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: 8.0),
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(
-                                        '${index + 1}. ',
-                                        style: TextStyle(
-                                          fontSize: 14.0,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                      Icon(
+                                        Icons.fitness_center,
+                                        size: 60,
+                                        color: Theme.of(context).colorScheme.primary,
                                       ),
-                                      Expanded(
-                                        child: Text(
-                                          widget.exercise.instructions[index],
-                                          style: TextStyle(
-                                            fontSize: 14.0,
-                                          ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'No image available',
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.primary,
                                         ),
                                       ),
                                     ],
                                   ),
-                                );
-                              },
+                                ),
+                        ),
+                        SizedBox(height: 16.0),
+                        
+                        // Exercise name
+                        Text(
+                          _capitalizeWords(widget.exercise.name),
+                          style: TextStyle(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        SizedBox(height: 8.0),
+                        
+                        // Exercise details in a column to avoid overflow
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Target Muscle
+                            _buildRichText(
+                              'Target Muscle:',
+                              widget.exercise.primaryMuscle,
+                            ),
+                            SizedBox(height: 4.0),
+                            
+                            // Equipment
+                            _buildRichText('Equipment:', widget.exercise.equipment),
+                            SizedBox(height: 4.0),
+                            
+                            // Body Part
+                            _buildRichText('Body Part:', widget.exercise.category),
+                            SizedBox(height: 4.0),
+                            
+                            // Secondary Muscles (with proper wrapping)
+                            _buildRichText(
+                              'Secondary Muscles:',
+                              widget.exercise.secondaryMuscles.isNotEmpty
+                                  ? widget.exercise.secondaryMuscles.join(', ')
+                                  : 'None',
                             ),
                           ],
                         ),
+                        
+                        SizedBox(height: 16.0),
+                        Divider(
+                          thickness: 2.0,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        SizedBox(height: 8.0),
+                        
+                        // Instructions section
+                        Text(
+                          'Instructions',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        SizedBox(height: 8.0),
+                        
+                        // Instructions list
+                        widget.exercise.instructions.isNotEmpty
+                            ? ListView.builder(
+                                physics: NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                itemCount: widget.exercise.instructions.length,
+                                itemBuilder: (context, index) {
+                                  return Padding(
+                                    padding: EdgeInsets.only(bottom: 8.0),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${index + 1}. ',
+                                          style: TextStyle(
+                                            fontSize: 14.0,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            widget.exercise.instructions[index],
+                                            style: TextStyle(
+                                              fontSize: 14.0,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              )
+                            : Padding(
+                                padding: EdgeInsets.symmetric(vertical: 8.0),
+                                child: Text(
+                                  'No instructions available for this exercise.',
+                                  style: TextStyle(
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
                       ],
                     ),
                   ),
@@ -328,39 +244,39 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
     );
   }
 
+  // Helper method to format text with bold labels
+  Widget _buildRichText(String label, String value) {
+    return RichText(
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: '$label ',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onBackground,
+              fontSize: 14.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          TextSpan(
+            text: _capitalizeWords(value),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onBackground,
+              fontSize: 14.0,
+            ),
+          ),
+        ],
+      ),
+      overflow: TextOverflow.visible, // Changed from ellipsis to visible
+      maxLines: 5, // Increased from 2 to 5
+    );
+  }
+
+  // Helper method to capitalize words
   String _capitalizeWords(String text) {
     if (text.isEmpty) return '';
     return text.split(' ').map((word) {
       if (word.isEmpty) return '';
       return word[0].toUpperCase() + word.substring(1).toLowerCase();
     }).join(' ');
-  }
-}
-
-// A simple expanded image view widget
-class _ExpandedImageView extends StatelessWidget {
-  final Image image;
-  final String tag;
-
-  const _ExpandedImageView({
-    Key? key,
-    required this.image,
-    required this.tag,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GestureDetector(
-        onTap: () => Navigator.of(context).pop(),
-        child: Center(
-          child: Hero(
-            tag: tag,
-            child: image,
-          ),
-        ),
-      ),
-    );
   }
 }

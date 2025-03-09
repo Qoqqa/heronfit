@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Exercise {
   final String id;
   final String name;
@@ -5,11 +7,14 @@ class Exercise {
   final String level;
   final String? mechanic;
   final String equipment;
-  final List<String> primaryMuscles;
+  final String primaryMuscle;
   final List<String> secondaryMuscles;
   final List<String> instructions;
   final String category;
-  final List<String> images;
+  final String imageUrl;
+
+  static const String _imageBaseUrl =
+      'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'; 
 
   Exercise({
     required this.id,
@@ -18,33 +23,105 @@ class Exercise {
     required this.level,
     this.mechanic,
     required this.equipment,
-    required this.primaryMuscles,
+    required this.primaryMuscle,
     required this.secondaryMuscles,
     required this.instructions,
     required this.category,
-    required this.images,
+    required this.imageUrl,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
-      id: json['id'],
-      name: json['name'],
-      force: json['force'],
-      level: json['level'],
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      force: json['force'] ?? '',
+      level: json['level'] ?? '',
       mechanic: json['mechanic'],
-      equipment: json['equipment'],
-      primaryMuscles: _parseJsonList(json['primaryMuscles']),
+      equipment: json['equipment'] ?? '',
+      primaryMuscle: _getFirstValue(json['primaryMuscles']),
       secondaryMuscles: _parseJsonList(json['secondaryMuscles']),
       instructions: _parseJsonList(json['instructions']),
-      category: json['category'],
-      images: _parseJsonList(json['images']),
+      category: json['category'] ?? '',
+      imageUrl: _getFullImageUrl(json['images']),
     );
   }
 
-  // ✅ **Fix: Properly handle Supabase `jsonb` fields**
+  // Extract first value safely from a JSONB array
+  static String _getFirstValue(dynamic data) {
+    if (data == null) return 'Unknown';
+    
+    // If data is already a List (parsed JSON)
+    if (data is List && data.isNotEmpty) {
+      return data.first.toString();
+    }
+    
+    // If data is a string (JSONB as string)
+    if (data is String) {
+      try {
+        final List<dynamic> parsedData = jsonDecode(data);
+        if (parsedData.isNotEmpty) {
+          return parsedData.first.toString();
+        }
+      } catch (e) {
+        print('Error parsing JSON from string: $e');
+      }
+    }
+    
+    return 'Unknown';
+  }
+
+  // Convert JSONB array to List<String>
   static List<String> _parseJsonList(dynamic data) {
     if (data == null) return [];
-    if (data is List) return data.map((e) => e.toString()).toList();
+    
+    // If data is already a List (parsed JSON)
+    if (data is List) {
+      return data.map((e) => e.toString()).toList();
+    }
+    
+    // If data is a string (JSONB as string)
+    if (data is String) {
+      try {
+        final List<dynamic> parsedData = jsonDecode(data);
+        return parsedData.map((e) => e.toString()).toList();
+      } catch (e) {
+        print('Error parsing JSON from string: $e');
+      }
+    }
+    
     return [];
+  }
+
+  // Append GitHub base URL to the first image path
+  static String _getFullImageUrl(dynamic images) {
+    // If images is null, return empty string
+    if (images == null) return '';
+    
+    try {
+      // If images is already a List (parsed JSON)
+      if (images is List && images.isNotEmpty) {
+        final String imagePath = images.first.toString();
+        print('Image path found: $imagePath'); // Debug log
+        return '$_imageBaseUrl$imagePath';
+      }
+      
+      // If images is a string (JSONB as string)
+      if (images is String) {
+        try {
+          final List<dynamic> parsedImages = jsonDecode(images);
+          if (parsedImages.isNotEmpty) {
+            final String imagePath = parsedImages.first.toString();
+            print('Parsed image path: $imagePath'); // Debug log
+            return '$_imageBaseUrl$imagePath';
+          }
+        } catch (e) {
+          print('Error parsing JSON images from string: $e');
+        }
+      }
+    } catch (e) {
+      print('Error getting full image URL: $e');
+    }
+    
+    return ''; // Return empty string and handle in the UI
   }
 }
