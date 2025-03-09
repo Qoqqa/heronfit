@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme.dart';
 import '../../models/workout_model.dart';
 export '../../models/workout_model.dart';
+import '../../views/workout/add_exercise_screen.dart';
 
 class WorkoutWidget extends StatefulWidget {
   const WorkoutWidget({super.key});
@@ -102,8 +103,13 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
                       Align(
                         alignment: AlignmentDirectional(0.0, 0.0),
                         child: ElevatedButton(
-                          onPressed: () {
-                            // Add your onPressed code here!
+                            onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                              builder: (context) => AddExerciseScreen(),
+                              ),
+                            );
                           },
                           child: Text(
                             'Start New Workout',
