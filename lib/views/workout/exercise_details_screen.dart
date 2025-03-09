@@ -90,20 +90,28 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                         type: PageTransitionType.fade,
                                         child: _ExpandedImageView(
                                           image: Image.network(
-                                            widget.exercise.gifUrl,
+                                            widget.exercise.images.isNotEmpty
+                                                ? widget.exercise.images.first
+                                                : '',
                                             fit: BoxFit.contain,
                                           ),
-                                          tag: widget.exercise.gifUrl,
+                                          tag: widget.exercise.images.isNotEmpty
+                                              ? widget.exercise.images.first
+                                              : '',
                                         ),
                                       ),
                                     );
                                   },
                                   child: Hero(
-                                    tag: widget.exercise.gifUrl,
+                                    tag: widget.exercise.images.isNotEmpty
+                                        ? widget.exercise.images.first
+                                        : '',
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(8.0),
                                       child: Image.network(
-                                        widget.exercise.gifUrl,
+                                        widget.exercise.images.isNotEmpty
+                                            ? widget.exercise.images.first
+                                            : '',
                                         width: double.infinity,
                                         height: 300.0,
                                         fit: BoxFit.cover,
@@ -161,8 +169,8 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                             ),
                                           ),
                                           TextSpan(
-                                            text: widget.exercise.targetMuscles.isNotEmpty
-                                                ? _capitalizeWords(widget.exercise.targetMuscles.first)
+                                            text: widget.exercise.primaryMuscles.isNotEmpty
+                                                ? _capitalizeWords(widget.exercise.primaryMuscles.first)
                                                 : 'None',
                                             style: TextStyle(
                                               color: Theme.of(context).colorScheme.onBackground,
@@ -185,8 +193,8 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                             ),
                                           ),
                                           TextSpan(
-                                            text: widget.exercise.equipments.isNotEmpty
-                                                ? _capitalizeWords(widget.exercise.equipments.first)
+                                            text: widget.exercise.equipment.isNotEmpty
+                                                ? _capitalizeWords(widget.exercise.equipment)
                                                 : 'None',
                                             style: TextStyle(
                                               color: Theme.of(context).colorScheme.onBackground,
@@ -215,8 +223,8 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                             ),
                                           ),
                                           TextSpan(
-                                            text: widget.exercise.bodyParts.isNotEmpty
-                                                ? _capitalizeWords(widget.exercise.bodyParts.first)
+                                            text: widget.exercise.category.isNotEmpty
+                                                ? _capitalizeWords(widget.exercise.category)
                                                 : 'None',
                                             style: TextStyle(
                                               color: Theme.of(context).colorScheme.onBackground,

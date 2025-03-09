@@ -1,35 +1,50 @@
 class Exercise {
-  final String exerciseId;
+  final String id;
   final String name;
-  final String gifUrl;
-  final List<String> targetMuscles;
-  final List<String> bodyParts;
-  final List<String> equipments;
+  final String force;
+  final String level;
+  final String? mechanic;
+  final String equipment;
+  final List<String> primaryMuscles;
   final List<String> secondaryMuscles;
   final List<String> instructions;
+  final String category;
+  final List<String> images;
 
   Exercise({
-    required this.exerciseId,
+    required this.id,
     required this.name,
-    required this.gifUrl,
-    required this.targetMuscles,
-    required this.bodyParts,
-    required this.equipments,
+    required this.force,
+    required this.level,
+    this.mechanic,
+    required this.equipment,
+    required this.primaryMuscles,
     required this.secondaryMuscles,
     required this.instructions,
+    required this.category,
+    required this.images,
   });
 
-  // Factory method to create an Exercise object from JSON
   factory Exercise.fromJson(Map<String, dynamic> json) {
     return Exercise(
-      exerciseId: json['exerciseId'],
+      id: json['id'],
       name: json['name'],
-      gifUrl: json['gifUrl'],
-      targetMuscles: List<String>.from(json['targetMuscles']),
-      bodyParts: List<String>.from(json['bodyParts']),
-      equipments: List<String>.from(json['equipments']),
-      secondaryMuscles: List<String>.from(json['secondaryMuscles']),
-      instructions: List<String>.from(json['instructions']),
+      force: json['force'],
+      level: json['level'],
+      mechanic: json['mechanic'],
+      equipment: json['equipment'],
+      primaryMuscles: _parseJsonList(json['primaryMuscles']),
+      secondaryMuscles: _parseJsonList(json['secondaryMuscles']),
+      instructions: _parseJsonList(json['instructions']),
+      category: json['category'],
+      images: _parseJsonList(json['images']),
     );
+  }
+
+  // ✅ **Fix: Properly handle Supabase `jsonb` fields**
+  static List<String> _parseJsonList(dynamic data) {
+    if (data == null) return [];
+    if (data is List) return data.map((e) => e.toString()).toList();
+    return [];
   }
 }

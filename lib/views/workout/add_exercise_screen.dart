@@ -427,7 +427,9 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                             padding: EdgeInsets.all(2.0),
                                             child: ClipOval(
                                               child: Image.network(
-                                                exercise.gifUrl,
+                                                exercise.images.isNotEmpty
+                                                    ? exercise.images.first
+                                                    : '',
                                                 fit: BoxFit.cover,
                                                 loadingBuilder: (context, child, loadingProgress) {
                                                   if (loadingProgress == null) return child;
@@ -466,8 +468,8 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                               ),
                                               SizedBox(height: 4.0),
                                               Text(
-                                                exercise.targetMuscles.isNotEmpty
-                                                    ? _capitalizeWords(exercise.targetMuscles.join(', '))
+                                                exercise.primaryMuscles.isNotEmpty
+                                                    ? _capitalizeWords(exercise.primaryMuscles.join(', '))
                                                     : 'No target muscles specified',
                                                 style: TextStyle(
                                                   fontSize: 14.0,
