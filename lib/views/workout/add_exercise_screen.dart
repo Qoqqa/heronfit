@@ -16,27 +16,46 @@ class AddExerciseScreen extends StatefulWidget {
 class _AddExerciseScreenState extends State<AddExerciseScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final ScrollController _scrollController = ScrollController();
+  
   Timer? _debounce;
   String _searchQuery = '';
   List<Exercise> _exercises = [];
+  List<String> _autocompleteSuggestions = [];
   bool _isLoading = true;
+  bool _isSearching = false;
+  bool _showAutocomplete = false;
   final ExerciseController _exerciseController = ExerciseController();
 
   @override
   void initState() {
     super.initState();
     _loadExercises();
+    
+    // Add scroll listener for infinite scrolling
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     _searchFocusNode.dispose();
+    _scrollController.dispose();
     _debounce?.cancel();
     super.dispose();
   }
 
-  // Load exercises from API
+  // Handle scroll events for infinite scrolling
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8 &&
+        !_exerciseController.isFetchingMore &&
+        _exerciseController.hasMorePages &&
+        !_isSearching) {
+      _loadMoreExercises();
+    }
+  }
+
+  // Load initial exercises from API
   Future<void> _loadExercises() async {
     setState(() {
       _isLoading = true;
@@ -53,6 +72,66 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         _isLoading = false;
       });
       _showErrorDialog('Error loading exercises: $e');
+    }
+  }
+  
+  // Load more exercises (pagination)
+  Future<void> _loadMoreExercises() async {
+    if (_isSearching) return;
+    
+    try {
+      final exercises = await _exerciseController.fetchMoreExercises();
+      setState(() {
+        _exercises = exercises;
+      });
+    } catch (e) {
+      _showErrorDialog('Error loading more exercises: $e');
+    }
+  }
+  
+  // Search exercises by query
+  Future<void> _searchExercises(String query) async {
+    setState(() {
+      _isSearching = true;
+      _isLoading = true;
+    });
+
+    try {
+      final exercises = await _exerciseController.searchExercises(query);
+      setState(() {
+        _exercises = exercises;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      _showErrorDialog('Error searching exercises: $e');
+    } finally {
+      setState(() {
+        _isSearching = false;
+      });
+    }
+  }
+  
+  // Get autocomplete suggestions
+  Future<void> _getAutocompleteSuggestions(String query) async {
+    if (query.isEmpty) {
+      setState(() {
+        _autocompleteSuggestions = [];
+        _showAutocomplete = false;
+      });
+      return;
+    }
+    
+    try {
+      final suggestions = await _exerciseController.getAutocompleteSuggestions(query);
+      setState(() {
+        _autocompleteSuggestions = suggestions;
+        _showAutocomplete = suggestions.isNotEmpty;
+      });
+    } catch (e) {
+      print('Error getting autocomplete suggestions: $e');
     }
   }
 
@@ -73,26 +152,50 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     );
   }
 
-  // Filter exercises based on search query
-  List<Exercise> _getFilteredExercises() {
-    if (_searchQuery.isEmpty) {
-      return _exercises;
-    }
-
-    final query = _searchQuery.toLowerCase();
-    return _exercises.where((exercise) {
-      return exercise.name.toLowerCase().contains(query) ||
-          exercise.targetMuscles.any((muscle) => muscle.toLowerCase().contains(query)) ||
-          exercise.bodyParts.any((part) => part.toLowerCase().contains(query));
-    }).toList();
+  // Handle search input changes
+  void _onSearchChanged(String value) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      setState(() {
+        _searchQuery = value;
+      });
+      
+      if (value.isEmpty) {
+        // Reset to initial exercises list
+        _loadExercises();
+      } else {
+        // Get autocomplete suggestions
+        _getAutocompleteSuggestions(value);
+      }
+    });
+  }
+  
+  // Handle suggestion selection
+  void _onSuggestionSelected(String suggestion) {
+    _searchController.text = suggestion;
+    setState(() {
+      _searchQuery = suggestion;
+      _showAutocomplete = false;
+    });
+    _searchExercises(suggestion);
+  }
+  
+  // Perform search with current query
+  void _performSearch() {
+    setState(() {
+      _showAutocomplete = false;
+    });
+    _searchExercises(_searchQuery);
   }
 
   @override
   Widget build(BuildContext context) {
-    final filteredExercises = _getFilteredExercises();
-    
     return GestureDetector(
       onTap: () {
+        setState(() {
+          _showAutocomplete = false;
+        });
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
@@ -122,68 +225,112 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         body: SafeArea(
           child: Column(
             children: [
+              // Search Bar
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: TextFormField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: (value) {
-                      if (_debounce?.isActive ?? false) _debounce!.cancel();
-                      _debounce = Timer(const Duration(milliseconds: 500), () {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Search Exercises...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(
-                                Icons.clear,
-                                color: Colors.grey,
-                              ),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                });
-                              },
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
-                        ),
+                child: Stack(
+                  children: [
+                    // Search field
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Colors.transparent,
+                      child: TextFormField(
+                        controller: _searchController,
+                        focusNode: _searchFocusNode,
+                        onChanged: _onSearchChanged,
+                        onFieldSubmitted: (_) => _performSearch(),
+                        decoration: InputDecoration(
+                          hintText: 'Search Exercises...',
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                          suffixIcon: _searchController.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: Colors.grey,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() {
+                                      _searchQuery = '';
+                                      _showAutocomplete = false;
+                                    });
+                                    _loadExercises();
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.8),
                         ),
-                        borderRadius: BorderRadius.circular(8.0),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface.withOpacity(0.8),
                     ),
-                  ),
+                    
+                    // Autocomplete suggestions
+                    if (_showAutocomplete)
+                      Positioned(
+                        top: 60,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(8.0),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4.0,
+                                spreadRadius: 1.0,
+                              ),
+                            ],
+                          ),
+                          constraints: BoxConstraints(
+                            maxHeight: 200,
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            padding: EdgeInsets.zero,
+                            itemCount: _autocompleteSuggestions.length,
+                            itemBuilder: (context, index) {
+                              final suggestion = _autocompleteSuggestions[index];
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  _capitalizeWords(suggestion),
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                onTap: () => _onSuggestionSelected(suggestion),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+              
+              // Instructions
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -196,12 +343,14 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                 ),
               ),
               SizedBox(height: 16),
+              
+              // Exercise List
               Expanded(
                 child: _isLoading
                   ? Center(
                       child: CircularProgressIndicator(),
                     )
-                  : filteredExercises.isEmpty
+                  : _exercises.isEmpty
                       ? Center(
                           child: Text(
                             'No exercises found',
@@ -212,10 +361,21 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                           ),
                         )
                       : ListView.builder(
+                          controller: _scrollController,
                           padding: EdgeInsets.all(16),
-                          itemCount: filteredExercises.length,
+                          itemCount: _exercises.length + (_exerciseController.hasMorePages && !_isSearching ? 1 : 0),
                           itemBuilder: (context, index) {
-                            final exercise = filteredExercises[index];
+                            // Show loading indicator at the bottom while loading more
+                            if (index == _exercises.length) {
+                              return Center(
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              );
+                            }
+                            
+                            final exercise = _exercises[index];
                             return Padding(
                               padding: EdgeInsets.only(bottom: 12.0),
                               child: InkWell(
