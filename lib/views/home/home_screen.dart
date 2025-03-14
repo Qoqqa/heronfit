@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const HomeContentScreen(),
     const BookingScreen(),
     const WorkoutWidget(),
-    const ProgressScreen(),
+    const ProgressDashboardWidget(),
     const ProfileScreen(),
   ];
 
