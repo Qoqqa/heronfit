@@ -97,6 +97,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 16.0),
                         Align(
                           alignment: const AlignmentDirectional(-1.0, 0.0),
                           child: Text(
@@ -106,6 +107,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 24.0),
                     Container(
                       width: double.infinity,
                       child: TextFormField(
@@ -140,6 +142,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 24.0),
                 ListView.separated(
                   padding: EdgeInsets.zero,
                   primary: false,
@@ -160,6 +163,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     );
                   },
                 ),
+                const SizedBox(height: 24.0),
                 Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
@@ -179,62 +183,66 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 32.0),
+                        minimumSize: const Size(double.infinity, 40.0),
                         backgroundColor: HeronFitTheme.primary,
                         textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
                         ),
-                        padding: EdgeInsets.zero,
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
-                      child: Text('Add Exercise',
-                      style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                              color: HeronFitTheme.bgLight,
-                              fontWeight: FontWeight.w600,
-                            ),
+                      child: Text(
+                        'Add Exercise',
+                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                          color: HeronFitTheme.bgLight,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8.0),
+                    const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pushNamed(context, WorkoutWidget.routeName);
                       },
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 32.0),
+                        minimumSize: const Size(double.infinity, 40.0),
                         backgroundColor: HeronFitTheme.error,
                         textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w500,
                         ),
-                        padding: EdgeInsets.zero,
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
-                      child: Text('Cancel Workout',
-                      style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                              color: HeronFitTheme.bgLight,
-                              fontWeight: FontWeight.w600,
-                            ),),
+                      child: Text(
+                        'Cancel Workout',
+                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                          color: HeronFitTheme.bgLight,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 24.0),
                 ElevatedButton(
                   onPressed: () {
                     // Navigator.pushNamed(context, WorkoutCompleteWidget.routeName,
                     //     arguments: widget.workoutID);
                   },
                   style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 40.0),
+                    minimumSize: const Size(double.infinity, 48.0),
                     backgroundColor: HeronFitTheme.bgLight,
                     textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
                       color: HeronFitTheme.primary,
                       fontWeight: FontWeight.bold,
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    padding: const EdgeInsets.symmetric(vertical: 12.0),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
                       side: const BorderSide(

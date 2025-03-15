@@ -88,6 +88,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                 ),
               ],
             ),
+            const SizedBox(height: 8.0),
             ListView.separated(
               padding: EdgeInsets.zero,
               primary: false,
@@ -139,23 +140,25 @@ class _ExerciseCardState extends State<ExerciseCard> {
                 );
               },
             ),
+            const SizedBox(height: 16.0), // Improved spacing between set items and button
             ElevatedButton(
               onPressed: () {
                 widget.onAddSet();
               },
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 32.0),
+                minimumSize: const Size(double.infinity, 40.0), // Increased padding
                 backgroundColor: HeronFitTheme.primary,
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.symmetric(vertical: 12.0), // Increased padding
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
-              child: Text('Add Set',
+              child: Text(
+                'Add Set',
                 style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                              color: HeronFitTheme.bgLight,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  color: HeronFitTheme.bgLight,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
