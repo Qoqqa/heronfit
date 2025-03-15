@@ -1,0 +1,332 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:heronfit/controllers/start_new_workout_controller.dart';
+import 'package:heronfit/models/exercise_model.dart';
+import 'package:heronfit/models/workout_model.dart';
+import 'package:heronfit/views/workout/add_exercise_screen.dart';
+// import 'package:heronfit/views/workout/workout_complete_widget.dart';
+import 'package:heronfit/views/workout/workout_widget.dart';
+import 'package:heronfit/core/theme.dart';
+
+class StartNewWorkoutWidget extends StatefulWidget {
+  const StartNewWorkoutWidget({Key? key, this.workoutID}) : super(key: key);
+
+  final Workout? workoutID;
+  static String routeName = 'StartNewWorkout';
+  static String routePath = '/startNewWorkout';
+
+  @override
+  _StartNewWorkoutWidgetState createState() => _StartNewWorkoutWidgetState();
+}
+
+class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
+  late StartNewWorkoutController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = StartNewWorkoutController(workout: widget.workoutID);
+    _controller.startTimer(); // Start the timer when the widget initializes
+  }
+
+  @override
+  void dispose() {
+    _controller.stopTimer(); // Stop the timer when the widget is disposed
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: HeronFitTheme.bgLight,
+        automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(
+            Icons.chevron_left_rounded,
+            color: HeronFitTheme.primary,
+            size: 30.0,
+          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title: Text(
+          'New Workout',
+          style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+            color: HeronFitTheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        elevation: 0.0,
+      ),
+      backgroundColor: HeronFitTheme.bgLight,
+      body: SafeArea(
+        top: true,
+        child: SingleChildScrollView(
+          primary: false,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Align(
+                              alignment: const AlignmentDirectional(-1.0, -1.0),
+                              child: Text(
+                                widget.workoutID?.name ?? '[Workout Name]',
+                                style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                                  color: HeronFitTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Align(
+                          alignment: const AlignmentDirectional(-1.0, 0.0),
+                          child: Text(
+                            'Duration: ${_controller.duration}',
+                            style: HeronFitTheme.textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      width: double.infinity,
+                      child: TextFormField(
+                        decoration: InputDecoration(
+                          labelText: 'Add a note about your workout',
+                          labelStyle: HeronFitTheme.textTheme.labelSmall,
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: Color(0x00000000),
+                              width: 1.0,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: const BorderSide(
+                              color: HeronFitTheme.primary,
+                              width: 1.0,
+                            ),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          filled: true,
+                          fillColor: HeronFitTheme.bgSecondary,
+                          prefixIcon: const Icon(
+                            Icons.edit,
+                            color: HeronFitTheme.textMuted,
+                            size: 16.0,
+                          ),
+                        ),
+                        style: HeronFitTheme.textTheme.bodyMedium,
+                        onChanged: (value) => _controller.setWorkoutNotes(value),
+                      ),
+                    ),
+                  ],
+                ),
+                ListView.separated(
+                  padding: EdgeInsets.zero,
+                  primary: false,
+                  shrinkWrap: true,
+                  scrollDirection: Axis.vertical,
+                  itemCount: _controller.exercises.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12.0),
+                  itemBuilder: (context, index) {
+                    final exercise = _controller.exercises[index];
+                    return Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            blurRadius: 40.0,
+                            color: Colors.grey.withOpacity(0.3),
+                            offset: const Offset(
+                              0.0,
+                              10.0,
+                            ),
+                          )
+                        ],
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    exercise.name ?? '[Exercise Name]',
+                                    textAlign: TextAlign.start,
+                                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                                      color: HeronFitTheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8.0),
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                Text(
+                                  'SET',
+                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'KG',
+                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  'REPS',
+                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                VerticalDivider(
+                                  color: Colors.grey[400],
+                                ),
+                              ],
+                            ),
+                            ListView.separated(
+                              padding: EdgeInsets.zero,
+                              primary: false,
+                              shrinkWrap: true,
+                              scrollDirection: Axis.vertical,
+                              itemCount: 0, // Replace with your sets data
+                              separatorBuilder: (_, __) => const SizedBox(height: 8.0),
+                              itemBuilder: (context, setsListIndex) {
+                                return const SizedBox.shrink(); // Replace with your set row widget
+                              },
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                // Add set logic here
+                              },
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 32.0),
+                                backgroundColor: HeronFitTheme.primary,
+                                textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                                  color: Colors.white,
+                                ),
+                                padding: EdgeInsets.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8.0),
+                                ),
+                              ),
+                              child: const Text('Add Set'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                          builder: (context) => AddExerciseScreen(workoutId: widget.workoutID?.id),
+                          ),
+                        ).then((selectedExercise) {
+                          if (selectedExercise != null) {
+                          setState(() {
+                            _controller.addExercise(selectedExercise);
+                          });
+                          }
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 32.0),
+                        backgroundColor: HeronFitTheme.primary,
+                        textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: const Text('Add Exercise'),
+                    ),
+                    const SizedBox(height: 8.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, WorkoutWidget.routeName);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 32.0),
+                        backgroundColor: HeronFitTheme.error,
+                        textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        padding: EdgeInsets.zero,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: const Text('Cancel Workout'),
+                    ),
+                  ],
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigator.pushNamed(context, WorkoutCompleteWidget.routeName,
+                    //     arguments: widget.workoutID);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 40.0),
+                    backgroundColor: HeronFitTheme.bgLight,
+                    textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                      color: HeronFitTheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                      side: const BorderSide(
+                        color: HeronFitTheme.primary,
+                        width: 2.0,
+                      ),
+                    ),
+                  ),
+                  child: const Text('Finish Workout'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
