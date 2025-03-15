@@ -21,3 +21,10 @@ class WorkoutModel extends FlutterFlowModel<WorkoutWidget> {
   @override
   void dispose() {}
 }
+
+class Workout {
+  final String? id;
+  final String? name;
+
+  Workout({this.id, this.name});
+}

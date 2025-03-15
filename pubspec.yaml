@@ -78,6 +78,7 @@ flutter:
     - assets/images/logo_heronfit.png
     - assets/images/logotype_heronfit.png
     - assets/images/onboarding_hero.png
+    - assets/images/workout_complete.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
