@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'edit_goals.dart'; // Import the EditGoalsWidget
+import 'update_weight.dart'; // Import the UpdateWeightWidget
 
 class ProgressDashboardWidget extends StatefulWidget {
   const ProgressDashboardWidget({super.key});
@@ -114,7 +116,12 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                           const SizedBox(height: 8),
                           ElevatedButton(
                             onPressed: () {
-                              Navigator.of(context).pushNamed('/editGoals');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const EditGoalsWidget(),
+                                ),
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Theme.of(context).colorScheme.secondary,
@@ -184,7 +191,12 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                   size: 24,
                                 ),
                                 onPressed: () {
-                                  Navigator.of(context).pushNamed('/updateWeight');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const UpdateWeightWidget(),
+                                    ),
+                                  );
                                 },
                               ),
                             ],
