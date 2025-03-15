@@ -4,7 +4,7 @@ import 'package:heronfit/controllers/start_new_workout_controller.dart';
 import 'package:heronfit/models/exercise_model.dart';
 import 'package:heronfit/models/workout_model.dart';
 import 'package:heronfit/views/workout/add_exercise_screen.dart';
-// import 'package:heronfit/views/workout/workout_complete_widget.dart';
+import 'package:heronfit/views/workout/workout_complete_widget.dart';
 import 'package:heronfit/views/workout/workout_widget.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:flutter/services.dart'; // Import for input formatting
@@ -232,8 +232,17 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                 const SizedBox(height: 24.0),
                 ElevatedButton(
                   onPressed: () {
-                    // Navigator.pushNamed(context, WorkoutCompleteWidget.routeName,
-                    //     arguments: widget.workoutID);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => WorkoutCompleteWidget(
+                          workoutId: widget.workoutID?.id ?? '',
+                          startTime: DateTime.now().subtract(Duration(minutes: _controller.duration)),
+                          endTime: DateTime.now(),
+                          workoutName: widget.workoutID?.name ?? 'Workout',
+                        ),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48.0),

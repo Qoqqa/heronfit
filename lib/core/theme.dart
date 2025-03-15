@@ -42,6 +42,7 @@ class HeronFitTheme {
   static const Color error = Color(0xFFE57373);
   static const Color warning = Color(0xFFFFB74D);
   static const Color info = Color(0xFF4FC3F7);
+  static const Color dropShadow = Colors.black26;
 
   // ✅ Typography (Material Design 3)
   static final TextTheme textTheme = TextTheme(
