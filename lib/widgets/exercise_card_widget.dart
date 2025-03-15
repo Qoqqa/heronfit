@@ -146,15 +146,17 @@ class _ExerciseCardState extends State<ExerciseCard> {
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 32.0),
                 backgroundColor: HeronFitTheme.primary,
-                textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                  color: Colors.white,
-                ),
                 padding: EdgeInsets.zero,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
-              child: const Text('Add Set'),
+              child: Text('Add Set',
+                style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                              color: HeronFitTheme.bgLight,
+                              fontWeight: FontWeight.w600,
+                            ),
+              ),
             ),
           ],
         ),

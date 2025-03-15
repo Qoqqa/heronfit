@@ -190,7 +190,12 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
-                      child: const Text('Add Exercise'),
+                      child: Text('Add Exercise',
+                      style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                              color: HeronFitTheme.bgLight,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
                     ),
                     const SizedBox(height: 8.0),
                     ElevatedButton(
@@ -209,7 +214,11 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
-                      child: const Text('Cancel Workout'),
+                      child: Text('Cancel Workout',
+                      style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                              color: HeronFitTheme.bgLight,
+                              fontWeight: FontWeight.w600,
+                            ),),
                     ),
                   ],
                 ),
