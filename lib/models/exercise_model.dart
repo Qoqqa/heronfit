@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'set_data_model.dart';
 
 class Exercise {
   final String id;
@@ -12,6 +13,7 @@ class Exercise {
   final List<String> instructions;
   final String category;
   final String imageUrl;
+  List<SetData> sets = [];
 
   static const String _imageBaseUrl =
       'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'; 
@@ -101,7 +103,6 @@ class Exercise {
       // If images is already a List (parsed JSON)
       if (images is List && images.isNotEmpty) {
         final String imagePath = images.first.toString();
-        print('Image path found: $imagePath'); // Debug log
         return '$_imageBaseUrl$imagePath';
       }
       
@@ -111,7 +112,6 @@ class Exercise {
           final List<dynamic> parsedImages = jsonDecode(images);
           if (parsedImages.isNotEmpty) {
             final String imagePath = parsedImages.first.toString();
-            print('Parsed image path: $imagePath'); // Debug log
             return '$_imageBaseUrl$imagePath';
           }
         } catch (e) {

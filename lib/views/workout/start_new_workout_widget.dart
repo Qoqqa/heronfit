@@ -7,6 +7,8 @@ import 'package:heronfit/views/workout/add_exercise_screen.dart';
 // import 'package:heronfit/views/workout/workout_complete_widget.dart';
 import 'package:heronfit/views/workout/workout_widget.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:flutter/services.dart'; // Import for input formatting
+import 'package:heronfit/widgets/exercise_card_widget.dart'; // Import the ExerciseCard widget
 
 class StartNewWorkoutWidget extends StatefulWidget {
   const StartNewWorkoutWidget({Key? key, this.workoutID}) : super(key: key);
@@ -147,102 +149,14 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12.0),
                   itemBuilder: (context, index) {
                     final exercise = _controller.exercises[index];
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 40.0,
-                            color: Colors.grey.withOpacity(0.3),
-                            offset: const Offset(
-                              0.0,
-                              10.0,
-                            ),
-                          )
-                        ],
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24.0),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    exercise.name ?? '[Exercise Name]',
-                                    textAlign: TextAlign.start,
-                                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                                      color: HeronFitTheme.primary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8.0),
-                            Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Text(
-                                  'SET',
-                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'KG',
-                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'REPS',
-                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                VerticalDivider(
-                                  color: Colors.grey[400],
-                                ),
-                              ],
-                            ),
-                            ListView.separated(
-                              padding: EdgeInsets.zero,
-                              primary: false,
-                              shrinkWrap: true,
-                              scrollDirection: Axis.vertical,
-                              itemCount: 0, // Replace with your sets data
-                              separatorBuilder: (_, __) => const SizedBox(height: 8.0),
-                              itemBuilder: (context, setsListIndex) {
-                                return const SizedBox.shrink(); // Replace with your set row widget
-                              },
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                // Add set logic here
-                              },
-                              style: ElevatedButton.styleFrom(
-                                minimumSize: const Size(double.infinity, 32.0),
-                                backgroundColor: HeronFitTheme.primary,
-                                textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                  color: Colors.white,
-                                ),
-                                padding: EdgeInsets.zero,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                              ),
-                              child: const Text('Add Set'),
-                            ),
-                          ],
-                        ),
-                      ),
+                    return ExerciseCard(
+                      exercise: exercise,
+                      workoutId: widget.workoutID?.id,
+                      onAddSet: () {
+                        setState(() {
+                          _controller.addSet(exercise);
+                        });
+                      },
                     );
                   },
                 ),
@@ -254,13 +168,13 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                          builder: (context) => AddExerciseScreen(workoutId: widget.workoutID?.id),
+                            builder: (context) => AddExerciseScreen(workoutId: widget.workoutID?.id),
                           ),
                         ).then((selectedExercise) {
                           if (selectedExercise != null) {
-                          setState(() {
-                            _controller.addExercise(selectedExercise);
-                          });
+                            setState(() {
+                              _controller.addExercise(selectedExercise);
+                            });
                           }
                         });
                       },

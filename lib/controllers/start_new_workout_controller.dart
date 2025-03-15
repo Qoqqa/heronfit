@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:heronfit/models/exercise_model.dart';
 import 'package:heronfit/models/workout_model.dart';
+import 'package:heronfit/models/set_data_model.dart';
 
 class StartNewWorkoutController {
   Workout? workout;
@@ -26,7 +27,7 @@ class StartNewWorkoutController {
   }
 
   void addSet(Exercise exercise) {
-    // Logic to add a set to the exercise
+    exercise.sets.add(SetData(kg: 0, reps: 0, completed: false));
   }
 
   void startTimer() {
