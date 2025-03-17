@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'edit_goals.dart'; // Import the EditGoalsWidget
+import 'update_weight.dart'; // Import the UpdateWeightWidget
+import 'progress_tracker.dart';
 
 class ProgressDashboardWidget extends StatefulWidget {
   const ProgressDashboardWidget({super.key});
@@ -112,23 +115,31 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.of(context).pushNamed('/editGoals');
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).colorScheme.secondary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: Text(
-                              'Edit Goals',
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const EditGoalsWidget(),
                                   ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: Text(
+                                'Edit Goals',
+                                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                              ),
                             ),
                           ),
                         ],
@@ -184,20 +195,35 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                   size: 24,
                                 ),
                                 onPressed: () {
-                                  Navigator.of(context).pushNamed('/updateWeight');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const UpdateWeightWidget(),
+                                    ),
+                                  );
                                 },
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          Container(
-                            width: double.infinity,
-                            height: 200,
-                            color: Colors.grey[200],
-                            child: Center(
-                              child: Text(
-                                'Graph Placeholder',
-                                style: Theme.of(context).textTheme.bodyMedium,
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const ProgressTrackerWidget(),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              height: 200,
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Text(
+                                  'Graph Placeholder',
+                                  style: Theme.of(context).textTheme.bodyMedium,
+                                ),
                               ),
                             ),
                           ),
