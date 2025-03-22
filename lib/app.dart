@@ -18,7 +18,7 @@ class HeronFitApp extends StatelessWidget {
       theme: HeronFitTheme.lightTheme,  // Apply custom theme
       home: SplashScreenWidget(),  // Start with SplashScreen
       routes: {
-        '/home': (context) => const HomeScreen(),
+        '/home': (context) => const HomeWidget(),
         '/onboarding': (context) => const OnboardingWidget(),
         '/login': (context) => const LoginWidget(),
         '/add_exercise': (context) => AddExerciseScreen(),

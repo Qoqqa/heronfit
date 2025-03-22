@@ -488,7 +488,7 @@ class _OnboardingFeaturesWidgetState extends State<OnboardingFeaturesWidget> wit
                                               size: 30.0,
                                             ),
                                             onPressed: () {
-                                              Navigator.pushNamed(context, HomeScreen.routeName);
+                                              Navigator.pushNamed(context, HomeWidget.routeName);
                                             },
                                           ).animateOnPageLoad(animationsMap['iconButtonOnPageLoadAnimation3']!),
                                         ),
