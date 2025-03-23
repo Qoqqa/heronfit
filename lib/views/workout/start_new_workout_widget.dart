@@ -82,24 +82,57 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                       mainAxisSize: MainAxisSize.max,
                       children: [
                         // Replace static text with editable TextField for workout name
-                        TextFormField(
+                        Container(
+                          width: double.infinity,
+                          child: TextFormField(
                           initialValue: widget.workoutID?.name ?? 'New Workout',
+                          autofocus: true,
+                          textCapitalization: TextCapitalization.sentences,
+                          obscureText: false,
                           style: HeronFitTheme.textTheme.labelMedium?.copyWith(
                             color: HeronFitTheme.primary,
                             fontWeight: FontWeight.w600,
+                            letterSpacing: 0.0,
                           ),
                           decoration: InputDecoration(
+                            isDense: true,
                             labelText: 'Workout Name',
-                            labelStyle: HeronFitTheme.textTheme.labelSmall,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                              borderSide: BorderSide.none,
+                            labelStyle: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                            letterSpacing: 0.0,
                             ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            filled: true,
-                            fillColor: HeronFitTheme.bgSecondary,
+                            hintText: 'Enter workout name',
+                            hintStyle: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                            color: HeronFitTheme.textMuted,
+                            letterSpacing: 0.0,
+                            ),
+                            enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: HeronFitTheme.primary,
+                              width: 2.0,
+                            ),
+                            ),
+                            focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: HeronFitTheme.primaryDark,
+                              width: 2.0,
+                            ),
+                            ),
+                            errorBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: HeronFitTheme.error,
+                              width: 2.0,
+                            ),
+                            ),
+                            focusedErrorBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(
+                              color: HeronFitTheme.error,
+                              width: 2.0,
+                            ),
+                            ),
+                            contentPadding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
                           ),
                           onChanged: (value) => _controller.setWorkoutName(value),
+                          ),
                         ),
                         const SizedBox(height: 16.0),
                         // Replace static timer display with StreamBuilder for real-time updates
