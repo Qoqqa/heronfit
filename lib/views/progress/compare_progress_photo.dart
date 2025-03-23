@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:heronfit/views/progress/view_progress_photo.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/scheduler.dart';
+import 'view_progress_photo.dart';
 
 class CompareProgressPhotosWidget extends StatefulWidget {
   const CompareProgressPhotosWidget({super.key});
@@ -60,6 +59,54 @@ class _CompareProgressPhotosWidgetState extends State<CompareProgressPhotosWidge
               child: Column(
                 mainAxisSize: MainAxisSize.max,
                 children: [
+              
+Padding(
+  padding: EdgeInsets.all(12),
+  child: SizedBox(
+    height: 200, // Fixed height for horizontal scrolling
+    child: ListView(
+      scrollDirection: Axis.horizontal, // Horizontal scroll direction
+      shrinkWrap: true,
+      physics: NeverScrollableScrollPhysics(), // Optional: disable scrolling if not needed
+      children: [
+        Container(
+          width: 200,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              'https://via.placeholder.com/200',
+              width: 200,
+              height: 200,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        SizedBox(width: 12), // spacing between images
+        Container(
+          width: 200,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              'https://via.placeholder.com/200',
+              width: 200,
+              height: 200,
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        // Add more Containers as needed...
+      ],
+    ),
+  ),
+),
+
+
                   Padding(
                     padding: EdgeInsets.all(12),
                     child: Stack(

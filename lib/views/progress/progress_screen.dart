@@ -82,12 +82,14 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                             mainAxisSize: MainAxisSize.max,
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Text(
-                                'Current Goal: Gain Muscle And Get Stronger',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                              Expanded(
+                                child: Text(
+                                  'Current Goal: Gain Muscle And Get Stronger',
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                ),
                               ),
                             ],
                           ),
@@ -108,9 +110,11 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                 size: 24,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                'Recommended 3-5 workouts per week',
-                                style: Theme.of(context).textTheme.bodyLarge,
+                              Expanded(
+                                child: Text(
+                                  'Recommended 3-5 workouts per week',
+                                  style: Theme.of(context).textTheme.bodyLarge,
+                                ),
                               ),
                             ],
                           ),
@@ -136,7 +140,8 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               ),
                               child: Text(
                                 'Edit Goals',
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white,
+                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      color: Colors.white,
                                       fontWeight: FontWeight.w600,
                                     ),
                               ),
