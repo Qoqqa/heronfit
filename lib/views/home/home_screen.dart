@@ -1,12 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:page_transition/page_transition.dart';
-import 'package:iconly/iconly.dart';
-import '../booking/booking_screen.dart';
-import '../workout/workout_widget.dart';
-import '../progress/progress_screen.dart'; // Ensure this import is correct
-import '../profile/profile_screen.dart';
-import '../../widgets/bottom_nav_bar.dart'; // Import the BottomNavBar widget
 
 class HomeWidget extends StatefulWidget {
   const HomeWidget({super.key});
@@ -20,45 +12,6 @@ class HomeWidget extends StatefulWidget {
 
 class _HomeWidgetState extends State<HomeWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  int _selectedIndex = 0;
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    switch (index) {
-      case 0:
-        Navigator.push(
-          context,
-          PageTransition(type: PageTransitionType.fade, child: const HomeWidget()),
-        );
-        break;
-      case 1:
-        Navigator.push(
-          context,
-          PageTransition(type: PageTransitionType.fade, child: const BookingScreen()),
-        );
-        break;
-      case 2:
-        Navigator.push(
-          context,
-          PageTransition(type: PageTransitionType.fade, child: const WorkoutWidget()),
-        );
-        break;
-      case 3:
-        Navigator.push(
-          context,
-          PageTransition(type: PageTransitionType.fade, child: const ProgressDashboardWidget()), // Corrected class name
-        );
-        break;
-      case 4:
-        Navigator.push(
-          context,
-          PageTransition(type: PageTransitionType.fade, child: const ProfileScreen()),
-        );
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -475,10 +428,6 @@ class _HomeWidgetState extends State<HomeWidget> {
                 ),
               ),
             ),
-          ),
-          bottomNavigationBar: BottomNavBar( // Use the BottomNavBar widget
-            currentIndex: _selectedIndex,
-            onTap: _onItemTapped,
           ),
         ),
       ),

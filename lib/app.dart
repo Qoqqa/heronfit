@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:heronfit/views/home/home_screen.dart';
+import 'package:heronfit/widgets/main_screen_wrapper.dart'; // Import MainScreenWrapper
 import 'views/splash_screen.dart';
-import 'views/home/home_screen.dart';
 import 'views/onboarding/onboarding_hero.dart';
 import 'views/auth/login_widget.dart';
 import 'views/workout/add_exercise_screen.dart';
@@ -15,10 +14,10 @@ class HeronFitApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'HeronFit',
-      theme: HeronFitTheme.lightTheme,  // Apply custom theme
-      home: SplashScreenWidget(),  // Start with SplashScreen
+      theme: HeronFitTheme.lightTheme, // Apply custom theme
+      home: SplashScreenWidget(), // Start with SplashScreen
       routes: {
-        '/home': (context) => const HomeWidget(),
+        '/home': (context) => const MainScreenWrapper(), // Use MainScreenWrapper for main screens
         '/onboarding': (context) => const OnboardingWidget(),
         '/login': (context) => const LoginWidget(),
         '/add_exercise': (context) => AddExerciseScreen(),

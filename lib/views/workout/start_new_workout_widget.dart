@@ -81,28 +81,83 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Align(
-                              alignment: const AlignmentDirectional(-1.0, -1.0),
-                              child: Text(
-                                widget.workoutID?.name ?? '[Workout Name]',
-                                style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                        // Replace static text with editable TextField for workout name
+                        Container(
+                          width: double.infinity,
+                          child: TextFormField(
+                            initialValue:
+                                widget.workoutID?.name ?? 'New Workout',
+                            autofocus: true,
+                            textCapitalization: TextCapitalization.sentences,
+                            obscureText: false,
+                            style: HeronFitTheme.textTheme.labelMedium
+                                ?.copyWith(
                                   color: HeronFitTheme.primary,
                                   fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.0,
+                                ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              labelText: 'Workout Name',
+                              labelStyle: HeronFitTheme.textTheme.labelSmall
+                                  ?.copyWith(letterSpacing: 0.0),
+                              hintText: 'Enter workout name',
+                              hintStyle: HeronFitTheme.textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: HeronFitTheme.textMuted,
+                                    letterSpacing: 0.0,
+                                  ),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.primary,
+                                  width: 2.0,
                                 ),
                               ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.primaryDark,
+                                  width: 2.0,
+                                ),
+                              ),
+                              errorBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.error,
+                                  width: 2.0,
+                                ),
+                              ),
+                              focusedErrorBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.error,
+                                  width: 2.0,
+                                ),
+                              ),
+                              contentPadding:
+                                  const EdgeInsetsDirectional.fromSTEB(
+                                    0.0,
+                                    0.0,
+                                    0.0,
+                                    16.0,
+                                  ),
                             ),
-                          ],
+                            onChanged:
+                                (value) => _controller.setWorkoutName(value),
+                          ),
                         ),
                         const SizedBox(height: 16.0),
+                        // Replace static timer display with StreamBuilder for real-time updates
                         Align(
                           alignment: const AlignmentDirectional(-1.0, 0.0),
-                          child: Text(
-                            'Duration: ${_controller.duration}',
-                            style: HeronFitTheme.textTheme.bodyMedium,
+                          child: StreamBuilder<int>(
+                            stream: _controller.durationStream,
+                            initialData: _controller.duration,
+                            builder: (context, snapshot) {
+                              final minutes = snapshot.data! ~/ 60;
+                              final seconds = snapshot.data! % 60;
+                              return Text(
+                                'Duration: ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                                style: HeronFitTheme.textTheme.bodyMedium,
+                              );
+                            },
                           ),
                         ),
                       ],
@@ -137,7 +192,8 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                           ),
                         ),
                         style: HeronFitTheme.textTheme.bodyMedium,
-                        onChanged: (value) => _controller.setWorkoutNotes(value),
+                        onChanged:
+                            (value) => _controller.setWorkoutNotes(value),
                       ),
                     ),
                   ],
@@ -172,7 +228,10 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AddExerciseScreen(workoutId: widget.workoutID?.id),
+                            builder:
+                                (context) => AddExerciseScreen(
+                                  workoutId: widget.workoutID?.id,
+                                ),
                           ),
                         ).then((selectedExercise) {
                           if (selectedExercise != null) {
@@ -185,10 +244,11 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
                         backgroundColor: HeronFitTheme.primary,
-                        textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        textStyle: HeronFitTheme.textTheme.labelMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
@@ -210,10 +270,11 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
                         backgroundColor: HeronFitTheme.error,
-                        textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        textStyle: HeronFitTheme.textTheme.labelMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
@@ -235,12 +296,22 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => WorkoutCompleteWidget(
-                          workoutId: widget.workoutID?.id ?? '',
-                          startTime: DateTime.now().subtract(Duration(minutes: _controller.duration)),
-                          endTime: DateTime.now(),
-                          workoutName: widget.workoutID?.name ?? 'Workout',
-                        ),
+                        builder:
+                            (context) => WorkoutCompleteWidget(
+                              workoutId: widget.workoutID?.id ?? '',
+                              startTime: DateTime.now().subtract(
+                                Duration(seconds: _controller.duration),
+                              ), // Use the timer's duration
+                              endTime: DateTime.now(),
+                              workoutName:
+                                  _controller.workoutName.isNotEmpty
+                                      ? _controller.workoutName
+                                      : 'Unnamed Workout', // Use the updated workout name
+                              exercises:
+                                  _controller.exercises
+                                      .map((e) => e.name)
+                                      .toList(), // Pass exercises
+                            ),
                       ),
                     );
                   },
