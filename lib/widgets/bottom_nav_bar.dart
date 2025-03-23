@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconly/iconly.dart';
+import 'package:solar_icons/solar_icons.dart'; // Ensure SolarIcons is imported
 import 'package:heronfit/core/theme.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -15,12 +15,37 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(icon: Icon(IconlyBold.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(IconlyBold.calendar), label: 'Booking'),
-        BottomNavigationBarItem(icon: Icon(IconlyBold.work), label: 'Workout'),
-        BottomNavigationBarItem(icon: Icon(IconlyBold.chart), label: 'Progress'),
-        BottomNavigationBarItem(icon: Icon(IconlyBold.profile), label: 'Profile'),
+      items: <BottomNavigationBarItem>[
+        BottomNavigationBarItem(
+          icon: Icon(
+            currentIndex == 0 ? SolarIconsBold.home : SolarIconsOutline.home,
+          ),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            currentIndex == 1 ? SolarIconsBold.calendar : SolarIconsOutline.calendar,
+          ),
+          label: 'Booking',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            currentIndex == 2 ? SolarIconsBold.dumbbellLarge : SolarIconsOutline.dumbbellLarge,
+          ),
+          label: 'Workout',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            currentIndex == 3 ? SolarIconsBold.chartSquare : SolarIconsOutline.chartSquare,
+          ),
+          label: 'Progress',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(
+            currentIndex == 4 ? SolarIconsBold.user : SolarIconsOutline.user,
+          ),
+          label: 'Profile',
+        ),
       ],
       currentIndex: currentIndex,
       selectedItemColor: HeronFitTheme.primary,

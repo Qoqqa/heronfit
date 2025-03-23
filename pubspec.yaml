@@ -40,6 +40,7 @@ dependencies:
   supabase_flutter: ^2.0.0
   flutter_dotenv: ^5.0.2
   image_picker: ^0.8.4+4
+  solar_icons: 
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
