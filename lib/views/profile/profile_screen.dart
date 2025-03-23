@@ -132,7 +132,7 @@ class ProfileScreen extends StatelessWidget {
                                 backgroundColor: Theme.of(context).colorScheme.secondary,
                                 textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   color: Theme.of(context).colorScheme.onSecondary,
-                                ),
+                                ), 
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -164,8 +164,11 @@ class ProfileScreen extends StatelessWidget {
                             label: const Text('Logout'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Theme.of(context).colorScheme.secondary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 8),
                               textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                color: Theme.of(context).colorScheme.onSecondary,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
