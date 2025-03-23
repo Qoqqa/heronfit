@@ -8,6 +8,7 @@ class WorkoutCompleteWidget extends StatefulWidget {
   final DateTime startTime;
   final DateTime endTime;
   final String workoutName;
+  final List<String> exercises;
 
   const WorkoutCompleteWidget({
     Key? key,
@@ -15,6 +16,7 @@ class WorkoutCompleteWidget extends StatefulWidget {
     required this.startTime,
     required this.endTime,
     required this.workoutName,
+    required this.exercises,
   }) : super(key: key);
 
   static String routeName = 'WorkoutComplete';
@@ -35,6 +37,7 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
       startTime: widget.startTime,
       endTime: widget.endTime,
       workoutName: widget.workoutName,
+      exercises: widget.exercises, // Pass the exercises here
     );
     _controller = WorkoutCompleteController(model);
   }
@@ -155,18 +158,26 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
                             ),
                             const SizedBox(height: 8.0),
                             Text(
-                              'Start Time: ${_controller.startTime}',
+                              'Date: ${_controller.startTime.toLocal().toString().split(' ')[0]}',
                               style: HeronFitTheme.textTheme.labelSmall?.copyWith(
                                 color: HeronFitTheme.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 16.0),
+                            Text(
+                              'Exercises:',
+                              style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                                color: HeronFitTheme.primary,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 8.0),
-                            Text(
-                              'End Time: ${_controller.endTime}',
-                              style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                                color: HeronFitTheme.textPrimary,
-                              ),
-                            ),
+                            ...widget.exercises.map((exercise) => Text(
+                                  '- $exercise',
+                                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                                    color: HeronFitTheme.textPrimary,
+                                  ),
+                                )),
                           ],
                         ),
                       ),

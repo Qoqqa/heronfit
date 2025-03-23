@@ -286,6 +286,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                           startTime: DateTime.now().subtract(Duration(minutes: _controller.duration)),
                           endTime: DateTime.now(),
                           workoutName: widget.workoutID?.name ?? 'Workout',
+                          exercises: _controller.exercises.map((e) => e.name).toList(), // Pass exercises here
                         ),
                       ),
                     );
