@@ -81,28 +81,41 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Align(
-                              alignment: const AlignmentDirectional(-1.0, -1.0),
-                              child: Text(
-                                widget.workoutID?.name ?? '[Workout Name]',
-                                style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                  color: HeronFitTheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                        // Replace static text with editable TextField for workout name
+                        TextFormField(
+                          initialValue: widget.workoutID?.name ?? 'New Workout',
+                          style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                            color: HeronFitTheme.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: 'Workout Name',
+                            labelStyle: HeronFitTheme.textTheme.labelSmall,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8.0),
+                              borderSide: BorderSide.none,
                             ),
-                          ],
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            filled: true,
+                            fillColor: HeronFitTheme.bgSecondary,
+                          ),
+                          onChanged: (value) => _controller.setWorkoutName(value),
                         ),
                         const SizedBox(height: 16.0),
+                        // Replace static timer display with StreamBuilder for real-time updates
                         Align(
                           alignment: const AlignmentDirectional(-1.0, 0.0),
-                          child: Text(
-                            'Duration: ${_controller.duration}',
-                            style: HeronFitTheme.textTheme.bodyMedium,
+                          child: StreamBuilder<int>(
+                            stream: _controller.durationStream,
+                            initialData: _controller.duration,
+                            builder: (context, snapshot) {
+                              final minutes = snapshot.data! ~/ 60;
+                              final seconds = snapshot.data! % 60;
+                              return Text(
+                                'Duration: ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
+                                style: HeronFitTheme.textTheme.bodyMedium,
+                              );
+                            },
                           ),
                         ),
                       ],

@@ -11,8 +11,14 @@ class StartNewWorkoutController {
   List<Exercise> exercises = [];
   int duration = 0;
   late Timer _timer;
+  
+  // Add StreamController for real-time duration updates
+  final StreamController<int> _durationController = StreamController<int>.broadcast();
+  Stream<int> get durationStream => _durationController.stream;
 
-  StartNewWorkoutController({required this.workout});
+  StartNewWorkoutController({required this.workout}) {
+    workoutName = workout?.name ?? 'New Workout';
+  }
 
   void setWorkoutName(String name) {
     workoutName = name;
@@ -33,6 +39,8 @@ class StartNewWorkoutController {
   void startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       duration++;
+      // Add the updated duration to the stream
+      _durationController.add(duration);
     });
   }
 
@@ -43,5 +51,6 @@ class StartNewWorkoutController {
   @override
   void dispose() {
     _timer.cancel();
+    _durationController.close(); // Close the stream controller when disposing
   }
 }
