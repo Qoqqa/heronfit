@@ -85,53 +85,62 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                         Container(
                           width: double.infinity,
                           child: TextFormField(
-                          initialValue: widget.workoutID?.name ?? 'New Workout',
-                          autofocus: true,
-                          textCapitalization: TextCapitalization.sentences,
-                          obscureText: false,
-                          style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                            color: HeronFitTheme.primary,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.0,
-                          ),
-                          decoration: InputDecoration(
-                            isDense: true,
-                            labelText: 'Workout Name',
-                            labelStyle: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                            letterSpacing: 0.0,
+                            initialValue:
+                                widget.workoutID?.name ?? 'New Workout',
+                            autofocus: true,
+                            textCapitalization: TextCapitalization.sentences,
+                            obscureText: false,
+                            style: HeronFitTheme.textTheme.labelMedium
+                                ?.copyWith(
+                                  color: HeronFitTheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.0,
+                                ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              labelText: 'Workout Name',
+                              labelStyle: HeronFitTheme.textTheme.labelSmall
+                                  ?.copyWith(letterSpacing: 0.0),
+                              hintText: 'Enter workout name',
+                              hintStyle: HeronFitTheme.textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: HeronFitTheme.textMuted,
+                                    letterSpacing: 0.0,
+                                  ),
+                              enabledBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.primary,
+                                  width: 2.0,
+                                ),
+                              ),
+                              focusedBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.primaryDark,
+                                  width: 2.0,
+                                ),
+                              ),
+                              errorBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.error,
+                                  width: 2.0,
+                                ),
+                              ),
+                              focusedErrorBorder: UnderlineInputBorder(
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.error,
+                                  width: 2.0,
+                                ),
+                              ),
+                              contentPadding:
+                                  const EdgeInsetsDirectional.fromSTEB(
+                                    0.0,
+                                    0.0,
+                                    0.0,
+                                    16.0,
+                                  ),
                             ),
-                            hintText: 'Enter workout name',
-                            hintStyle: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                            color: HeronFitTheme.textMuted,
-                            letterSpacing: 0.0,
-                            ),
-                            enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: HeronFitTheme.primary,
-                              width: 2.0,
-                            ),
-                            ),
-                            focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: HeronFitTheme.primaryDark,
-                              width: 2.0,
-                            ),
-                            ),
-                            errorBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: HeronFitTheme.error,
-                              width: 2.0,
-                            ),
-                            ),
-                            focusedErrorBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(
-                              color: HeronFitTheme.error,
-                              width: 2.0,
-                            ),
-                            ),
-                            contentPadding: const EdgeInsetsDirectional.fromSTEB(0.0, 0.0, 0.0, 16.0),
-                          ),
-                          onChanged: (value) => _controller.setWorkoutName(value),
+                            onChanged:
+                                (value) => _controller.setWorkoutName(value),
                           ),
                         ),
                         const SizedBox(height: 16.0),
@@ -183,7 +192,8 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                           ),
                         ),
                         style: HeronFitTheme.textTheme.bodyMedium,
-                        onChanged: (value) => _controller.setWorkoutNotes(value),
+                        onChanged:
+                            (value) => _controller.setWorkoutNotes(value),
                       ),
                     ),
                   ],
@@ -218,7 +228,10 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => AddExerciseScreen(workoutId: widget.workoutID?.id),
+                            builder:
+                                (context) => AddExerciseScreen(
+                                  workoutId: widget.workoutID?.id,
+                                ),
                           ),
                         ).then((selectedExercise) {
                           if (selectedExercise != null) {
@@ -231,10 +244,11 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
                         backgroundColor: HeronFitTheme.primary,
-                        textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        textStyle: HeronFitTheme.textTheme.labelMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
@@ -256,10 +270,11 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
                         backgroundColor: HeronFitTheme.error,
-                        textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        textStyle: HeronFitTheme.textTheme.labelMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
@@ -281,13 +296,22 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => WorkoutCompleteWidget(
-                          workoutId: widget.workoutID?.id ?? '',
-                          startTime: DateTime.now().subtract(Duration(minutes: _controller.duration)),
-                          endTime: DateTime.now(),
-                          workoutName: widget.workoutID?.name ?? 'Workout',
-                          exercises: _controller.exercises.map((e) => e.name).toList(), // Pass exercises here
-                        ),
+                        builder:
+                            (context) => WorkoutCompleteWidget(
+                              workoutId: widget.workoutID?.id ?? '',
+                              startTime: DateTime.now().subtract(
+                                Duration(seconds: _controller.duration),
+                              ), // Use the timer's duration
+                              endTime: DateTime.now(),
+                              workoutName:
+                                  _controller.workoutName.isNotEmpty
+                                      ? _controller.workoutName
+                                      : 'Unnamed Workout', // Use the updated workout name
+                              exercises:
+                                  _controller.exercises
+                                      .map((e) => e.name)
+                                      .toList(), // Pass exercises
+                            ),
                       ),
                     );
                   },

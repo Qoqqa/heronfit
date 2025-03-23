@@ -24,6 +24,8 @@ class StartNewWorkoutController {
     workoutName = name;
   }
 
+  int get workoutDurationInMinutes => duration ~/ 60; // Convert seconds to minutes
+
   void setWorkoutNotes(String notes) {
     workoutNotes = notes;
   }
