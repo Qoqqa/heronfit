@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
+import 'edit_profile.dart'; // Import the EditProfileWidget
+import '../booking/my_bookings.dart'; // Import the MyBookingsWidget
+import '../workout/workout_history.dart'; // Import the WorkoutHistoryWidget
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -124,7 +127,12 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             ElevatedButton(
                               onPressed: () {
-                                // Navigate to Edit Profile screen
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const EditProfileWidget(),
+                                  ),
+                                );
                               },
                               child: const Text('Edit'),
                               style: ElevatedButton.styleFrom(
@@ -254,13 +262,28 @@ class ProfileScreen extends StatelessWidget {
       'Account',
       [
         _buildSectionItem(context, Icons.person, 'Edit Profile', () {
-          // Navigate to Edit Profile screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const EditProfileWidget(),
+            ),
+          );
         }),
         _buildSectionItem(context, Icons.book, 'My Bookings', () {
-          // Navigate to My Bookings screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MyBookingsWidget(),
+            ),
+          );
         }),
         _buildSectionItem(context, Icons.history, 'Workout History', () {
-          // Navigate to Workout History screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const WorkoutHistoryWidget(),
+            ),
+          );
         }),
       ],
     );
@@ -326,7 +349,7 @@ class ProfileScreen extends StatelessWidget {
             ...items.map((item) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: item,
-            )),
+            )).toList(),
           ],
         ),
       ),
