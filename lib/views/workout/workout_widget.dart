@@ -10,6 +10,7 @@ export '../../models/workout_model.dart';
 import '../../views/workout/add_exercise_screen.dart';
 import 'package:heronfit/views/workout/start_new_workout_widget.dart';
 import '../../core/services/workout_storage_service.dart';
+import 'package:heronfit/views/workout/start_workout_from_template.dart';
 
 class WorkoutWidget extends StatefulWidget {
   const WorkoutWidget({super.key});
@@ -180,8 +181,12 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
                                   style: HeronFitTheme.textTheme.bodySmall,
                                 ),
                                 onTap: () {
-                                  // Navigate to workout details or start workout
-                                  print('Tapped on workout: ${workout.name}');
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => StartWorkoutFromTemplate(workout: workout),
+                                    ),
+                                  );
                                 },
                               ),
                             );
