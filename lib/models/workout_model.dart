@@ -23,8 +23,48 @@ class WorkoutModel extends FlutterFlowModel<WorkoutWidget> {
 }
 
 class Workout {
-  final String? id;
-  final String? name;
+  final String id;
+  final String name;
+  final List<String> exercises;
+  final Duration duration;
 
-  Workout({this.id, this.name});
+  Workout({
+    required this.id,
+    required this.name,
+    required this.exercises,
+    required this.duration,
+  });
+
+  factory Workout.fromJson(Map<String, dynamic> json) {
+    return Workout(
+      id: json['id'],
+      name: json['name'],
+      exercises: List<String>.from(json['exercises']),
+      duration: Duration(seconds: json['duration']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'exercises': exercises,
+      'duration': duration.inSeconds,
+    };
+  }
+}
+
+void testWorkoutSerialization() {
+  final workout = Workout(
+    id: '1',
+    name: 'Test Workout',
+    exercises: ['Push-ups', 'Squats'],
+    duration: Duration(minutes: 30),
+  );
+
+  final json = workout.toJson();
+  print('Serialized workout: $json'); // Debug log
+
+  final deserializedWorkout = Workout.fromJson(json);
+  print('Deserialized workout: $deserializedWorkout'); // Debug log
 }
