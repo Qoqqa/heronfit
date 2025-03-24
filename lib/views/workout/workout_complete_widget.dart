@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:heronfit/controllers/workout_complete_controller.dart';
 import 'package:heronfit/models/workout_complete_model.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/core/services/workout_storage_service.dart';
+import 'package:heronfit/models/workout_model.dart';
 
 class WorkoutCompleteWidget extends StatefulWidget {
   final String workoutId;
@@ -184,7 +186,17 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
                     ),
                     const SizedBox(height: 24.0),
                     ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final workout = Workout(
+                          id: widget.workoutId,
+                          name: widget.workoutName,
+                          exercises: widget.exercises,
+                          duration: widget.endTime.difference(widget.startTime),
+                        );
+
+                        final storageService = WorkoutStorageService();
+                        await storageService.saveWorkout(workout);
+
                         Navigator.pushNamed(context, '/home');
                       },
                       style: ElevatedButton.styleFrom(
@@ -196,7 +208,7 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
                         ),
                       ),
                       child: Text(
-                        'Back to Home',
+                        'Save Workout',
                         style: HeronFitTheme.textTheme.labelMedium?.copyWith(
                           color: HeronFitTheme.bgLight,
                           fontWeight: FontWeight.w600,

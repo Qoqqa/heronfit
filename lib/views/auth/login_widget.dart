@@ -134,7 +134,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                                     focusNode: _model.passwordFocusNode,
                                     autofocus: true,
                                     autofillHints: [AutofillHints.password],
-                                    obscureText: !_model.passwordVisibility,
                                     decoration: InputDecoration(
                                       labelText: 'Password',
                                       border: OutlineInputBorder(
@@ -181,8 +180,7 @@ class _LoginWidgetState extends State<LoginWidget> {
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: Padding(
+                        Padding(
                             padding: EdgeInsetsDirectional.fromSTEB(
                                 0.0, 0.0, 0.0, 8.0),
                             child: ElevatedButton(
@@ -227,7 +225,6 @@ class _LoginWidgetState extends State<LoginWidget> {
                               ),
                             ),
                           ),
-                        ),
                         Align(
                           alignment: AlignmentDirectional(0.0, 0.0),
                           child: InkWell(

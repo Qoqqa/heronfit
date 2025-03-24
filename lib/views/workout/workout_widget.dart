@@ -9,6 +9,7 @@ import '../../models/workout_model.dart';
 export '../../models/workout_model.dart';
 import '../../views/workout/add_exercise_screen.dart';
 import 'package:heronfit/views/workout/start_new_workout_widget.dart';
+import '../../core/services/workout_storage_service.dart';
 
 class WorkoutWidget extends StatefulWidget {
   const WorkoutWidget({super.key});
@@ -22,6 +23,8 @@ class WorkoutWidget extends StatefulWidget {
 
 class _WorkoutWidgetState extends State<WorkoutWidget> {
   late WorkoutModel _model;
+  late WorkoutStorageService _storageService;
+  List<Workout> _savedWorkouts = [];
 
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -29,6 +32,16 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
   void initState() {
     super.initState();
     _model = createModel(context, () => WorkoutModel());
+    _storageService = WorkoutStorageService();
+    _loadSavedWorkouts();
+  }
+
+  Future<void> _loadSavedWorkouts() async {
+    final workouts = await _storageService.getSavedWorkouts();
+    print('Loaded workouts: $workouts'); // Debug log
+    setState(() {
+      _savedWorkouts = workouts;
+    });
   }
 
   @override
@@ -64,7 +77,6 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
             'Workout',
             style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
               color: HeronFitTheme.primary,
-              // fontSize: 22.0,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -73,98 +85,126 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
         ),
         body: SafeArea(
           top: true,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Align(
-                        alignment: AlignmentDirectional(-1.0, 0.0),
-                        child: Text(
-                          'Quick Start',
-                          textAlign: TextAlign.justify,
-                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Quick Start Section
+                Text(
+                  'Quick Start',
+                  style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                Text(
+                  'Begin a new empty workout now or choose from our recommended programs',
+                  style: HeronFitTheme.textTheme.labelMedium,
+                ),
+                const SizedBox(height: 16.0),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => StartNewWorkoutWidget(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Start New Workout',
+                    style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                      color: HeronFitTheme.bgLight,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 40.0),
+                    backgroundColor: HeronFitTheme.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24.0),
+
+                // My Programs Section
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'My Programs',
+                      style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.add_rounded,
+                        color: HeronFitTheme.primary,
+                        size: 24.0,
+                      ),
+                      onPressed: () {
+                        _createNewWorkout();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16.0),
+
+                // List of Saved Workouts
+                Expanded(
+                  child: _savedWorkouts.isEmpty
+                      ? Center(
+                          child: Text(
+                            'No saved workouts yet.',
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.textMuted,
+                            ),
                           ),
-                        ),
-                      ),
-                      Align(
-                        alignment: AlignmentDirectional(-1.0, 0.0),
-                        child: Text(
-                          'Begin a new empty workout now or choose from our recommended programs',
-                          style: HeronFitTheme.textTheme.labelMedium,
-                        ),
-                      ),
-                      SizedBox(height: 16.0),
-                      Align(
-                        alignment: AlignmentDirectional(0.0, 0.0),
-                        child: ElevatedButton(
-                            onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => StartNewWorkoutWidget(),
+                        )
+                      : ListView.builder(
+                          itemCount: _savedWorkouts.length,
+                          itemBuilder: (context, index) {
+                            final workout = _savedWorkouts[index];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: ListTile(
+                                title: Text(
+                                  workout.name,
+                                  style: HeronFitTheme.textTheme.titleSmall,
+                                ),
+                                subtitle: Text(
+                                  '${workout.exercises.length} exercises • ${workout.duration.inMinutes} minutes',
+                                  style: HeronFitTheme.textTheme.bodySmall,
+                                ),
+                                onTap: () {
+                                  // Navigate to workout details or start workout
+                                  print('Tapped on workout: ${workout.name}');
+                                },
                               ),
                             );
                           },
-                          child: Text(
-                            'Start New Workout',
-                            style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                              color: HeronFitTheme.bgLight,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: Size(double.infinity, 40.0),
-                            backgroundColor: HeronFitTheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 24.0),
-                  Column(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'My Programs',
-                            style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.add_rounded,
-                              color: HeronFitTheme.primary,
-                              size: 24.0,
-                            ),
-                            onPressed: () {
-                              // Add your onPressed code here!
-                            },
-                          ),
-                        ],
-                      ),
-                      // Add your FutureBuilder or ListView here
-                    ],
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  void _createNewWorkout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => StartNewWorkoutWidget(),
+      ),
+    ).then((_) {
+      print('Returning from StartNewWorkoutWidget'); // Debug log
+      _loadSavedWorkouts(); // Reload saved workouts
+    });
   }
 }
