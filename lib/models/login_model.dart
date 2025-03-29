@@ -1,12 +1,7 @@
 // import '/auth/supabase_auth/auth_util.dart';
 import 'package:flutterflow_ui/flutterflow_ui.dart';
-import 'dart:ui';
 import '/views/auth/login_widget.dart' show LoginWidget;
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 
 class LoginModel extends FlutterFlowModel<LoginWidget> {
   ///  State fields for stateful widgets in this page.
