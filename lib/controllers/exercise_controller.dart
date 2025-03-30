@@ -97,4 +97,57 @@ class ExerciseController {
       throw Exception('Error fetching exercises: $e');
     }
   }
+
+  // Get all available equipment types from the database
+  Future<List<String>> getAvailableEquipment() async {
+    try {
+      final data = await SupabaseClientManager.client
+          .from('exercises')
+          .select('equipment')
+          .order('equipment');
+      
+      // Extract unique equipment values
+      final equipmentSet = <String>{};
+      for (var item in data) {
+        final equipment = item['equipment'] as String;
+        if (equipment.isNotEmpty) {
+          equipmentSet.add(equipment);
+        }
+      }
+      
+      return equipmentSet.toList();
+    } catch (e) {
+      print('Error getting equipment: $e');
+      return [];
+    }
+  }
+
+  // Search exercises with equipment filter
+  Future<List<Exercise>> searchExercisesWithFilter({
+    String query = '',
+    List<String>? equipmentFilter,
+  }) async {
+    try {
+      var supabaseQuery = SupabaseClientManager.client
+          .from('exercises')
+          .select();
+      
+      // Apply text search if provided
+      if (query.isNotEmpty) {
+        supabaseQuery = supabaseQuery.ilike('name', '%$query%');
+      }
+      
+      // Apply equipment filter if provided
+      if (equipmentFilter != null && equipmentFilter.isNotEmpty) {
+        supabaseQuery = supabaseQuery.inFilter('equipment', equipmentFilter);
+      }
+      
+      // Apply limit and get results
+      final data = await supabaseQuery.limit(limit);
+      
+      return data.map((json) => Exercise.fromJson(json)).toList();
+    } catch (e) {
+      throw Exception('Error searching exercises: $e');
+    }
+  }
 }

@@ -27,12 +27,16 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   bool _showAutocomplete = false;
   final ExerciseController _exerciseController = ExerciseController();
 
+  List<String> _availableEquipment = [];
+  List<String> _selectedEquipment = [];
+  bool _isFilterExpanded = false;
+  bool _isLoadingEquipment = false;
+
   @override
   void initState() {
     super.initState();
     _loadExercises();
-    
-    // Add scroll listener for infinite scrolling
+    _loadAvailableEquipment();
     _scrollController.addListener(_onScroll);
   }
 
@@ -45,7 +49,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     super.dispose();
   }
 
-  // Handle scroll events for infinite scrolling
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent * 0.8 &&
         !_exerciseController.isFetchingMore &&
@@ -55,7 +58,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
 
-  // Load initial exercises from API
   Future<void> _loadExercises() async {
     setState(() {
       _isLoading = true;
@@ -75,7 +77,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
   
-  // Load more exercises (pagination)
   Future<void> _loadMoreExercises() async {
     if (_isSearching) return;
     
@@ -89,7 +90,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
   
-  // Search exercises by query
   Future<void> _searchExercises(String query) async {
     setState(() {
       _isSearching = true;
@@ -97,7 +97,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     });
 
     try {
-      final exercises = await _exerciseController.searchExercises(query);
+      final exercises = await _exerciseController.searchExercisesWithFilter(
+        query: query,
+        equipmentFilter: _selectedEquipment.isEmpty ? null : _selectedEquipment,
+      );
       setState(() {
         _exercises = exercises;
         _isLoading = false;
@@ -114,7 +117,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
   
-  // Get autocomplete suggestions
   Future<void> _getAutocompleteSuggestions(String query) async {
     if (query.isEmpty) {
       setState(() {
@@ -135,7 +137,25 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
 
-  // Show error dialog
+  Future<void> _loadAvailableEquipment() async {
+    setState(() {
+      _isLoadingEquipment = true;
+    });
+
+    try {
+      final equipment = await _exerciseController.getAvailableEquipment();
+      setState(() {
+        _availableEquipment = equipment;
+        _isLoadingEquipment = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingEquipment = false;
+      });
+      print('Error loading equipment: $e');
+    }
+  }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -152,7 +172,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     );
   }
 
-  // Handle search input changes
   void _onSearchChanged(String value) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     
@@ -162,16 +181,13 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       });
       
       if (value.isEmpty) {
-        // Reset to initial exercises list
         _loadExercises();
       } else {
-        // Get autocomplete suggestions
         _getAutocompleteSuggestions(value);
       }
     });
   }
   
-  // Handle suggestion selection
   void _onSuggestionSelected(String suggestion) {
     _searchController.text = suggestion;
     setState(() {
@@ -181,10 +197,27 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     _searchExercises(suggestion);
   }
   
-  // Perform search with current query
   void _performSearch() {
     setState(() {
       _showAutocomplete = false;
+    });
+    _searchExercises(_searchQuery);
+  }
+
+  void _toggleEquipment(String equipment) {
+    setState(() {
+      if (_selectedEquipment.contains(equipment)) {
+        _selectedEquipment.remove(equipment);
+      } else {
+        _selectedEquipment.add(equipment);
+      }
+    });
+    _searchExercises(_searchQuery);
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedEquipment.clear();
     });
     _searchExercises(_searchQuery);
   }
@@ -221,16 +254,29 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           ),
           centerTitle: true,
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: Icon(
+                Icons.filter_list,
+                color: _selectedEquipment.isNotEmpty 
+                    ? Theme.of(context).colorScheme.primary 
+                    : Theme.of(context).colorScheme.onSurface,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isFilterExpanded = !_isFilterExpanded;
+                });
+              },
+            ),
+          ],
         ),
         body: SafeArea(
           child: Column(
             children: [
-              // Search Bar
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
                 child: Stack(
                   children: [
-                    // Search field
                     Container(
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.surface,
@@ -287,7 +333,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                       ),
                     ),
                     
-                    // Autocomplete suggestions
                     if (_showAutocomplete)
                       Positioned(
                         top: 60,
@@ -330,26 +375,159 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                 ),
               ),
               
-              // Instructions
+              AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                height: _isFilterExpanded ? null : 0,
+                child: _isFilterExpanded
+                    ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Filter by Equipment',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                if (_selectedEquipment.isNotEmpty)
+                                  TextButton(
+                                    onPressed: _clearFilters,
+                                    child: Text('Clear All'),
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size(50, 30),
+                                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            _isLoadingEquipment
+                                ? Center(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                      child: CircularProgressIndicator(strokeWidth: 2),
+                                    ),
+                                  )
+                                : Wrap(
+                                    spacing: 8.0,
+                                    runSpacing: 8.0,
+                                    children: _availableEquipment.map((equipment) {
+                                      final isSelected = _selectedEquipment.contains(equipment);
+                                      return FilterChip(
+                                        label: Text(_capitalizeWords(equipment)),
+                                        selected: isSelected,
+                                        onSelected: (_) => _toggleEquipment(equipment),
+                                        backgroundColor: Theme.of(context).colorScheme.surface,
+                                        selectedColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                                        checkmarkColor: Theme.of(context).colorScheme.primary,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16.0),
+                                          side: BorderSide(
+                                            color: isSelected
+                                                ? Theme.of(context).colorScheme.primary
+                                                : Colors.grey.withOpacity(0.5),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                            SizedBox(height: 8),
+                            Divider(),
+                          ],
+                        ),
+                      )
+                    : SizedBox.shrink(),
+              ),
+              
+              if (_selectedEquipment.isNotEmpty && !_isFilterExpanded)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      SizedBox(width: 4),
+                      Text(
+                        'Filtered by ${_selectedEquipment.length} equipment types',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      Spacer(),
+                      GestureDetector(
+                        onTap: _clearFilters,
+                        child: Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
-                  'Use the search bar above to quickly find the exercise you need. Tap to add a new exercise to your workout. Long press on an exercise to view its details.',
+                  'Tap to add an exercise to your workout. Long press for details. Use filters to find equipment-specific exercises.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w600,
+                    fontSize: 12,
                   ),
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 8),
               
-              // Exercise List
               Expanded(
                 child: _isLoading
                     ? Center(child: CircularProgressIndicator())
                     : _exercises.isEmpty
-                        ? Center(child: Text('No exercises found'))
+                        ? Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.fitness_center,
+                                  size: 64,
+                                  color: Colors.grey.withOpacity(0.5),
+                                ),
+                                SizedBox(height: 16),
+                                Text(
+                                  'No exercises found',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                if (_selectedEquipment.isNotEmpty) ...[
+                                  SizedBox(height: 8),
+                                  ElevatedButton(
+                                    onPressed: _clearFilters,
+                                    child: Text('Clear Filters'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.secondary,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          )
                         : ListView.builder(
                             controller: _scrollController,
                             padding: EdgeInsets.all(16),
@@ -402,8 +580,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                       child: Row(
                                         crossAxisAlignment: CrossAxisAlignment.center,
                                         children: [
-                                          // Exercise image with proper error handling
-                                                                                    // Image display section in add_exercise_screen.dart
                                           Container(
                                             width: 64,
                                             height: 64,
@@ -421,8 +597,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                                       exercise.imageUrl,
                                                       fit: BoxFit.cover,
                                                       errorBuilder: (context, error, stackTrace) {
-                                                        print('Error loading image: $error');
-                                                        print('Image URL: ${exercise.imageUrl}');
                                                         return Center(
                                                           child: Icon(
                                                             Icons.fitness_center,
@@ -455,12 +629,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                           ),
                                           SizedBox(width: 12.0),
 
-                                          // Exercise details with constraints to prevent overflow
                                           Expanded(
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
-                                                // Exercise Name
                                                 Text(
                                                   _capitalizeWords(exercise.name),
                                                   style: TextStyle(
@@ -472,12 +644,19 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                                 SizedBox(height: 4.0),
-
-                                                // Target muscle with overflow protection
                                                 Text(
-                                                  'Target Muscle: ${_capitalizeWords(exercise.primaryMuscle)}',
+                                                  'Target: ${_capitalizeWords(exercise.primaryMuscle)}',
                                                   style: TextStyle(fontSize: 14.0),
-                                                  maxLines: 2,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                                Text(
+                                                  'Equipment: ${_capitalizeWords(exercise.equipment)}',
+                                                  style: TextStyle(
+                                                    fontSize: 13.0,
+                                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                                                  ),
+                                                  maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
                                                 ),
                                               ],
