@@ -12,6 +12,7 @@ import 'package:heronfit/views/workout/start_new_workout_widget.dart';
 import '../../core/services/workout_storage_service.dart';
 import '../../core/services/workout_recommendation_service.dart';
 import 'package:heronfit/views/workout/start_workout_from_template.dart';
+import '../../widgets/recommendation_algorithm_selector.dart';
 
 class WorkoutWidget extends StatefulWidget {
   const WorkoutWidget({super.key});
@@ -143,6 +144,11 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 16.0),
+                  RecommendationAlgorithmSelector(
+                    recommendationService: _recommendationService,
+                    onAlgorithmChanged: _loadRecommendedWorkouts,
                   ),
                   const SizedBox(height: 24.0),
 
