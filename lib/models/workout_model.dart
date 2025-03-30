@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 
 class WorkoutModel extends FlutterFlowModel<WorkoutWidget> {
   ///  State fields for stateful widgets in this page.
@@ -27,13 +28,15 @@ class Workout {
   final String name;
   final List<String> exercises;
   final Duration duration;
+  final DateTime timestamp;
 
   Workout({
     required this.id,
     required this.name,
     required this.exercises,
     required this.duration,
-  });
+    DateTime? timestamp,
+  }) : this.timestamp = timestamp ?? DateTime.now();
 
   factory Workout.fromJson(Map<String, dynamic> json) {
     return Workout(
@@ -41,6 +44,19 @@ class Workout {
       name: json['name'],
       exercises: List<String>.from(json['exercises']),
       duration: Duration(seconds: json['duration']),
+      timestamp: json['timestamp'] != null 
+        ? DateTime.parse(json['timestamp']) 
+        : null,
+    );
+  }
+
+  factory Workout.fromSupabase(Map<String, dynamic> json) {
+    return Workout(
+      id: json['id'].toString(),
+      name: json['name'],
+      exercises: List<String>.from(json['exercises']),
+      duration: Duration(seconds: json['duration']),
+      timestamp: DateTime.parse(json['timestamp']),
     );
   }
 
@@ -50,6 +66,7 @@ class Workout {
       'name': name,
       'exercises': exercises,
       'duration': duration.inSeconds,
+      'timestamp': timestamp.toIso8601String(),
     };
   }
 }

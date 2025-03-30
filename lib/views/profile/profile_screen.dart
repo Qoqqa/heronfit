@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
 import 'edit_profile.dart'; // Import the EditProfileWidget
 import '../booking/my_bookings.dart'; // Import the MyBookingsWidget
-import '../workout/workout_history.dart'; // Import the WorkoutHistoryWidget
+import '../workout/workout_history_widget.dart'; // Import the WorkoutHistoryWidget
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -278,13 +278,27 @@ class ProfileScreen extends StatelessWidget {
           );
         }),
         _buildSectionItem(context, Icons.history, 'Workout History', () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const WorkoutHistoryWidget(),
-            ),
-          );
+          Navigator.pushNamed(context, '/workoutHistory');
         }),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/workoutHistory');
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: Text(
+            'View Workout History',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
       ],
     );
   }

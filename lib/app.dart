@@ -7,6 +7,7 @@ import 'views/auth/register01_widget.dart'; // Import RegisterWidget
 import 'views/workout/add_exercise_screen.dart';
 import 'views/workout/start_workout_from_template.dart'; // Import StartWorkoutFromTemplate
 import 'views/workout/workout_complete_widget.dart'; // Import WorkoutCompleteWidget
+import 'views/workout/workout_history_widget.dart'; // Import WorkoutHistoryWidget
 import 'core/theme.dart';
 import 'core/auth_guard.dart'; // Import AuthGuard
 
@@ -48,6 +49,11 @@ class HeronFitApp extends StatelessWidget {
                   exercises: args['exercises'],
                 ),
               ),
+            );
+          case '/workoutHistory':
+            return MaterialPageRoute(
+              settings: settings,
+              builder: (context) => AuthGuard(child: const WorkoutHistoryWidget()),
             );
           default:
             return MaterialPageRoute(builder: (context) => const SplashScreenWidget());
