@@ -1,7 +1,11 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'compare_progress_photo.dart';
+
+// Initialize Supabase Client
+final supabaseClient = Supabase.instance.client;
 
 class ProgressPhotosListWidget extends StatefulWidget {
   const ProgressPhotosListWidget({super.key});
@@ -16,6 +20,54 @@ class ProgressPhotosListWidget extends StatefulWidget {
 
 class _ProgressPhotosListWidgetState extends State<ProgressPhotosListWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  List<Map<String, dynamic>> _progressData = []; // Store fetched data
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProgressData(); // Fetch data on initialization
+  }
+
+  Future<void> _fetchProgressData() async {
+    try {
+      // Get the current user
+      final user = supabaseClient.auth.currentUser;
+
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You must be logged in to view progress data!')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Fetch data filtered by the user's email
+      final response = await supabaseClient
+          .from('update_weight')
+          .select('date, weight, pic') // Select required columns
+          .eq('email', user.email!) // Filter by the user's email
+          .order('id', ascending: false); // Order by date (most recent first)
+
+      if (response == null || response.isEmpty) {
+        throw Exception('Failed to fetch data: No data returned.');
+      }
+
+      setState(() {
+        _progressData = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error fetching data: $e')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,115 +108,114 @@ class _ProgressPhotosListWidgetState extends State<ProgressPhotosListWidget> {
           top: true,
           child: Padding(
             padding: EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  // Placeholder for the list of progress photos
-                  ListView.builder(
-                    padding: EdgeInsets.zero,
-                    primary: false,
-                    shrinkWrap: true,
-                    scrollDirection: Axis.vertical,
-                    itemCount: 5, // Example item count
-                    itemBuilder: (context, index) {
-                      return Card(
-                        clipBehavior: Clip.antiAliasWithSaveLayer,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    blurRadius: 40,
-                                    color: Theme.of(context).shadowColor,
-                                    offset: Offset(
-                                      0,
-                                      10,
-                                    ),
-                                  )
-                                ],
+            child: _isLoading
+                ? Center(child: CircularProgressIndicator()) // Show loading indicator
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        ListView.builder(
+                          padding: EdgeInsets.zero,
+                          primary: false,
+                          shrinkWrap: true,
+                          scrollDirection: Axis.vertical,
+                          itemCount: _progressData.length,
+                          itemBuilder: (context, index) {
+                            final progress = _progressData[index];
+                            return Card(
+                              clipBehavior: Clip.antiAliasWithSaveLayer,
+                              shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Padding(
-                                padding: EdgeInsets.all(24),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  children: [
-                                    Column(
-                                      mainAxisSize: MainAxisSize.max,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Date: 2025-03-16', // Example date
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .labelLarge
-                                              ?.copyWith(
-                                                color: Theme.of(context)
-                                                    .primaryColor,
-                                                letterSpacing: 0.0,
-                                              ),
-                                        ),
-                                        Align(
-                                          alignment:
-                                              AlignmentDirectional(-1, 1),
-                                          child: Text(
-                                            'Weight: 70kg', // Example weight
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .labelMedium
-                                                ?.copyWith(
-                                                  letterSpacing: 0.0,
-                                                ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.max,
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 40,
+                                          color: Theme.of(context).shadowColor,
+                                          offset: Offset(
+                                            0,
+                                            10,
                                           ),
-                                        ),
+                                        )
                                       ],
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    Expanded(
-                                      child: Align(
-                                        alignment: AlignmentDirectional(1, 0),
-                                        child: Container(
-                                          width: 100,
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .secondaryContainer,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(24),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.max,
+                                        mainAxisAlignment: MainAxisAlignment.start,
+                                        children: [
+                                          Column(
+                                            mainAxisSize: MainAxisSize.max,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Date: ${progress['date'] ?? 'N/A'}',
+                                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                                      color: Theme.of(context).primaryColor,
+                                                      letterSpacing: 0.0,
+                                                    ),
+                                              ),
+                                              Align(
+                                                alignment: AlignmentDirectional(-1, 1),
+                                                child: Text(
+                                                  'Weight: ${progress['weight'] ?? 'N/A'} kg',
+                                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                                        letterSpacing: 0.0,
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          child: ClipRRect(
-                                            borderRadius:
-                                                BorderRadius.circular(8),
-                                            child: Image.network(
-                                              'https://via.placeholder.com/100', // Example image URL
-                                              width: 200,
-                                              height: 200,
-                                              fit: BoxFit.cover,
+                                          Expanded(
+                                            child: Align(
+                                              alignment: AlignmentDirectional(1, 0),
+                                              child: Container(
+                                                width: 100,
+                                                height: 100,
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context).colorScheme.secondaryContainer,
+                                                ),
+                                                child: ClipRRect(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                  child: progress['pic'] != null
+                                                      ? Image.network(
+                                                          progress['pic'],
+                                                          width: 200,
+                                                          height: 200,
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : Container(
+                                                          color: Colors.grey[300],
+                                                          child: Icon(
+                                                            Icons.image,
+                                                            size: 50,
+                                                            color: Colors.grey[600],
+                                                          ),
+                                                        ),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
-                ],
-              ),
-            ),
           ),
         ),
       ),
