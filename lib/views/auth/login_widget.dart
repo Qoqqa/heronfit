@@ -1,13 +1,7 @@
-import '../../controllers/auth/login_controller.dart'; // Adjust path if needed
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-
-import '../../models/login_model.dart';
-import '../../core/theme.dart'; // Import your theme
-
-export '../../models/login_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/theme.dart';
+import '../../views/auth/register01_widget.dart'; // Import RegisterWidget
 
 class LoginWidget extends StatefulWidget {
   const LoginWidget({super.key});
@@ -20,32 +14,21 @@ class LoginWidget extends StatefulWidget {
 }
 
 class _LoginWidgetState extends State<LoginWidget> {
-  LoginModel createModel(
-    BuildContext context,
-    LoginModel Function() modelCreator,
-  ) {
-    return modelCreator();
-  }
-
-  late LoginModel _model;
-
-  final scaffoldKey = GlobalKey<ScaffoldState>();
+  late TextEditingController _emailController;
+  late TextEditingController _passwordController;
+  bool _passwordVisible = false; // For toggling password visibility
 
   @override
   void initState() {
     super.initState();
-    _model = createModel(context, () => LoginModel());
-
-    _model.emailAddressTextController ??= TextEditingController();
-    _model.emailAddressFocusNode ??= FocusNode();
-
-    _model.passwordTextController ??= TextEditingController();
-    _model.passwordFocusNode ??= FocusNode();
+    _emailController = TextEditingController();
+    _passwordController = TextEditingController();
   }
 
   @override
   void dispose() {
-    _model.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -54,278 +37,171 @@ class _LoginWidgetState extends State<LoginWidget> {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
         body: SafeArea(
-          top: true,
-          child: Align(
-            alignment: AlignmentDirectional(0.0, 0.0),
-            child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(24.0, 48.0, 24.0, 48.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Align(
-                    alignment: AlignmentDirectional(0.0, 0.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children:
-                          [
-                                Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Text(
-                                      'Great To See You Again!',
-                                      textAlign: TextAlign.center,
-                                      style: HeronFitTheme.textTheme.titleMedium
-                                          ?.copyWith(
-                                            color: HeronFitTheme.primary,
-                                          ),
-                                    ),
-                                    Text(
-                                      'Let\'s pick up where you left off.',
-                                      textAlign: TextAlign.center,
-                                      style: HeronFitTheme.textTheme.titleLarge
-                                          ?.copyWith(
-                                            color: HeronFitTheme.primary,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                                Form(
-                                  key: _model.formKey,
-                                  autovalidateMode: AutovalidateMode.disabled,
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                          0.0,
-                                          0.0,
-                                          0.0,
-                                          16.0,
-                                        ),
-                                        child: Container(
-                                          width: double.infinity,
-                                          child: TextFormField(
-                                            controller:
-                                                _model
-                                                    .emailAddressTextController,
-                                            focusNode:
-                                                _model.emailAddressFocusNode,
-                                            autofocus: true,
-                                            autofillHints: [
-                                              AutofillHints.email,
-                                            ],
-                                            obscureText: false,
-                                            decoration: InputDecoration(
-                                              labelText: 'Email Address',
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8.0),
-                                              ),
-                                            ),
-                                            style:
-                                                HeronFitTheme
-                                                    .textTheme
-                                                    .labelMedium,
-                                            // validator: _model
-                                            //     .emailAddressTextControllerValidator
-                                            //     .asValidator(context),
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsetsDirectional.fromSTEB(
-                                          0.0,
-                                          0.0,
-                                          0.0,
-                                          16.0,
-                                        ),
-                                        child: Container(
-                                          width: double.infinity,
-                                          child: TextFormField(
-                                            controller:
-                                                _model.passwordTextController,
-                                            focusNode: _model.passwordFocusNode,
-                                            autofocus: true,
-                                            autofillHints: [
-                                              AutofillHints.password,
-                                            ],
-                                            decoration: InputDecoration(
-                                              labelText: 'Password',
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(8.0),
-                                              ),
-                                            ),
-                                            style:
-                                                HeronFitTheme
-                                                    .textTheme
-                                                    .labelMedium,
-                                            // validator: _model
-                                            //     .passwordTextControllerValidator
-                                            //     .asValidator(context),
-                                          ),
-                                        ),
-                                      ),
-                                      InkWell(
-                                        splashColor: Colors.transparent,
-                                        focusColor: Colors.transparent,
-                                        hoverColor: Colors.transparent,
-                                        highlightColor: Colors.transparent,
-                                        onTap: () async {
-                                          // ForgotPassword
-
-                                          // context.pushNamed(
-                                          //     ForgotPasswordWidget.routeName);
-                                        },
-                                        child: Text(
-                                          'Forgot your password?',
-                                          style: HeronFitTheme
-                                              .textTheme
-                                              .labelMedium
-                                              ?.copyWith(
-                                                decoration:
-                                                    TextDecoration.underline,
-                                              ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ]
-                              .map(
-                                (widget) => Padding(
-                                  padding: const EdgeInsets.only(bottom: 48.0),
-                                  child: widget,
-                                ),
-                              )
-                              .toList(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 48.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  children: [
+                    Text(
+                      'Great To See You Again!',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                        color: HeronFitTheme.primary,
+                      ),
                     ),
-                  ),
-                  Align(
-                    alignment: AlignmentDirectional(0.0, 1.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(
-                            0.0,
-                            0.0,
-                            0.0,
-                            8.0,
+                    const SizedBox(height: 8.0),
+                    Text(
+                      'Let\'s pick up where you left off.',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+                        color: HeronFitTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 32.0),
+                    TextField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email Address',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: !_passwordVisible, // Toggle visibility
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _passwordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                           ),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              final email =
-                                  _model.emailAddressTextController!.text.trim();
-                              final password =
-                                  _model.passwordTextController!.text.trim();
+                          onPressed: () {
+                            setState(() {
+                              _passwordVisible = !_passwordVisible;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16.0),
+                    InkWell(
+                      onTap: () {
+                        // Handle forgot password logic
+                      },
+                      child: Text(
+                        'Forgot your password?',
+                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        final email = _emailController.text.trim();
+                        final password = _passwordController.text.trim();
 
-                              if (email.isEmpty || password.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Please fill in all fields'),
-                                  ),
-                                );
-                                return;
-                              }
+                        if (email.isEmpty || password.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please fill in all fields'),
+                            ),
+                          );
+                          return;
+                        }
 
-                              try {
-                                final response = await Supabase
-                                    .instance
-                                    .client
-                                    .auth
-                                    .signInWithPassword(
-                                      email: email,
-                                      password: password,
-                                    );
+                        try {
+                          final response = await Supabase.instance.client.auth
+                              .signInWithPassword(
+                            email: email,
+                            password: password,
+                          );
 
-                                if (response.user != null) {
-                                  // Navigate to the home screen or another page
-                                  Navigator.pushNamed(context, '/home');
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Login failed')),
-                                  );
-                                }
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Error: ${e.toString()}'),
-                                  ),
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: HeronFitTheme.primaryDark,
-                              padding: EdgeInsets.symmetric(vertical: 12.0),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
+                          if (response.user != null) {
+                            Navigator.pushNamed(context, '/home');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Login failed')),
+                            );
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Error: ${e.toString()}'),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HeronFitTheme.primaryDark,
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.login, size: 24.0),
+                          const SizedBox(width: 8.0),
+                          Text(
+                            'Log In',
+                            style: HeronFitTheme.textTheme.labelMedium
+                                ?.copyWith(color: HeronFitTheme.bgLight),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8.0),
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const RegisterWidget(),
+                          ),
+                        );
+                      },
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'Don\'t have an account?',
+                              style: HeronFitTheme.textTheme.labelMedium,
+                            ),
+                            TextSpan(
+                              text: ' Register',
+                              style: HeronFitTheme.textTheme.labelMedium
+                                  ?.copyWith(
+                                color: HeronFitTheme.primaryDark,
+                                fontWeight: FontWeight.w600,
+                                decoration: TextDecoration.underline,
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.login, size: 24.0),
-                                SizedBox(width: 8.0),
-                                Text(
-                                  'Log In',
-                                  style: HeronFitTheme.textTheme.labelMedium
-                                      ?.copyWith(color: HeronFitTheme.bgLight),
-                                ),
-                              ],
-                            ),
-                          ),
+                          ],
                         ),
-                        Align(
-                          alignment: AlignmentDirectional(0.0, 0.0),
-                          child: InkWell(
-                            splashColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () async {
-                              // Register
-
-                              // context.pushNamed(RegisterWidget.routeName);
-                            },
-                            child: RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: 'Don\'t have an account?',
-                                    style: HeronFitTheme.textTheme.labelMedium,
-                                  ),
-                                  TextSpan(
-                                    text: ' Register',
-                                    style: HeronFitTheme.textTheme.labelMedium
-                                        ?.copyWith(
-                                          color: HeronFitTheme.primaryDark,
-                                          fontWeight: FontWeight.w600,
-                                          decoration: TextDecoration.underline,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
