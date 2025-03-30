@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_otp_text_field: ^1.0.1
   google_fonts: ^6.2.1
   iconly: ^1.0.1
   flutterflow_ui: ^0.3.1
@@ -37,7 +38,7 @@ dependencies:
   provider: ^6.0.0
   smooth_page_indicator: ^1.2.1
   flutter_animate: ^4.5.2
-  supabase_flutter: ^2.0.0
+  supabase_flutter: ^2.8.4
   flutter_dotenv: ^5.0.2
   image_picker: ^0.8.4+4
   solar_icons:

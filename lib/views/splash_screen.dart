@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/theme.dart';
 import 'home/home_screen.dart';
 import 'onboarding/onboarding_hero.dart';
-import 'onboarding/onboarding_features.dart';
 
 class SplashScreenWidget extends StatefulWidget {
   const SplashScreenWidget({super.key});
@@ -19,11 +19,30 @@ class _SplashScreenWidgetState extends State<SplashScreenWidget> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const OnboardingWidget()),
-      );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkSession();
     });
+  }
+
+  Future<void> _checkSession() async {
+    debugPrint('Checking session...');
+    final session = Supabase.instance.client.auth.currentSession;
+
+    if (session != null) {
+      Timer(const Duration(seconds: 3), () {
+        debugPrint('Session found. Navigating to HomeWidget... User ID: ${session.user?.id}');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomeWidget()),
+        );
+      });
+    } else {
+      debugPrint('No session found. Navigating to OnboardingWidget...');
+      Timer(const Duration(seconds: 3), () {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const OnboardingWidget()),
+        );
+      });
+    }
   }
 
   @override
@@ -78,9 +97,8 @@ class _SplashScreenWidgetState extends State<SplashScreenWidget> {
                           alignment: AlignmentDirectional(0.0, 0.0),
                           child: Text(
                             'HeronFit',
-                            style: HeronFitTheme.textTheme.displayMedium?.copyWith(
-                              color: HeronFitTheme.bgLight,
-                            ),
+                            style: HeronFitTheme.textTheme.displayMedium
+                                ?.copyWith(color: HeronFitTheme.bgLight),
                           ),
                         ),
                       ],

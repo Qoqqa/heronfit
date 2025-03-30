@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class HomeWidget extends StatefulWidget {
   const HomeWidget({super.key});
@@ -12,6 +13,48 @@ class HomeWidget extends StatefulWidget {
 
 class _HomeWidgetState extends State<HomeWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  String? userName;
+  String? userEmail;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+  final user = Supabase.instance.client.auth.currentUser;
+
+  if (user != null) {
+    try {
+      // Fetch user details from the 'users' table
+      final response = await Supabase.instance.client
+          .from('users')
+          .select('first_name')
+          .eq('id', user.id)
+          .single();
+
+      setState(() {
+        userName = response['first_name'] ?? 'User'; // Use the first_name from the table
+        userEmail = user.email; // Use the email from the auth session
+      });
+    } catch (e) {
+      debugPrint('Error fetching user data: $e');
+      setState(() {
+        userName = 'User'; // Fallback if fetching fails
+        userEmail = user.email;
+      });
+    }
+  } else {
+    // If no user is logged in, navigate to the login screen
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+}
+
+  Future<void> _logout() async {
+    await Supabase.instance.client.auth.signOut();
+    Navigator.pushReplacementNamed(context, '/login');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,12 +72,18 @@ class _HomeWidgetState extends State<HomeWidget> {
             top: true,
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: SingleChildScrollView( // Added SingleChildScrollView
+              child: SingleChildScrollView(
+                // Added SingleChildScrollView
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 32),
+                      padding: const EdgeInsetsDirectional.fromSTEB(
+                        0,
+                        0,
+                        0,
+                        32,
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.max,
                         children: [
@@ -55,17 +104,24 @@ class _HomeWidgetState extends State<HomeWidget> {
                                       child: Text(
                                         'Welcome,',
                                         textAlign: TextAlign.start,
-                                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                          color: Theme.of(context).colorScheme.onBackground,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleSmall?.copyWith(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.onBackground,
                                         ),
                                       ),
                                     ),
                                     Align(
                                       alignment: AlignmentDirectional(-1, 0),
                                       child: Text(
-                                        'John Doe',
+                                        userName ?? 'Loading...',
                                         textAlign: TextAlign.start,
-                                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge?.copyWith(
                                           color: Theme.of(context).primaryColor,
                                         ),
                                       ),
@@ -80,7 +136,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                                       blurRadius: 40,
                                       color: Theme.of(context).shadowColor,
                                       offset: const Offset(0, 10),
-                                    )
+                                    ),
                                   ],
                                 ),
                                 child: IconButton(
@@ -102,328 +158,539 @@ class _HomeWidgetState extends State<HomeWidget> {
                     Column(
                       mainAxisSize: MainAxisSize.max,
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        Expanded(
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.background,
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 40,
-                                  color: Theme.of(context).shadowColor,
-                                  offset: const Offset(0, 10),
-                                )
-                              ],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-                                    child: InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () {
-                                        // Navigate to Book A Session screen
-                                      },
-                                      child: Row(
+                      children:
+                          [
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.background,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 40,
+                                          color: Theme.of(context).shadowColor,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
                                         mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            'Gym Availability',
-                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                              color: Theme.of(context).primaryColor,
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.event_available_outlined,
-                                            color: Theme.of(context).primaryColor,
-                                            size: 24,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.date_range_outlined,
-                                            color: Theme.of(context).colorScheme.onBackground,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Monday, October 25',
-                                          style: Theme.of(context).textTheme.labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.access_time_rounded,
-                                            color: Theme.of(context).colorScheme.onBackground,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        Text(
-                                          '10:00 AM - 11:00 AM',
-                                          style: Theme.of(context).textTheme.labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.groups_outlined,
-                                            color: Theme.of(context).colorScheme.onBackground,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: '10',
-                                                style: Theme.of(context).textTheme.labelMedium,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  16,
+                                                ),
+                                            child: InkWell(
+                                              splashColor: Colors.transparent,
+                                              focusColor: Colors.transparent,
+                                              hoverColor: Colors.transparent,
+                                              highlightColor:
+                                                  Colors.transparent,
+                                              onTap: () {
+                                                // Navigate to Book A Session screen
+                                              },
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Gym Availability',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          color:
+                                                              Theme.of(
+                                                                context,
+                                                              ).primaryColor,
+                                                        ),
+                                                  ),
+                                                  Icon(
+                                                    Icons
+                                                        .event_available_outlined,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).primaryColor,
+                                                    size: 24,
+                                                  ),
+                                                ],
                                               ),
-                                              TextSpan(
-                                                text: '/15 capacity',
-                                                style: Theme.of(context).textTheme.labelMedium,
-                                              )
-                                            ],
-                                            style: Theme.of(context).textTheme.labelSmall,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.secondary,
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 40,
-                                  color: Theme.of(context).shadowColor,
-                                  offset: const Offset(0, 10),
-                                )
-                              ],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-                                    child: InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () {
-                                        // Navigate to My Bookings screen
-                                      },
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Upcoming Session',
-                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                              color: Theme.of(context).colorScheme.onSecondary,
                                             ),
                                           ),
-                                          Icon(
-                                            Icons.event_note_outlined,
-                                            color: Theme.of(context).colorScheme.onSecondary,
-                                            size: 24,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.date_range_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onBackground,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Monday, October 25',
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.labelMedium,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.access_time_rounded,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onBackground,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '10:00 AM - 11:00 AM',
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.labelMedium,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.groups_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onBackground,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    children: [
+                                                      TextSpan(
+                                                        text: '10',
+                                                        style:
+                                                            Theme.of(context)
+                                                                .textTheme
+                                                                .labelMedium,
+                                                      ),
+                                                      TextSpan(
+                                                        text: '/15 capacity',
+                                                        style:
+                                                            Theme.of(context)
+                                                                .textTheme
+                                                                .labelMedium,
+                                                      ),
+                                                    ],
+                                                    style:
+                                                        Theme.of(
+                                                          context,
+                                                        ).textTheme.labelSmall,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.date_range_outlined,
-                                            color: Theme.of(context).colorScheme.onSecondary,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        Text(
-                                          'No Booked Sessions!',
-                                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                            color: Theme.of(context).colorScheme.onSecondary,
-                                          ),
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.secondary,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 40,
+                                          color: Theme.of(context).shadowColor,
+                                          offset: const Offset(0, 10),
                                         ),
                                       ],
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.background,
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 40,
-                                  color: Theme.of(context).shadowColor,
-                                  offset: const Offset(0, 10),
-                                )
-                              ],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-                                    child: InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () {
-                                        // Navigate to Workout History screen
-                                      },
-                                      child: Row(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
                                         mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            'Recent Activity',
-                                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                              color: Theme.of(context).primaryColor,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  16,
+                                                ),
+                                            child: InkWell(
+                                              splashColor: Colors.transparent,
+                                              focusColor: Colors.transparent,
+                                              hoverColor: Colors.transparent,
+                                              highlightColor:
+                                                  Colors.transparent,
+                                              onTap: () {
+                                                // Navigate to My Bookings screen
+                                              },
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Upcoming Session',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .onSecondary,
+                                                        ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.event_note_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onSecondary,
+                                                    size: 24,
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ),
-                                          Icon(
-                                            Icons.event_repeat_outlined,
-                                            color: Theme.of(context).primaryColor,
-                                            size: 24,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.date_range_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onSecondary,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'No Booked Sessions!',
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelMedium
+                                                      ?.copyWith(
+                                                        color:
+                                                            Theme.of(context)
+                                                                .colorScheme
+                                                                .onSecondary,
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.start,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.date_range_outlined,
-                                            color: Theme.of(context).colorScheme.onBackground,
-                                            size: 24,
-                                          ),
-                                        ),
-                                        Text(
-                                          'Last Workout: Yesterday, 45 mins',
-                                          style: Theme.of(context).textTheme.labelMedium,
+                                ),
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Theme.of(
+                                            context,
+                                          ).colorScheme.background,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 40,
+                                          color: Theme.of(context).shadowColor,
+                                          offset: const Offset(0, 10),
                                         ),
                                       ],
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.update_outlined,
-                                            color: Theme.of(context).colorScheme.onBackground,
-                                            size: 24,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.max,
+                                        children: [
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  16,
+                                                ),
+                                            child: InkWell(
+                                              splashColor: Colors.transparent,
+                                              focusColor: Colors.transparent,
+                                              hoverColor: Colors.transparent,
+                                              highlightColor:
+                                                  Colors.transparent,
+                                              onTap: () {
+                                                // Navigate to Workout History screen
+                                              },
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.max,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    'Recent Activity',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          color:
+                                                              Theme.of(
+                                                                context,
+                                                              ).primaryColor,
+                                                        ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.event_repeat_outlined,
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).primaryColor,
+                                                    size: 24,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          'Workouts This Week: 3',
-                                          style: Theme.of(context).textTheme.labelMedium,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 0, 8),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 8, 0),
-                                          child: Icon(
-                                            Icons.timer_outlined,
-                                            color: Theme.of(context).colorScheme.onBackground,
-                                            size: 24,
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.date_range_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onBackground,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Last Workout: Yesterday, 45 mins',
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.labelMedium,
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        Text(
-                                          'Total Time This Week: 2.5 hours',
-                                          style: Theme.of(context).textTheme.labelMedium,
-                                        ),
-                                      ],
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.update_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onBackground,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Workouts This Week: 3',
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.labelMedium,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsetsDirectional.fromSTEB(
+                                                  0,
+                                                  0,
+                                                  0,
+                                                  8,
+                                                ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.max,
+                                              children: [
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsetsDirectional.fromSTEB(
+                                                        0,
+                                                        0,
+                                                        8,
+                                                        0,
+                                                      ),
+                                                  child: Icon(
+                                                    Icons.timer_outlined,
+                                                    color:
+                                                        Theme.of(context)
+                                                            .colorScheme
+                                                            .onBackground,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Total Time This Week: 2.5 hours',
+                                                  style:
+                                                      Theme.of(
+                                                        context,
+                                                      ).textTheme.labelMedium,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ].map((widget) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: widget,
-                      )).toList(),
+                                ),
+                              ]
+                              .map(
+                                (widget) => Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8,
+                                  ),
+                                  child: widget,
+                                ),
+                              )
+                              .toList(),
                     ),
-                    SizedBox(height: 14), // Added SizedBox to provide extra space
+                    SizedBox(
+                      height: 14,
+                    ), // Added SizedBox to provide extra space
                   ],
                 ),
               ),

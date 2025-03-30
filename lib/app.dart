@@ -3,10 +3,12 @@ import 'package:heronfit/widgets/main_screen_wrapper.dart'; // Import MainScreen
 import 'views/splash_screen.dart';
 import 'views/onboarding/onboarding_hero.dart';
 import 'views/auth/login_widget.dart';
+import 'views/auth/register01_widget.dart'; // Import RegisterWidget
 import 'views/workout/add_exercise_screen.dart';
 import 'views/workout/start_workout_from_template.dart'; // Import StartWorkoutFromTemplate
 import 'views/workout/workout_complete_widget.dart'; // Import WorkoutCompleteWidget
 import 'core/theme.dart';
+import 'core/auth_guard.dart'; // Import AuthGuard
 
 class HeronFitApp extends StatelessWidget {
   const HeronFitApp({super.key});
@@ -21,22 +23,30 @@ class HeronFitApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/home':
-            return MaterialPageRoute(builder: (context) => const MainScreenWrapper());
+            return MaterialPageRoute(
+              builder: (context) => AuthGuard(child: const MainScreenWrapper()),
+            );
           case '/onboarding':
             return MaterialPageRoute(builder: (context) => const OnboardingWidget());
           case '/login':
             return MaterialPageRoute(builder: (context) => const LoginWidget());
+          case '/register':
+            return MaterialPageRoute(builder: (context) => const RegisterWidget());
           case '/add_exercise':
-            return MaterialPageRoute(builder: (context) => AddExerciseScreen());
+            return MaterialPageRoute(
+              builder: (context) => AuthGuard(child: AddExerciseScreen()),
+            );
           case '/workoutComplete':
             final args = settings.arguments as Map<String, dynamic>;
             return MaterialPageRoute(
-              builder: (context) => WorkoutCompleteWidget(
-                workoutId: args['workoutId'],
-                workoutName: args['workoutName'],
-                startTime: args['startTime'],
-                endTime: args['endTime'],
-                exercises: args['exercises'],
+              builder: (context) => AuthGuard(
+                child: WorkoutCompleteWidget(
+                  workoutId: args['workoutId'],
+                  workoutName: args['workoutName'],
+                  startTime: args['startTime'],
+                  endTime: args['endTime'],
+                  exercises: args['exercises'],
+                ),
               ),
             );
           default:

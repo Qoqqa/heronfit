@@ -50,9 +50,8 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     fit: BoxFit.cover,
-                    image: Image.asset(
-                      'assets/images/onboarding_hero.png',
-                    ).image,
+                    image:
+                        Image.asset('assets/images/onboarding_hero.png').image,
                   ),
                 ),
               ),
@@ -72,10 +71,11 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                         child: Text(
                           'Welcome to HeronFit',
                           textAlign: TextAlign.center,
-                          style: HeronFitTheme.textTheme.headlineMedium?.copyWith(
-                            color: HeronFitTheme.primary,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: HeronFitTheme.textTheme.headlineMedium
+                              ?.copyWith(
+                                color: HeronFitTheme.primary,
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                       ),
                       Align(
@@ -95,10 +95,17 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(0.0, 16.0, 0.0, 16.0),
+                        padding: const EdgeInsetsDirectional.fromSTEB(
+                          0.0,
+                          16.0,
+                          0.0,
+                          16.0,
+                        ),
                         child: ElevatedButton(
-                            onPressed: () {
-                            Navigator.of(context).pushNamed('/home');
+                          onPressed: () {
+                            Navigator.of(context).pushNamed(
+                              '/register',
+                            ); // Navigate to RegisterWidget
                           },
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 48.0),
@@ -128,22 +135,27 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                             children: [
                               TextSpan(
                                 text: 'Already have an account?',
-                                style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                  color: HeronFitTheme.primary,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: HeronFitTheme.textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: HeronFitTheme.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                               ),
                               TextSpan(
                                 text: ' Log In',
-                                style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                  color: HeronFitTheme.primaryDark,
-                                  fontWeight: FontWeight.w600,
-                                  decoration: TextDecoration.underline,
-                                ),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = () {
-                                    Navigator.of(context).pushNamed('/login');
-                                  },
+                                style: HeronFitTheme.textTheme.labelMedium
+                                    ?.copyWith(
+                                      color: HeronFitTheme.primaryDark,
+                                      fontWeight: FontWeight.w600,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                recognizer:
+                                    TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.of(
+                                          context,
+                                        ).pushNamed('/login');
+                                      },
                               ),
                             ],
                           ),
