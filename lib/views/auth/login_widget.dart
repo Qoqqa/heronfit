@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/login_model.dart';
 import '../../core/theme.dart'; // Import your theme
-
+import 'register01_widget.dart'; // Import the RegisterWidget 
 export '../../models/login_model.dart';
 
 class LoginWidget extends StatefulWidget {
@@ -295,10 +295,14 @@ class _LoginWidgetState extends State<LoginWidget> {
                             focusColor: Colors.transparent,
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
-                            onTap: () async {
-                              // Register
-
-                              // context.pushNamed(RegisterWidget.routeName);
+                            onTap: () {
+                              // Navigate to the Register screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                              builder: (context) => const RegisterWidget(), // Navigate to RegisterWidget
+                              ),
+                              );
                             },
                             child: RichText(
                               text: TextSpan(
