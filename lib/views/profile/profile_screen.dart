@@ -5,6 +5,7 @@ import 'package:page_transition/page_transition.dart';
 import 'edit_profile.dart'; // Import the EditProfileWidget
 import '../booking/my_bookings.dart'; // Import the MyBookingsWidget
 import '../workout/workout_history_widget.dart'; // Import the WorkoutHistoryWidget
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -165,8 +166,26 @@ class ProfileScreen extends StatelessWidget {
                           _buildNotificationSection(context),
                           _buildOtherSection(context),
                           ElevatedButton.icon(
-                            onPressed: () {
+                            onPressed: () async {
                               // Handle logout
+                              try {
+                                await Supabase.instance.client.auth.signOut();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Logged out successfully'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                                // Navigate to login screen
+                                Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error logging out: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
                             },
                             icon: const Icon(Icons.logout),
                             label: const Text('Logout'),
