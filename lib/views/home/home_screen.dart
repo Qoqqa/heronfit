@@ -71,18 +71,18 @@ class _HomeWidgetState extends State<HomeWidget> {
           body: SafeArea(
             top: true,
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(28),
               child: SingleChildScrollView(
                 // Added SingleChildScrollView
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Padding(
-                      padding: const EdgeInsetsDirectional.fromSTEB(
+                padding: const EdgeInsetsDirectional.fromSTEB(
                         0,
                         0,
                         0,
-                        32,
+                        36,
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.max,
@@ -131,19 +131,15 @@ class _HomeWidgetState extends State<HomeWidget> {
                               ),
                               Container(
                                 decoration: BoxDecoration(
-                                  boxShadow: [
-                                    BoxShadow(
-                                      blurRadius: 40,
-                                      color: Theme.of(context).shadowColor,
-                                      offset: const Offset(0, 10),
-                                    ),
-                                  ],
+                                  // Removed the boxShadow property to eliminate the shadow
+                                  color: Theme.of(context).colorScheme.background, // Optional: Add a background color if needed
+                                  shape: BoxShape.circle, // Ensures the button remains circular
                                 ),
                                 child: IconButton(
                                   icon: Icon(
                                     Icons.notifications,
                                     color: Theme.of(context).primaryColor,
-                                    size: 24,
+                                    size: 28,
                                   ),
                                   onPressed: () {
                                     // Navigate to Notification screen
@@ -168,13 +164,13 @@ class _HomeWidgetState extends State<HomeWidget> {
                                           Theme.of(
                                             context,
                                           ).colorScheme.background,
-                                      boxShadow: [
+                                      /*boxShadow: [
                                         BoxShadow(
                                           blurRadius: 40,
                                           color: Theme.of(context).shadowColor,
                                           offset: const Offset(0, 10),
                                         ),
-                                      ],
+                                      ],*/
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Padding(
@@ -376,13 +372,13 @@ class _HomeWidgetState extends State<HomeWidget> {
                                           Theme.of(
                                             context,
                                           ).colorScheme.secondary,
-                                      boxShadow: [
+                                      /*boxShadow: [
                                         BoxShadow(
                                           blurRadius: 40,
                                           color: Theme.of(context).shadowColor,
                                           offset: const Offset(0, 10),
                                         ),
-                                      ],
+                                      ],*/
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Padding(
@@ -418,19 +414,14 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .titleSmall
-                                                        ?.copyWith(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .onSecondary,
+                                                        ?.copyWith(                                                   
+                                                          color:Colors.white,
+                                                          fontWeight: FontWeight.bold,                                                     
                                                         ),
                                                   ),
                                                   Icon(
                                                     Icons.event_note_outlined,
-                                                    color:
-                                                        Theme.of(context)
-                                                            .colorScheme
-                                                            .onSecondary,
+                                                    color:Colors.white,                                               
                                                     size: 24,
                                                   ),
                                                 ],
@@ -459,11 +450,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                         0,
                                                       ),
                                                   child: Icon(
-                                                    Icons.date_range_outlined,
-                                                    color:
-                                                        Theme.of(context)
-                                                            .colorScheme
-                                                            .onSecondary,
+                                                    Icons.date_range_outlined,                                              
+                                                       color:Colors.white,
                                                     size: 24,
                                                   ),
                                                 ),
@@ -473,10 +461,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                       .textTheme
                                                       .labelMedium
                                                       ?.copyWith(
-                                                        color:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .onSecondary,
+                                                       color:Colors.white,
+                                                          fontWeight: FontWeight.bold,
                                                       ),
                                                 ),
                                               ],
@@ -497,9 +483,9 @@ class _HomeWidgetState extends State<HomeWidget> {
                                           ).colorScheme.background,
                                       boxShadow: [
                                         BoxShadow(
-                                          blurRadius: 40,
+                                          blurRadius: 0,
                                           color: Theme.of(context).shadowColor,
-                                          offset: const Offset(0, 10),
+                                          offset: const Offset(0, 0),
                                         ),
                                       ],
                                       borderRadius: BorderRadius.circular(8),
@@ -689,7 +675,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                               .toList(),
                     ),
                     SizedBox(
-                      height: 14,
+                      height: 20,
                     ), // Added SizedBox to provide extra space
                   ],
                 ),

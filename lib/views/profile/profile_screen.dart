@@ -5,6 +5,9 @@ import 'package:page_transition/page_transition.dart';
 import 'edit_profile.dart'; // Import the EditProfileWidget
 import '../booking/my_bookings.dart'; // Import the MyBookingsWidget
 import '../workout/workout_history_widget.dart'; // Import the WorkoutHistoryWidget
+import 'contactUs_screen.dart'; // Import the ContactUsWidget
+import 'privacyPolicy_screen.dart'; // Import the PrivacyPolicyWidget
+import 'termsOfUse_screen.dart'; // Import the TermsOfUseWidget
 import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 
 class ProfileScreen extends StatelessWidget {
@@ -139,8 +142,9 @@ class ProfileScreen extends StatelessWidget {
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(horizontal: 24),
                                 backgroundColor: Theme.of(context).colorScheme.secondary,
-                                textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSecondary,
+                                foregroundColor: Colors.white, // Ensures the text color is white
+                                textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(                          
+                                      fontWeight: FontWeight.bold,                        
                                 ), 
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -187,12 +191,12 @@ class ProfileScreen extends StatelessWidget {
                                 );
                               }
                             },
-                            icon: const Icon(Icons.logout),
+                            icon: const Icon(Icons.logout, size: 24.0,),
                             label: const Text('Logout'),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Theme.of(context).colorScheme.secondary,
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              padding: const EdgeInsets.symmetric(vertical: 12), //change to 12 from 8
                               textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -200,6 +204,7 @@ class ProfileScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              minimumSize: const Size(double.infinity, 48), //added
                             ),
                           ),
                         ].map((widget) => Padding(
@@ -224,22 +229,22 @@ class ProfileScreen extends StatelessWidget {
         width: 100,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.background,
-          boxShadow: [
+          /*boxShadow: [
             BoxShadow(
-              blurRadius: 4,
+              blurRadius: 5,
               color: Theme.of(context).shadowColor,
               offset: const Offset(0, 2),
             ),
-          ],
-          borderRadius: BorderRadius.circular(8),
+          ],*/
+          //borderRadius: BorderRadius.circular(8),//
         ),
         child: Card(
           clipBehavior: Clip.antiAliasWithSaveLayer,
           color: Theme.of(context).colorScheme.background,
           elevation: 0,
-          shape: RoundedRectangleBorder(
+          /*shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
-          ),
+          ),*/
           child: Padding(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -340,14 +345,29 @@ class ProfileScreen extends StatelessWidget {
       'Other',
       [
         _buildSectionItem(context, Icons.contact_mail, 'Contact Us', () {
-          // Navigate to Contact Us screen
-        }),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ContactUsWidget(),
+          ),
+        );
+      }),
         _buildSectionItem(context, Icons.privacy_tip, 'Privacy Policy', () {
-          // Navigate to Privacy Policy screen
-        }),
-        _buildSectionItem(context, Icons.info, 'Terms Of Use', () {
-          // Navigate to Terms Of Use screen
-        }),
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PrivacyPolicyWidget(),
+          ),
+        );
+      }),
+         _buildSectionItem(context, Icons.info, 'Terms Of Use', () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const TermsOfUseWidget(),
+          ),
+        );
+      }),
       ],
     );
   }
@@ -357,14 +377,14 @@ class ProfileScreen extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.background,
-        boxShadow: [
+        /*boxShadow: [
           BoxShadow(
-            blurRadius: 4,
+            blurRadius: 5,
             color: Theme.of(context).shadowColor,
             offset: const Offset(0, 2),
           ),
-        ],
-        borderRadius: BorderRadius.circular(16),
+        ],*/
+        //borderRadius: BorderRadius.circular(16),//
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme.dart'; // Import your theme
 import '../../models/register01_model.dart'; // Import the RegisterModel
 import 'registerverification_widget.dart'; // Import RegisterVerificationWidget
 
@@ -74,19 +75,26 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                   children: [
                     Text(
                       'Welcome to HeronFit',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.blue,
+                      //style: TextStyle(//
+                        style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                          color: HeronFitTheme.primary,
+                          letterSpacing: 0.0,
+                        //fontSize: 24,
+                        //fontWeight: FontWeight.w500,
+                        //color: Colors.blue,//
                       ),
                     ),
                     SizedBox(height: 8),
                     Text(
                       'Ready to Begin?',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                      style: HeronFitTheme.textTheme.headlineLarge?.copyWith(
+                          color: HeronFitTheme.primary,
+                          letterSpacing: 0.0,
+                          fontWeight: FontWeight.bold,
+                      //style: TextStyle(//
+                        //fontSize: 32,
+                        //fontWeight: FontWeight.bold,
+                        //color: Colors.blue,//
                       ),
                     ),
                   ],
@@ -184,20 +192,51 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                 Column(
                   children: [
                     ElevatedButton(
-                      onPressed: _register,
-                      child: Text('Register'),
+                      onPressed: _register,        
                       style: ElevatedButton.styleFrom(
+                        backgroundColor: HeronFitTheme.primaryDark, // Use the same background color
                         padding: EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.app_registration, size: 24.0, color: HeronFitTheme.bgLight), // Icon for "Register"
+                          SizedBox(width: 8.0),
+                           Text(
+                            'Register',
+                          style: HeronFitTheme.textTheme.labelMedium
+                              ?.copyWith(color: HeronFitTheme.bgLight), // Text style
+                           ),
+                        ],
+                        ),
                     ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushNamed(context, '/login');
                       },
-                      child: Text('Already have an account? Log In'),
+                      //child: Text('Already have an account? Log In'),//
+                        child: RichText(
+                              text: TextSpan(
+                                children: [
+                                  TextSpan(
+                                    text: 'Already have an account?',
+                                    style: HeronFitTheme.textTheme.labelMedium,
+                                  ),
+                                  TextSpan(
+                                    text: ' Log In',
+                                    style: HeronFitTheme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: HeronFitTheme.primaryDark,
+                                          fontWeight: FontWeight.w600,
+                                          decoration: TextDecoration.underline,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
                     ),
                   ],
                 ),
