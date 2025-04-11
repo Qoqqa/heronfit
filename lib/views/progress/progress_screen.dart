@@ -45,9 +45,9 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
           title: Text(
             'Progress',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 20,
-                ),
+              color: Theme.of(context).primaryColor,
+              fontSize: 20,
+            ),
           ),
           centerTitle: true,
           elevation: 0,
@@ -85,10 +85,12 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               Expanded(
                                 child: Text(
                                   'Current Goal: Gain Muscle And Get Stronger',
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: Theme.of(context).primaryColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelSmall?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
                             ],
@@ -96,9 +98,9 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                           const SizedBox(height: 8),
                           Text(
                             'Build a toned physique and improve your athletic performance.',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontSize: 12,
-                                ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.copyWith(fontSize: 12),
                           ),
                           const SizedBox(height: 8),
                           Row(
@@ -126,24 +128,30 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const EditGoalsWidget(),
+                                    builder:
+                                        (context) => const EditGoalsWidget(),
                                   ),
                                 );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.secondary,
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.secondary,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                               child: Text(
                                 'Edit Goals',
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
@@ -179,17 +187,21 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                 children: [
                                   Text(
                                     'Weight',
-                                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                          color: Theme.of(context).primaryColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelMedium?.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
                                     'Last 90 Days',
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                          color: Theme.of(context).primaryColor,
-                                        ),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.labelSmall?.copyWith(
+                                      color: Theme.of(context).primaryColor,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -203,7 +215,9 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const UpdateWeightWidget(),
+                                      builder:
+                                          (context) =>
+                                              const UpdateWeightWidget(),
                                     ),
                                   );
                                 },
@@ -216,7 +230,9 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const ProgressTrackerWidget(),
+                                  builder:
+                                      (context) =>
+                                          const ProgressTrackerWidget(),
                                 ),
                               );
                             },
@@ -267,18 +283,23 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                             children: [
                               Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Workouts Completed',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
                                       Text(
                                         '15',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
@@ -293,18 +314,23 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Total Workout Time',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.max,
                                     children: [
                                       Text(
                                         '2h 30m',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                       ),
                                       const SizedBox(width: 4),
                                       Icon(
@@ -319,11 +345,13 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Average Workout Duration',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.max,
@@ -336,7 +364,10 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                       const SizedBox(width: 4),
                                       Text(
                                         '50 min',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                       ),
                                     ],
                                   ),
@@ -379,11 +410,13 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                             children: [
                               Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Longest Workout Time',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.max,
@@ -396,7 +429,10 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                       const SizedBox(width: 4),
                                       Text(
                                         '1h 30min',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                       ),
                                     ],
                                   ),
@@ -405,11 +441,13 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Most Workout in a Week',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.max,
@@ -422,7 +460,10 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                       const SizedBox(width: 4),
                                       Text(
                                         '5',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                       ),
                                     ],
                                   ),
@@ -431,11 +472,13 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                               const SizedBox(height: 12),
                               Row(
                                 mainAxisSize: MainAxisSize.max,
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Longest Workout Time',
-                                    style: Theme.of(context).textTheme.labelSmall,
+                                    style:
+                                        Theme.of(context).textTheme.labelSmall,
                                   ),
                                   Row(
                                     mainAxisSize: MainAxisSize.max,
@@ -448,7 +491,10 @@ class _ProgressDashboardWidgetState extends State<ProgressDashboardWidget> {
                                       const SizedBox(width: 4),
                                       Text(
                                         '15',
-                                        style: Theme.of(context).textTheme.labelSmall,
+                                        style:
+                                            Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall,
                                       ),
                                     ],
                                   ),

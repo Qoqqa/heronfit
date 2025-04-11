@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutterflow_ui/flutterflow_ui.dart' show createModel;
+import '../../core/utils/model_utils.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
@@ -37,7 +37,7 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
   @override
   void initState() {
     super.initState();
-    _model = createModel(context, () => WorkoutModel());
+    _model = createWorkoutModel(context, widget);
     _storageService = WorkoutStorageService();
     _recommendationService = WorkoutRecommendationService();
     _loadSavedWorkouts();
@@ -51,14 +51,15 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
       _savedWorkouts = workouts;
     });
   }
-  
+
   Future<void> _loadRecommendedWorkouts() async {
     setState(() {
       _isLoadingRecommendations = true;
     });
-    
+
     try {
-      final recommendations = await _recommendationService.getRecommendedWorkouts(4);
+      final recommendations = await _recommendationService
+          .getRecommendedWorkouts(4);
       setState(() {
         _recommendedWorkouts = recommendations;
         _isLoadingRecommendations = false;
@@ -163,10 +164,7 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(
-                          Icons.refresh,
-                          color: HeronFitTheme.primary,
-                        ),
+                        icon: Icon(Icons.refresh, color: HeronFitTheme.primary),
                         onPressed: _loadRecommendedWorkouts,
                       ),
                     ],
@@ -177,40 +175,41 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
                     style: HeronFitTheme.textTheme.labelMedium,
                   ),
                   const SizedBox(height: 16.0),
-                  
+
                   // Recommended Workouts
                   _isLoadingRecommendations
                       ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32.0),
-                            child: CircularProgressIndicator(
-                              color: HeronFitTheme.primary,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                          child: CircularProgressIndicator(
+                            color: HeronFitTheme.primary,
+                          ),
+                        ),
+                      )
+                      : _recommendedWorkouts.isEmpty
+                      ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                          child: Text(
+                            'No recommendations available. Try refreshing!',
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.textMuted,
                             ),
                           ),
-                        )
-                      : _recommendedWorkouts.isEmpty
-                          ? Center(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 32.0),
-                                child: Text(
-                                  'No recommendations available. Try refreshing!',
-                                  style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                                    color: HeronFitTheme.textMuted,
-                                  ),
-                                ),
-                              ),
-                            )
-                          : ListView.separated(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _recommendedWorkouts.length,
-                              separatorBuilder: (context, index) => const SizedBox(height: 12.0),
-                              itemBuilder: (context, index) {
-                                final workout = _recommendedWorkouts[index];
-                                return _buildWorkoutCard(workout);
-                              },
-                            ),
-                  
+                        ),
+                      )
+                      : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _recommendedWorkouts.length,
+                        separatorBuilder:
+                            (context, index) => const SizedBox(height: 12.0),
+                        itemBuilder: (context, index) {
+                          final workout = _recommendedWorkouts[index];
+                          return _buildWorkoutCard(workout);
+                        },
+                      ),
+
                   const SizedBox(height: 24.0),
 
                   // My Programs Section (existing code)
@@ -231,30 +230,31 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
                     style: HeronFitTheme.textTheme.labelMedium,
                   ),
                   const SizedBox(height: 16.0),
-                  
+
                   _savedWorkouts.isEmpty
                       ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32.0),
-                            child: Text(
-                              'No saved workouts yet. Complete a workout to save it as a template!',
-                              style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                                color: HeronFitTheme.textMuted,
-                              ),
-                              textAlign: TextAlign.center,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 32.0),
+                          child: Text(
+                            'No saved workouts yet. Complete a workout to save it as a template!',
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.textMuted,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                        )
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _savedWorkouts.length,
-                          separatorBuilder: (context, index) => const SizedBox(height: 12.0),
-                          itemBuilder: (context, index) {
-                            final workout = _savedWorkouts[index];
-                            return _buildWorkoutCard(workout);
-                          },
                         ),
+                      )
+                      : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _savedWorkouts.length,
+                        separatorBuilder:
+                            (context, index) => const SizedBox(height: 12.0),
+                        itemBuilder: (context, index) {
+                          final workout = _savedWorkouts[index];
+                          return _buildWorkoutCard(workout);
+                        },
+                      ),
                 ],
               ),
             ),
@@ -263,14 +263,12 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
       ),
     );
   }
-  
+
   Widget _buildWorkoutCard(Workout workout) {
     return Card(
       clipBehavior: Clip.antiAliasWithSaveLayer,
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -301,32 +299,34 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
               Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
-                children: workout.exercises.take(3).map((exercise) {
-                  return Chip(
-                    label: Text(
-                      exercise,
-                      style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                        fontSize: 10.0,
-                      ),
-                    ),
-                    backgroundColor: HeronFitTheme.bgSecondary,
-                    padding: const EdgeInsets.all(0),
-                    visualDensity: VisualDensity.compact,
-                  );
-                }).toList() + 
-                (workout.exercises.length > 3 ? [
-                  Chip(
-                    label: Text(
-                      '+${workout.exercises.length - 3} more',
-                      style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                        fontSize: 10.0,
-                      ),
-                    ),
-                    backgroundColor: HeronFitTheme.bgSecondary,
-                    padding: const EdgeInsets.all(0),
-                    visualDensity: VisualDensity.compact,
-                  )
-                ] : []),
+                children:
+                    workout.exercises.take(3).map((exercise) {
+                      return Chip(
+                        label: Text(
+                          exercise,
+                          style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                            fontSize: 10.0,
+                          ),
+                        ),
+                        backgroundColor: HeronFitTheme.bgSecondary,
+                        padding: const EdgeInsets.all(0),
+                        visualDensity: VisualDensity.compact,
+                      );
+                    }).toList() +
+                    (workout.exercises.length > 3
+                        ? [
+                          Chip(
+                            label: Text(
+                              '+${workout.exercises.length - 3} more',
+                              style: HeronFitTheme.textTheme.labelSmall
+                                  ?.copyWith(fontSize: 10.0),
+                            ),
+                            backgroundColor: HeronFitTheme.bgSecondary,
+                            padding: const EdgeInsets.all(0),
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ]
+                        : []),
               ),
             ],
           ),
@@ -334,7 +334,7 @@ class _WorkoutWidgetState extends State<WorkoutWidget> {
       ),
     );
   }
-  
+
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes;
     return '$minutes min';

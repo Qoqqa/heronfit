@@ -30,9 +30,9 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
     setState(() {
       _isLoading = true;
     });
-    
+
     final workouts = await _storageService.getSavedWorkouts();
-    
+
     setState(() {
       _workouts = workouts;
       _isLoading = false;
@@ -43,7 +43,7 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
     final hours = duration.inHours;
     final minutes = duration.inMinutes.remainder(60);
     final seconds = duration.inSeconds.remainder(60);
-    
+
     if (hours > 0) {
       return '${hours}h ${minutes}m';
     } else if (minutes > 0) {
@@ -87,13 +87,14 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
           centerTitle: true,
           elevation: 0,
         ),
-        body: _isLoading
-            ? Center(
-                child: CircularProgressIndicator(
-                  color: HeronFitTheme.primary,
-                ),
-              )
-            : _buildBody(),
+        body:
+            _isLoading
+                ? Center(
+                  child: CircularProgressIndicator(
+                    color: HeronFitTheme.primary,
+                  ),
+                )
+                : _buildBody(),
       ),
     );
   }
@@ -156,12 +157,12 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
     int totalWorkouts = _workouts.length;
     int totalDuration = 0;
     int totalExercises = 0;
-    
+
     for (var workout in _workouts) {
       totalDuration += workout.duration.inSeconds;
       totalExercises += workout.exercises.length;
     }
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -224,10 +225,11 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
       itemCount: _workouts.length,
       itemBuilder: (context, index) {
         final workout = _workouts[index];
-        final dateStr = workout.timestamp != null 
-            ? DateFormat('MMM d, yyyy').format(workout.timestamp) 
-            : 'Unknown date';
-        
+        final dateStr =
+            workout.timestamp != null
+                ? DateFormat('MMM d, yyyy').format(workout.timestamp)
+                : 'Unknown date';
+
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
           child: Card(
@@ -270,14 +272,21 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: workout.exercises.map((exercise) =>
-                        Chip(
-                          label: Text(exercise),
-                          backgroundColor: HeronFitTheme.bgLight,
-                          side: BorderSide(color: HeronFitTheme.primary.withOpacity(0.2)),
-                          labelStyle: TextStyle(fontSize: 12),
-                        ),
-                      ).toList(),
+                      children:
+                          workout.exercises
+                              .map(
+                                (exercise) => Chip(
+                                  label: Text(exercise),
+                                  backgroundColor: HeronFitTheme.bgLight,
+                                  side: BorderSide(
+                                    color: HeronFitTheme.primary.withOpacity(
+                                      0.2,
+                                    ),
+                                  ),
+                                  labelStyle: TextStyle(fontSize: 12),
+                                ),
+                              )
+                              .toList(),
                     ),
                   ],
                 ],
