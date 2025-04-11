@@ -60,3 +60,53 @@ lib/
 - Models: Define the data structures for users, bookings, workouts, etc.
 - Core: Stores utility functions, themes, and services (like Supabase).
 - Widgets: Contains reusable UI components.
+
+  2.1 Feature-First Folder Structure
+
+lib/
+├── core/
+│ ├── constants/
+│ │ ├── app_constants.dart
+│ │ └── theme_constants.dart
+│ ├── exceptions/
+│ │ └── app_exceptions.dart
+│ ├── services/
+│ │ ├── interfaces/
+│ │ │ └── storage_service_interface.dart
+│ │ ├── analytics_service.dart
+│ │ └── storage_service.dart
+│ └── utils/
+│ ├── date_utils.dart
+│ └── validators.dart
+├── models/
+│ ├── user.dart
+│ ├── workout.dart
+│ └── session.dart
+├── providers/
+│ ├── user_provider.dart
+│ ├── gym_availability_provider.dart
+│ └── activity_provider.dart
+├── views/
+│ ├── auth/
+│ │ ├── widgets/
+│ │ ├── login_screen.dart
+│ │ └── signup_screen.dart
+│ ├── home/
+│ │ ├── widgets/
+│ │ │ ├── activity_card.dart
+│ │ │ ├── availability_card.dart
+│ │ │ └── welcome_header.dart
+│ │ └── home_screen.dart
+│ ├── booking/
+│ │ └── booking_screen.dart
+│ └── workout/
+│ └── workout_screen.dart
+├── widgets/
+│ ├── buttons/
+│ │ └── primary_button.dart
+│ ├── cards/
+│ │ └── info_card.dart
+│ └── loading/
+│ └── skeleton_cards.dart
+├── app.dart
+└── main.dart

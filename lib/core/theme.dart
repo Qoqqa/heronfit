@@ -5,7 +5,7 @@ class HeronFitTheme {
   static ThemeData lightTheme = ThemeData(
     primaryColor: primary,
     scaffoldBackgroundColor: bgLight,
-    textTheme: textTheme, 
+    textTheme: textTheme,
     colorScheme: ColorScheme.light(
       primary: primary,
       secondary: primaryDark,
@@ -46,20 +46,80 @@ class HeronFitTheme {
 
   // ✅ Typography (Material Design 3)
   static final TextTheme textTheme = TextTheme(
-    displayLarge: GoogleFonts.poppins(fontSize: 57, fontWeight: FontWeight.w700, color: textPrimary),
-    displayMedium: GoogleFonts.poppins(fontSize: 45, fontWeight: FontWeight.w700, color: textPrimary),
-    displaySmall: GoogleFonts.poppins(fontSize: 36, fontWeight: FontWeight.w700, color: textPrimary),
-    headlineLarge: GoogleFonts.poppins(fontSize: 32, fontWeight: FontWeight.w600, color: textPrimary),
-    headlineMedium: GoogleFonts.poppins(fontSize: 28, fontWeight: FontWeight.w600, color: textPrimary),
-    headlineSmall: GoogleFonts.poppins(fontSize: 24, fontWeight: FontWeight.w600, color: textPrimary),
-    titleLarge: GoogleFonts.poppins(fontSize: 22, fontWeight: FontWeight.w500, color: textPrimary),
-    titleMedium: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: textPrimary),
-    titleSmall: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
-    bodyLarge: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w400, color: textPrimary),
-    bodyMedium: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w400, color: textSecondary),
-    bodySmall: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w400, color: textMuted),
-    labelLarge: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: textPrimary),
-    labelMedium: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500, color: textSecondary),
-    labelSmall: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w500, color: textMuted),
+    displayLarge: GoogleFonts.poppins(
+      fontSize: 57,
+      fontWeight: FontWeight.w700,
+      color: textPrimary,
+    ),
+    displayMedium: GoogleFonts.poppins(
+      fontSize: 45,
+      fontWeight: FontWeight.w700,
+      color: textPrimary,
+    ),
+    displaySmall: GoogleFonts.poppins(
+      fontSize: 36,
+      fontWeight: FontWeight.w700,
+      color: textPrimary,
+    ),
+    headlineLarge: GoogleFonts.poppins(
+      fontSize: 32,
+      fontWeight: FontWeight.w600,
+      color: textPrimary,
+    ),
+    headlineMedium: GoogleFonts.poppins(
+      fontSize: 28,
+      fontWeight: FontWeight.w600,
+      color: textPrimary,
+    ),
+    headlineSmall: GoogleFonts.poppins(
+      fontSize: 24,
+      fontWeight: FontWeight.w600,
+      color: textPrimary,
+    ),
+    titleLarge: GoogleFonts.poppins(
+      fontSize: 22,
+      fontWeight: FontWeight.w500,
+      color: textPrimary,
+    ),
+    titleMedium: GoogleFonts.poppins(
+      fontSize: 16,
+      fontWeight: FontWeight.w500,
+      color: textPrimary,
+    ),
+    titleSmall: GoogleFonts.poppins(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: textPrimary,
+    ),
+    bodyLarge: GoogleFonts.poppins(
+      fontSize: 16,
+      fontWeight: FontWeight.w400,
+      color: textPrimary,
+    ),
+    bodyMedium: GoogleFonts.poppins(
+      fontSize: 14,
+      fontWeight: FontWeight.w400,
+      color: textSecondary,
+    ),
+    bodySmall: GoogleFonts.poppins(
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      color: textMuted,
+    ),
+    labelLarge: GoogleFonts.poppins(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: textPrimary,
+    ),
+    labelMedium: GoogleFonts.poppins(
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+      color: textSecondary,
+    ),
+    labelSmall: GoogleFonts.poppins(
+      fontSize: 11,
+      fontWeight: FontWeight.w500,
+      color: textMuted,
+    ),
   );
 }

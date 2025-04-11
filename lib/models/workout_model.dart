@@ -1,7 +1,4 @@
-// import '/auth/supabase_auth/auth_util.dart';
-// import '/backend/supabase/supabase.dart';
-// import '/components/my_templates_empty_widget.dart';
-import 'package:flutterflow_ui/flutterflow_ui.dart';
+import '../../core/utils/model_utils.dart';
 import 'dart:ui';
 import '../views/workout/workout_widget.dart' show WorkoutWidget;
 import 'package:flutter/material.dart';
@@ -10,16 +7,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
-class WorkoutModel extends FlutterFlowModel<WorkoutWidget> {
-  ///  State fields for stateful widgets in this page.
+class WorkoutModel {
+  final WorkoutWidget widget;
 
-  // Stores action output result for [Backend Call - Insert Row] action in Button widget.
-  // WorkoutsRow? newWorkoutID;
+  WorkoutModel(this.widget);
 
-  @override
   void initState(BuildContext context) {}
 
-  @override
   void dispose() {}
 }
 
@@ -44,9 +38,8 @@ class Workout {
       name: json['name'],
       exercises: List<String>.from(json['exercises']),
       duration: Duration(seconds: json['duration']),
-      timestamp: json['timestamp'] != null 
-        ? DateTime.parse(json['timestamp']) 
-        : null,
+      timestamp:
+          json['timestamp'] != null ? DateTime.parse(json['timestamp']) : null,
     );
   }
 
