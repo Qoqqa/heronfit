@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../views/auth/login_widget.dart';
+import '../features/auth/views/login_screen.dart';
 
 class AuthGuard extends StatelessWidget {
   final Widget child;

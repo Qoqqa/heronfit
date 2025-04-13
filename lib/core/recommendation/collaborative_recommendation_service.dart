@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../models/workout_model.dart';
+import '../../features/workout/models/workout_model.dart';
 import 'base_recommendation_service.dart';
 import '../services/exercise_database_service.dart';
 import 'content_based_recommendation_service.dart';

@@ -1,12 +1,12 @@
 {
     "github.copilot.chat.codeGeneration.instructions": [
         {
-            "file": "docs/custom_instructions.md"
-        },
+            "file": "docs/comprehensive_ai_guidelines.md"
+        }
     ],
     "github.copilot.chat.commitMessageGeneration.instructions": [
         {
             "file": "docs/commit_message_instructions.md"
-        },
+        }
     ]
 }
