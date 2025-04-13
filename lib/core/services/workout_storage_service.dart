@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../models/workout_model.dart';
+import '../../features/workout/models/workout_model.dart';
 
 class WorkoutStorageService {
   static const String _workoutsKey = 'saved_workouts';

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:heronfit/views/home/home_screen.dart';
-import 'package:heronfit/views/profile/profile_screen.dart';
-import 'package:heronfit/views/workout/workout_widget.dart';
-import 'package:heronfit/views/booking/booking_screen.dart';
-import 'package:heronfit/views/progress/progress_screen.dart';
+import 'package:heronfit/features/home/views/home_screen.dart';
+import 'package:heronfit/features/profile/views/profile_screen.dart';
+import 'package:heronfit/features/workout/views/workout_widget.dart';
+import 'package:heronfit/features/booking/views/booking_screen.dart';
+import 'package:heronfit/features/progress/views/progress_screen.dart';
 import 'package:heronfit/widgets/bottom_nav_bar.dart';
 
 class MainScreenWrapper extends StatefulWidget {

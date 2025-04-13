@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:heronfit/core/theme.dart';
-import 'package:heronfit/models/exercise_model.dart';
-import 'package:heronfit/models/set_data_model.dart';
+import 'package:heronfit/features/workout/models/exercise_model.dart';
+import 'package:heronfit/features/workout/models/set_data_model.dart';
 
 class ExerciseCard extends StatefulWidget {
   final Exercise exercise;
@@ -31,11 +31,8 @@ class _ExerciseCardState extends State<ExerciseCard> {
           BoxShadow(
             blurRadius: 40.0,
             color: Colors.grey.withOpacity(0.3),
-            offset: const Offset(
-              0.0,
-              10.0,
-            ),
-          )
+            offset: const Offset(0.0, 10.0),
+          ),
         ],
         borderRadius: BorderRadius.circular(8.0),
       ),
@@ -83,9 +80,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                VerticalDivider(
-                  color: Colors.grey[400],
-                ),
+                VerticalDivider(color: Colors.grey[400]),
               ],
             ),
             const SizedBox(height: 8.0),
@@ -108,7 +103,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                         decoration: const InputDecoration(hintText: 'KG'),
                         keyboardType: TextInputType.number,
                         inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
+                          FilteringTextInputFormatter.digitsOnly,
                         ],
                         onChanged: (value) {
                           set.kg = int.tryParse(value) ?? 0;
@@ -121,7 +116,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                         decoration: const InputDecoration(hintText: 'Reps'),
                         keyboardType: TextInputType.number,
                         inputFormatters: <TextInputFormatter>[
-                          FilteringTextInputFormatter.digitsOnly
+                          FilteringTextInputFormatter.digitsOnly,
                         ],
                         onChanged: (value) {
                           set.reps = int.tryParse(value) ?? 0;
@@ -140,15 +135,22 @@ class _ExerciseCardState extends State<ExerciseCard> {
                 );
               },
             ),
-            const SizedBox(height: 16.0), // Improved spacing between set items and button
+            const SizedBox(
+              height: 16.0,
+            ), // Improved spacing between set items and button
             ElevatedButton(
               onPressed: () {
                 widget.onAddSet();
               },
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 40.0), // Increased padding
+                minimumSize: const Size(
+                  double.infinity,
+                  40.0,
+                ), // Increased padding
                 backgroundColor: HeronFitTheme.primary,
-                padding: const EdgeInsets.symmetric(vertical: 12.0), // Increased padding
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12.0,
+                ), // Increased padding
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),

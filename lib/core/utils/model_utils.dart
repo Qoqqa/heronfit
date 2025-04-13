@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../models/login_model.dart';
-import '../../models/workout_model.dart';
-import '../../views/auth/login_widget.dart';
-import '../../views/workout/workout_widget.dart';
+import 'package:flutter/scheduler.dart';
+
+import '../../features/auth/views/login_widget.dart';
+import '../../features/auth/models/login_model.dart';
+import '../../features/workout/models/workout_model.dart';
+import '../../features/auth/views/login_widget.dart';
+import '../../features/workout/views/workout_widget.dart';
 
 T createModel<T>(BuildContext context, T Function() builder) {
   return builder();

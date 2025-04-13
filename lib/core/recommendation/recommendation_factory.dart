@@ -1,20 +1,15 @@
-import '../../models/workout_model.dart';
+import '../../features/workout/models/workout_model.dart';
 import 'base_recommendation_service.dart';
 import 'random_recommendation_service.dart';
 import 'content_based_recommendation_service.dart';
 import 'collaborative_recommendation_service.dart';
 import 'hybrid_recommendation_service.dart';
 
-enum RecommendationAlgorithm {
-  random,
-  contentBased,
-  collaborative,
-  hybrid
-}
+enum RecommendationAlgorithm { random, contentBased, collaborative, hybrid }
 
 class RecommendationFactory {
   static BaseRecommendationService getRecommendationService(
-    RecommendationAlgorithm algorithm
+    RecommendationAlgorithm algorithm,
   ) {
     switch (algorithm) {
       case RecommendationAlgorithm.random:
@@ -29,28 +24,28 @@ class RecommendationFactory {
         return RandomRecommendationService();
     }
   }
-  
+
   static List<Map<String, dynamic>> getAvailableAlgorithms() {
     return [
       {
         'algorithm': RecommendationAlgorithm.random,
         'name': 'Random',
-        'description': 'Completely random workout recommendations'
+        'description': 'Completely random workout recommendations',
       },
       {
         'algorithm': RecommendationAlgorithm.contentBased,
         'name': 'Personalized',
-        'description': 'Based on your workout history and preferences'
+        'description': 'Based on your workout history and preferences',
       },
       {
         'algorithm': RecommendationAlgorithm.collaborative,
         'name': 'Community',
-        'description': 'Based on what similar users are doing'
+        'description': 'Based on what similar users are doing',
       },
       {
         'algorithm': RecommendationAlgorithm.hybrid,
         'name': 'Smart Mix',
-        'description': 'Combination of all recommendation techniques'
+        'description': 'Combination of all recommendation techniques',
       },
     ];
   }
