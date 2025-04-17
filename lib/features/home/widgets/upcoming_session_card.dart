@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'home_info_row.dart'; // Import the reusable row widget
+import '../../../core/theme.dart'; // Import HeronFitTheme
 
 class UpcomingSessionCard extends StatelessWidget {
   // TODO: Add parameters for dynamic data (session details, onTap)
@@ -10,20 +11,13 @@ class UpcomingSessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    final colorScheme = theme.colorScheme;
 
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colorScheme.secondary,
+        color: theme.colorScheme.secondary,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: HeronFitTheme.cardShadow, // Use theme shadow
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -46,13 +40,13 @@ class UpcomingSessionCard extends StatelessWidget {
                   Text(
                     'Upcoming Session',
                     style: textTheme.titleSmall?.copyWith(
-                      color: colorScheme.onSecondary,
+                      color: Colors.white, // Use Colors.white directly
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(
+                  const Icon(
                     SolarIconsOutline.clipboardList,
-                    color: colorScheme.onSecondary,
+                    color: Colors.white, // Use Colors.white directly
                     size: 24,
                   ),
                 ],
@@ -60,11 +54,11 @@ class UpcomingSessionCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             // TODO: Add logic to display actual session or "No Booked Sessions!"
-            HomeInfoRow(
+            const HomeInfoRow(
               icon: SolarIconsOutline.calendar,
               text: 'No Booked Sessions!', // Placeholder/Default
-              iconColor: colorScheme.onSecondary,
-              textColor: colorScheme.onSecondary,
+              iconColor: Colors.white, // Use Colors.white directly
+              textColor: Colors.white, // Use Colors.white directly
               fontWeight: FontWeight.bold,
             ),
           ],

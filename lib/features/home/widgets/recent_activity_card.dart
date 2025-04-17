@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'home_info_row.dart'; // Import the reusable row widget
+import '../../../core/theme.dart'; // Import HeronFitTheme
 
 class RecentActivityCard extends StatelessWidget {
   // TODO: Add parameters for dynamic data (last workout, weekly stats, onTap)
@@ -17,13 +18,7 @@ class RecentActivityCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.background,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            color: Colors.black.withOpacity(0.05),
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: HeronFitTheme.cardShadow, // Use theme shadow
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
