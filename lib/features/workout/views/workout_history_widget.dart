@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
-import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:go_router/go_router.dart';
+import 'package:solar_icons/solar_icons.dart'; // Add this import
 import '../../../core/theme.dart';
 import '../../../core/services/workout_storage_service.dart';
 
@@ -64,22 +65,27 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
         key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
         appBar: AppBar(
-          backgroundColor: HeronFitTheme.bgLight,
+          backgroundColor: Colors.transparent, // Set to transparent
           automaticallyImplyLeading: false,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => context.pop(), // Use context.pop()
+            icon: const Icon(
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: HeronFitTheme.primary, // Use primary color
+            ),
+            onPressed: () => context.pop(),
           ),
           title: Text(
             'Workout History',
             style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-              color: HeronFitTheme.primary,
-              fontSize: 20,
-              letterSpacing: 0.0,
+              // Use headlineSmall as base
+              color: HeronFitTheme.primary, // Use primary color
+              fontSize: 20.0, // Set font size to 20
+              fontWeight: FontWeight.bold, // Add bold weight
+              letterSpacing: 0.0, // Keep letterSpacing if needed
             ),
           ),
           centerTitle: true,
-          elevation: 0,
+          elevation: 0, // Keep elevation 0
         ),
         body:
             _isLoading

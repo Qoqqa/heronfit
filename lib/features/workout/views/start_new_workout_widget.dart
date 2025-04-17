@@ -22,11 +22,11 @@ class StartNewWorkoutWidget extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
+        backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: Icon(
-            Icons.chevron_left_rounded,
+            SolarIconsOutline.altArrowLeft,
             color: HeronFitTheme.primary,
             size: 30.0,
           ),
@@ -39,6 +39,7 @@ class StartNewWorkoutWidget extends ConsumerWidget {
           workoutState.name.isEmpty ? 'New Workout' : workoutState.name,
           style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
             color: HeronFitTheme.primary,
+            fontSize: 20.0,
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -20,19 +20,6 @@ class WorkoutWidget extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: HeronFitTheme.bgLight,
-      appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
-        automaticallyImplyLeading: false,
-        title: Text(
-          'Workout',
-          style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0.0,
-      ),
       body: SafeArea(
         top: true,
         child: ListView(

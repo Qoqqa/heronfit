@@ -7,6 +7,7 @@ import 'package:heronfit/features/workout/controllers/workout_providers.dart'; /
 import 'package:heronfit/core/theme.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
+import 'package:solar_icons/solar_icons.dart'; // Add this import
 
 // Convert to ConsumerWidget
 class StartWorkoutFromTemplate extends ConsumerWidget {
@@ -24,10 +25,13 @@ class StartWorkoutFromTemplate extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
+        backgroundColor: Colors.transparent, // Set to transparent
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: Icon(Icons.chevron_left, color: HeronFitTheme.primary),
+          icon: Icon(
+            SolarIconsOutline.altArrowLeft, // Use SolarIcons
+            color: HeronFitTheme.primary,
+          ),
           onPressed: () {
             workoutNotifier.cancelWorkout(); // Use notifier
             context.pop();
@@ -36,7 +40,8 @@ class StartWorkoutFromTemplate extends ConsumerWidget {
         title: Text(
           workoutState.name, // Use state for title
           style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
+            color: HeronFitTheme.primary, // Use primary color
+            fontSize: 20.0, // Set font size to 20
             fontWeight: FontWeight.bold,
           ),
         ),
