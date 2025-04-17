@@ -2,99 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
+import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 
 import '../../../core/theme.dart';
 import '../models/workout_model.dart';
-export '../models/workout_model.dart';
-import '../../../core/services/workout_storage_service.dart';
-import '../../../core/services/workout_recommendation_service.dart';
 
-class WorkoutWidget extends ConsumerStatefulWidget {
-  final Map<String, dynamic>? workoutData;
-  const WorkoutWidget({super.key, this.workoutData});
+class WorkoutWidget extends ConsumerWidget {
+  const WorkoutWidget({super.key});
 
   static String routePath = AppRoutes.workout;
 
   @override
-  ConsumerState<WorkoutWidget> createState() => _WorkoutWidgetState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final savedWorkoutsAsync = ref.watch(savedWorkoutsProvider);
+    final recommendedWorkoutsAsync = ref.watch(recommendedWorkoutsProvider);
 
-class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
-  late WorkoutModel _model;
-  late WorkoutStorageService _storageService;
-  late WorkoutRecommendationService _recommendationService;
-  List<Workout> _savedWorkouts = [];
-  List<Workout> _recommendedWorkouts = [];
-  bool _isLoadingRecommendations = false;
-
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _model = WorkoutModel(widget);
-    _storageService = WorkoutStorageService();
-    _recommendationService = WorkoutRecommendationService();
-    _loadSavedWorkouts();
-    _loadRecommendedWorkouts();
-  }
-
-  @override
-  void dispose() {
-    _model.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadSavedWorkouts() async {
-    final workouts = await _storageService.getSavedWorkouts();
-    debugPrint('Loaded workouts: $workouts');
-    if (mounted) {
-      setState(() {
-        _savedWorkouts = workouts;
-      });
-    }
-  }
-
-  Future<void> _loadRecommendedWorkouts() async {
-    if (mounted) {
-      setState(() {
-        _isLoadingRecommendations = true;
-      });
-    }
-
-    try {
-      final recommendations = await _recommendationService
-          .getRecommendedWorkouts(4);
-      if (mounted) {
-        setState(() {
-          _recommendedWorkouts = recommendations;
-          _isLoadingRecommendations = false;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error loading recommendations: $e');
-      if (mounted) {
-        setState(() {
-          _isLoadingRecommendations = false;
-        });
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load recommendations: $e')),
-        );
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
         appBar: AppBar(
           backgroundColor: HeronFitTheme.bgLight,
@@ -117,7 +45,6 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Quick Start Section
                   Text(
                     'Quick Start',
                     style: HeronFitTheme.textTheme.titleLarge?.copyWith(
@@ -132,7 +59,7 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
                   const SizedBox(height: 16.0),
                   ElevatedButton(
                     onPressed: () {
-                      context.push(AppRoutes.workoutStartNew);
+                      context.push(AppRoutes.workoutStartNew, extra: null);
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 48.0),
@@ -146,8 +73,6 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
                     child: const Text('Start an Empty Workout'),
                   ),
                   const SizedBox(height: 24.0),
-
-                  // Recommended Workouts Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -160,35 +85,48 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
                     ],
                   ),
                   const SizedBox(height: 8.0),
-                  _isLoadingRecommendations
-                      ? Center(
-                        child: CircularProgressIndicator(
-                          color: HeronFitTheme.primary,
+                  recommendedWorkoutsAsync.when(
+                    loading:
+                        () => Center(
+                          child: CircularProgressIndicator(
+                            color: HeronFitTheme.primary,
+                          ),
                         ),
-                      )
-                      : _recommendedWorkouts.isEmpty
-                      ? Center(
-                        child: Text(
-                          'No recommendations available.',
-                          style: HeronFitTheme.textTheme.bodyMedium,
+                    error:
+                        (error, stackTrace) => Center(
+                          child: Text(
+                            'Failed to load recommendations: $error',
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.error,
+                            ),
+                          ),
                         ),
-                      )
-                      : ListView.builder(
+                    data: (recommendedWorkouts) {
+                      if (recommendedWorkouts.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No recommendations available.',
+                            style: HeronFitTheme.textTheme.bodyMedium,
+                          ),
+                        );
+                      }
+                      return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _recommendedWorkouts.length,
+                        itemCount: recommendedWorkouts.length,
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12.0),
                             child: _buildWorkoutCard(
-                              _recommendedWorkouts[index],
+                              context,
+                              recommendedWorkouts[index],
                             ),
                           );
                         },
-                      ),
+                      );
+                    },
+                  ),
                   const SizedBox(height: 24.0),
-
-                  // My Templates Section
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -212,27 +150,44 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
                     ],
                   ),
                   const SizedBox(height: 16.0),
-                  _savedWorkouts.isEmpty
-                      ? Center(
-                        child: Text(
-                          'No saved templates yet.',
-                          style: HeronFitTheme.textTheme.bodyMedium,
+                  savedWorkoutsAsync.when(
+                    loading:
+                        () => const Center(child: CircularProgressIndicator()),
+                    error:
+                        (error, stackTrace) => Center(
+                          child: Text(
+                            'Failed to load templates: $error',
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.error,
+                            ),
+                          ),
                         ),
-                      )
-                      : ListView.builder(
+                    data: (savedWorkouts) {
+                      if (savedWorkouts.isEmpty) {
+                        return Center(
+                          child: Text(
+                            'No saved templates yet.',
+                            style: HeronFitTheme.textTheme.bodyMedium,
+                          ),
+                        );
+                      }
+                      return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount:
-                            _savedWorkouts.length > 3
-                                ? 3
-                                : _savedWorkouts.length,
+                            savedWorkouts.length > 3 ? 3 : savedWorkouts.length,
                         itemBuilder: (context, index) {
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12.0),
-                            child: _buildWorkoutCard(_savedWorkouts[index]),
+                            child: _buildWorkoutCard(
+                              context,
+                              savedWorkouts[index],
+                            ),
                           );
                         },
-                      ),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -242,7 +197,7 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
     );
   }
 
-  Widget _buildWorkoutCard(Workout workout) {
+  Widget _buildWorkoutCard(BuildContext context, Workout workout) {
     return Card(
       clipBehavior: Clip.antiAliasWithSaveLayer,
       color: Colors.white,
@@ -250,7 +205,7 @@ class _WorkoutWidgetState extends ConsumerState<WorkoutWidget> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
       child: InkWell(
         onTap: () {
-          context.push(AppRoutes.workoutStartFromTemplate, extra: workout);
+          context.push(AppRoutes.workoutStartNew, extra: workout);
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),

@@ -168,8 +168,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: AppRoutes.workout,
             builder: (context, state) {
-              final workoutData = state.extra as Map<String, dynamic>?;
-              return WorkoutWidget(workoutData: workoutData);
+              return const WorkoutWidget();
             },
           ),
           GoRoute(
