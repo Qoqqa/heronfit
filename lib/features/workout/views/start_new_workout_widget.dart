@@ -7,6 +7,7 @@ import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/widgets/exercise_card_widget.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 class StartNewWorkoutWidget extends ConsumerWidget {
   final Workout? initialWorkout;
@@ -62,50 +63,50 @@ class StartNewWorkoutWidget extends ConsumerWidget {
                       initialValue: workoutState.name,
                       textCapitalization: TextCapitalization.sentences,
                       obscureText: false,
-                      style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                        color: HeronFitTheme.primary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.0,
+                      style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                        color: HeronFitTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
-                        isDense: true,
                         labelText: 'Workout Name',
-                        labelStyle: HeronFitTheme.textTheme.labelSmall
-                            ?.copyWith(letterSpacing: 0.0),
-                        hintText: 'Enter workout name',
-                        hintStyle: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                        labelStyle: HeronFitTheme.textTheme.labelMedium,
+                        hintText: 'Enter workout name (e.g., Leg Day)',
+                        hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
-                          letterSpacing: 0.0,
                         ),
-                        enabledBorder: UnderlineInputBorder(
+                        enabledBorder: OutlineInputBorder(
                           borderSide: BorderSide(
+                            color: HeronFitTheme.primary.withAlpha(100),
+                            width: 1.0,
+                          ),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(
                             color: HeronFitTheme.primary,
-                            width: 2.0,
+                            width: 1.5,
                           ),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedBorder: UnderlineInputBorder(
-                          borderSide: BorderSide(
-                            color: HeronFitTheme.primaryDark,
-                            width: 2.0,
-                          ),
-                        ),
-                        errorBorder: UnderlineInputBorder(
+                        errorBorder: OutlineInputBorder(
                           borderSide: BorderSide(
                             color: HeronFitTheme.error,
-                            width: 2.0,
+                            width: 1.0,
                           ),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedErrorBorder: UnderlineInputBorder(
+                        focusedErrorBorder: OutlineInputBorder(
                           borderSide: BorderSide(
                             color: HeronFitTheme.error,
-                            width: 2.0,
+                            width: 1.5,
                           ),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        contentPadding: const EdgeInsetsDirectional.fromSTEB(
-                          0.0,
-                          0.0,
-                          0.0,
-                          16.0,
+                        filled: true,
+                        fillColor: HeronFitTheme.bgSecondary.withAlpha(100),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14.0,
+                          horizontal: 16.0,
                         ),
                       ),
                       onChanged:
@@ -118,42 +119,10 @@ class StartNewWorkoutWidget extends ConsumerWidget {
                       alignment: const AlignmentDirectional(-1.0, 0.0),
                       child: Text(
                         'Duration: ${_formatDuration(workoutState.duration)}',
-                        style: HeronFitTheme.textTheme.bodyMedium,
-                      ),
-                    ),
-                    const SizedBox(height: 24.0),
-                    TextFormField(
-                      key: ValueKey('workout_notes_${workoutState.id}'),
-                      initialValue: workoutState.notes,
-                      decoration: InputDecoration(
-                        labelText: 'Add a note about your workout',
-                        labelStyle: HeronFitTheme.textTheme.labelSmall,
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: Color(0x00000000),
-                            width: 1.0,
-                          ),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: HeronFitTheme.primary,
-                            width: 1.0,
-                          ),
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        filled: true,
-                        fillColor: HeronFitTheme.bgSecondary,
-                        prefixIcon: const Icon(
-                          Icons.edit,
+                        style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
-                          size: 16.0,
                         ),
                       ),
-                      style: HeronFitTheme.textTheme.bodyMedium,
-                      maxLines: 3,
-                      onChanged:
-                          (value) => workoutNotifier.setWorkoutNotes(value),
                     ),
                   ],
                 ),
@@ -180,7 +149,8 @@ class StartNewWorkoutWidget extends ConsumerWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    ElevatedButton(
+                    OutlinedButton.icon(
+                      label: const Text('Add Exercise'),
                       onPressed: () async {
                         final selectedExercise = await context.push<Exercise>(
                           AppRoutes.workoutAddExercise,
@@ -189,24 +159,18 @@ class StartNewWorkoutWidget extends ConsumerWidget {
                           workoutNotifier.addExercise(selectedExercise);
                         }
                       },
-                      style: ElevatedButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
-                        backgroundColor: HeronFitTheme.primary,
-                        textStyle: HeronFitTheme.textTheme.labelMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        foregroundColor: HeronFitTheme.primary,
+                        side: BorderSide(
+                          color: HeronFitTheme.primary.withAlpha(180),
+                        ),
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: Text(
-                        'Add Exercise',
-                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: HeronFitTheme.bgLight,
-                          fontWeight: FontWeight.w600,
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
                       ),
                     ),
@@ -222,40 +186,40 @@ class StartNewWorkoutWidget extends ConsumerWidget {
                         }
                       },
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48.0),
+                        minimumSize: const Size(double.infinity, 44.0),
                         backgroundColor: HeronFitTheme.primary,
-                        textStyle: HeronFitTheme.textTheme.titleMedium
-                            ?.copyWith(color: Colors.white),
+                        foregroundColor: Colors.white,
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
+                        elevation: 0,
                       ),
                       child: const Text('Finish Workout'),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 4.0),
                     ElevatedButton(
                       onPressed: () {
                         workoutNotifier.cancelWorkout();
                         context.pop();
                       },
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 40.0),
+                        minimumSize: const Size(double.infinity, 44.0),
                         backgroundColor: HeronFitTheme.error,
-                        textStyle: HeronFitTheme.textTheme.labelMedium
-                            ?.copyWith(color: Colors.white),
-                        padding: const EdgeInsets.symmetric(vertical: 12.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel Workout',
-                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: HeronFitTheme.bgLight,
+                        foregroundColor: Colors.white,
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 0,
                       ),
+                      child: const Text('Cancel Workout'),
                     ),
                   ],
                 ),
