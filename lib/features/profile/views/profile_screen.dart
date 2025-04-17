@@ -203,6 +203,8 @@ class ProfileScreen extends StatelessWidget {
                                       try {
                                         await Supabase.instance.client.auth
                                             .signOut();
+                                        // Show success message only if the widget is still mounted
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -213,14 +215,13 @@ class ProfileScreen extends StatelessWidget {
                                             backgroundColor: Colors.green,
                                           ),
                                         );
-                                        // Navigate to login screen
-                                        Navigator.of(
-                                          context,
-                                        ).pushNamedAndRemoveUntil(
-                                          '/login',
-                                          (route) => false,
+                                        // Explicitly navigate to onboarding after logout
+                                        context.pushReplacement(
+                                          AppRoutes.onboarding,
                                         );
                                       } catch (e) {
+                                        // Show error message only if the widget is still mounted
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
