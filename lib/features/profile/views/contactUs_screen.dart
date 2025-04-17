@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 import '../../../core/theme.dart';
 
 class ContactUsWidget extends StatelessWidget {
@@ -20,9 +21,7 @@ class ContactUsWidget extends StatelessWidget {
             color: HeronFitTheme.primary,
             size: 30,
           ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => context.pop(), // Use context.pop()
         ),
         title: Text(
           'Contact Us',
@@ -163,7 +162,9 @@ class ContactUsWidget extends StatelessWidget {
                             actions: [
                               TextButton(
                                 onPressed: () {
-                                  Navigator.pop(context);
+                                  if (context.mounted) {
+                                    context.pop(); // Pop after sending
+                                  }
                                 },
                                 child: const Text('OK'),
                               ),

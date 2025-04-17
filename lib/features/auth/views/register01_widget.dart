@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart'; // Updated import path
 import '../models/register01_model.dart'; // Updated import path
 export '../models/register01_model.dart'; // Updated export path
@@ -43,20 +45,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
         );
 
         // Navigate to the RegisterVerificationWidget
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder:
-                (context) => RegisterVerificationWidget(
-                  email: _model.emailAddressTextController?.text.trim() ?? '',
-                  password: _model.passwordTextController?.text.trim() ?? '',
-                  confirmPassword:
-                      _model.passwordConfirmTextController?.text.trim() ?? '',
-                  firstName: _model.firstNameTextController?.text.trim() ?? '',
-                  lastName: _model.lastNameTextController?.text.trim() ?? '',
-                ),
-          ),
-        );
+        context.push(AppRoutes.registerVerify);
       } else {
         ScaffoldMessenger.of(
           context,
@@ -230,7 +219,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/login');
+                        context.go(AppRoutes.login);
                       },
                       //child: Text('Already have an account? Log In'),//
                       child: RichText(

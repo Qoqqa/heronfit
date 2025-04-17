@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart'; // Import the new package
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../controllers/verify_email_controller.dart'; // Updated import path
 
 class RegisterVerificationWidget extends StatefulWidget {
@@ -38,7 +40,7 @@ class _RegisterVerificationWidgetState
       });
 
       // Navigate to the login screen after successful verification
-      Navigator.pushNamed(context, '/login');
+      context.go(AppRoutes.login);
     } else {
       setState(() {
         _isVerified = false;
@@ -52,10 +54,7 @@ class _RegisterVerificationWidgetState
             title: Text('Verification Failed'),
             content: Text('The PIN code is incorrect. Please try again.'),
             actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('OK'),
-              ),
+              TextButton(onPressed: () => context.pop(), child: Text('OK')),
             ],
           );
         },
@@ -178,7 +177,7 @@ class _RegisterVerificationWidgetState
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/register');
+                        context.go(AppRoutes.register);
                       },
                       child: Text(
                         'Change Email',

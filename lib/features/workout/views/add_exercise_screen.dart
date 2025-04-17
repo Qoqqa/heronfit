@@ -3,6 +3,7 @@ import 'dart:async';
 import '../models/exercise_model.dart';
 import '../controllers/exercise_controller.dart';
 import 'exercise_details_screen.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 
 class AddExerciseScreen extends StatefulWidget {
   final String? workoutId;
@@ -592,7 +593,9 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                       duration: Duration(seconds: 2),
                                     ),
                                   );
-                                  Navigator.pop(context, exercise);
+                                  context.pop(
+                                    exercise,
+                                  ); // Pop with the selected exercise as result
                                 },
                                 onLongPress: () {
                                   Navigator.of(context).push(

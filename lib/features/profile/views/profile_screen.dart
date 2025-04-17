@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import 'edit_profile.dart'; // Import the EditProfileWidget
 import '../../booking/views/my_bookings.dart'; // Import the MyBookingsWidget
 import '../../workout/views/workout_history_widget.dart'; // Import the WorkoutHistoryWidget
@@ -155,13 +157,7 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) => const EditProfileWidget(),
-                                  ),
-                                );
+                                context.push(AppRoutes.profileEdit);
                               },
                               child: const Text('Edit'),
                               style: ElevatedButton.styleFrom(
@@ -339,23 +335,17 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildAccountSection(BuildContext context) {
     return _buildSection(context, 'Account', [
       _buildSectionItem(context, Icons.person, 'Edit Profile', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const EditProfileWidget()),
-        );
+        context.push(AppRoutes.profileEdit);
       }),
       _buildSectionItem(context, Icons.book, 'My Bookings', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const MyBookingsWidget()),
-        );
+        context.push(AppRoutes.bookings);
       }),
       _buildSectionItem(context, Icons.history, 'Workout History', () {
-        Navigator.pushNamed(context, '/workoutHistory');
+        context.push(AppRoutes.profileHistory);
       }),
       ElevatedButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/workoutHistory');
+          context.push(AppRoutes.profileHistory);
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Theme.of(context).primaryColor,
@@ -377,7 +367,7 @@ class ProfileScreen extends StatelessWidget {
         Icons.notifications,
         'Pop-up Notification',
         () {
-          // Handle notification settings
+          print('Navigate to Notifications'); // Placeholder
         },
       ),
     ]);
@@ -386,22 +376,13 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildOtherSection(BuildContext context) {
     return _buildSection(context, 'Other', [
       _buildSectionItem(context, Icons.contact_mail, 'Contact Us', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ContactUsWidget()),
-        );
+        context.push(AppRoutes.profileContact);
       }),
       _buildSectionItem(context, Icons.privacy_tip, 'Privacy Policy', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const PrivacyPolicyWidget()),
-        );
+        context.push(AppRoutes.profilePrivacy);
       }),
       _buildSectionItem(context, Icons.info, 'Terms Of Use', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const TermsOfUseWidget()),
-        );
+        context.push(AppRoutes.profileTerms);
       }),
     ]);
   }

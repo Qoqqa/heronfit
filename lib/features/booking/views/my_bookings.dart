@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart';
 
 class MyBookingsWidget extends StatefulWidget {
   const MyBookingsWidget({super.key});
 
-  static String routeName = 'MyBookings';
   static String routePath = '/myBookings';
 
   @override
@@ -34,9 +35,7 @@ class _MyBookingsWidgetState extends State<MyBookingsWidget> {
               color: HeronFitTheme.primary,
               size: 30,
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => context.pop(), // Use context.pop()
           ),
           title: Text(
             'My Bookings',
@@ -165,8 +164,7 @@ class _MyBookingsWidgetState extends State<MyBookingsWidget> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // Back to Home
-                    Navigator.pushNamed(context, '/home');
+                    context.go(AppRoutes.home); // Navigate back to home
                   },
                   icon: Icon(Icons.home, size: 15),
                   label: Text('Back to Home'),

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 
 class HomeWidget extends StatefulWidget {
   const HomeWidget({super.key});
 
-  static String routeName = 'Home';
   static String routePath = '/home';
 
   @override
@@ -23,37 +24,44 @@ class _HomeWidgetState extends State<HomeWidget> {
   }
 
   Future<void> _fetchUserData() async {
-  final user = Supabase.instance.client.auth.currentUser;
+    final user = Supabase.instance.client.auth.currentUser;
 
-  if (user != null) {
-    try {
-      // Fetch user details from the 'users' table
-      final response = await Supabase.instance.client
-          .from('users')
-          .select('first_name')
-          .eq('id', user.id)
-          .single();
+    if (user != null) {
+      try {
+        // Fetch user details from the 'users' table
+        final response =
+            await Supabase.instance.client
+                .from('users')
+                .select('first_name')
+                .eq('id', user.id)
+                .single();
 
-      setState(() {
-        userName = response['first_name'] ?? 'User'; // Use the first_name from the table
-        userEmail = user.email; // Use the email from the auth session
-      });
-    } catch (e) {
-      debugPrint('Error fetching user data: $e');
-      setState(() {
-        userName = 'User'; // Fallback if fetching fails
-        userEmail = user.email;
-      });
+        setState(() {
+          userName =
+              response['first_name'] ??
+              'User'; // Use the first_name from the table
+          userEmail = user.email; // Use the email from the auth session
+        });
+      } catch (e) {
+        debugPrint('Error fetching user data: $e');
+        setState(() {
+          userName = 'User'; // Fallback if fetching fails
+          userEmail = user.email;
+        });
+      }
+    } else {
+      // If no user is logged in, navigate to the login screen
+      if (context.mounted) {
+        context.go(AppRoutes.login); // Use context.go to replace stack
+      }
     }
-  } else {
-    // If no user is logged in, navigate to the login screen
-    Navigator.pushReplacementNamed(context, '/login');
   }
-}
 
   Future<void> _logout() async {
     await Supabase.instance.client.auth.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
+    if (context.mounted) {
+      context.go(AppRoutes.login); // Use context.go to replace stack
+    }
   }
 
   @override
@@ -78,7 +86,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(
+                      padding: const EdgeInsetsDirectional.fromSTEB(
                         0,
                         0,
                         0,
@@ -132,8 +140,13 @@ class _HomeWidgetState extends State<HomeWidget> {
                               Container(
                                 decoration: BoxDecoration(
                                   // Removed the boxShadow property to eliminate the shadow
-                                  color: Theme.of(context).colorScheme.background, // Optional: Add a background color if needed
-                                  shape: BoxShape.circle, // Ensures the button remains circular
+                                  color:
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .background, // Optional: Add a background color if needed
+                                  shape:
+                                      BoxShape
+                                          .circle, // Ensures the button remains circular
                                 ),
                                 child: IconButton(
                                   icon: Icon(
@@ -414,14 +427,15 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                     style: Theme.of(context)
                                                         .textTheme
                                                         .titleSmall
-                                                        ?.copyWith(                                                   
-                                                          color:Colors.white,
-                                                          fontWeight: FontWeight.bold,                                                     
+                                                        ?.copyWith(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                         ),
                                                   ),
                                                   Icon(
                                                     Icons.event_note_outlined,
-                                                    color:Colors.white,                                               
+                                                    color: Colors.white,
                                                     size: 24,
                                                   ),
                                                 ],
@@ -450,8 +464,8 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                         0,
                                                       ),
                                                   child: Icon(
-                                                    Icons.date_range_outlined,                                              
-                                                       color:Colors.white,
+                                                    Icons.date_range_outlined,
+                                                    color: Colors.white,
                                                     size: 24,
                                                   ),
                                                 ),
@@ -461,8 +475,9 @@ class _HomeWidgetState extends State<HomeWidget> {
                                                       .textTheme
                                                       .labelMedium
                                                       ?.copyWith(
-                                                       color:Colors.white,
-                                                          fontWeight: FontWeight.bold,
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
                                                       ),
                                                 ),
                                               ],

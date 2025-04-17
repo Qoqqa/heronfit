@@ -4,6 +4,8 @@ import 'package:heronfit/features/workout/models/workout_complete_model.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/core/services/workout_storage_service.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 
 class WorkoutCompleteWidget extends StatefulWidget {
   final String workoutId;
@@ -21,7 +23,6 @@ class WorkoutCompleteWidget extends StatefulWidget {
     required this.exercises,
   }) : super(key: key);
 
-  static String routeName = 'WorkoutComplete';
   static String routePath = '/workoutComplete';
 
   @override
@@ -200,7 +201,9 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
                         final storageService = WorkoutStorageService();
                         await storageService.saveWorkout(workout);
 
-                        Navigator.pushNamed(context, '/home');
+                        context.go(
+                          AppRoutes.home,
+                        ); // Use context.go to replace the stack
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48.0),

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 import '../../../core/theme.dart';
 import '../../../core/services/workout_storage_service.dart';
 
 class WorkoutHistoryWidget extends StatefulWidget {
   const WorkoutHistoryWidget({super.key});
 
-  static String routeName = 'WorkoutHistory';
   static String routePath = '/workoutHistory';
 
   @override
@@ -67,14 +67,8 @@ class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
           backgroundColor: HeronFitTheme.bgLight,
           automaticallyImplyLeading: false,
           leading: IconButton(
-            icon: Icon(
-              Icons.chevron_left_rounded,
-              color: HeronFitTheme.primary,
-              size: 30,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => context.pop(), // Use context.pop()
           ),
           title: Text(
             'Workout History',

@@ -9,13 +9,13 @@ import 'package:heronfit/features/workout/views/workout_widget.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:flutter/services.dart'; // Import for input formatting
 import 'package:heronfit/widgets/exercise_card_widget.dart'; // Import the ExerciseCard widget
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 
 class StartNewWorkoutWidget extends StatefulWidget {
   const StartNewWorkoutWidget({Key? key, this.workoutID}) : super(key: key);
 
   final Workout? workoutID;
-  static String routeName = 'StartNewWorkout';
-  static String routePath = '/startNewWorkout';
 
   @override
   _StartNewWorkoutWidgetState createState() => _StartNewWorkoutWidgetState();
@@ -224,22 +224,15 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => AddExerciseScreen(
-                                  workoutId: widget.workoutID?.id,
-                                ),
-                          ),
-                        ).then((selectedExercise) {
-                          if (selectedExercise != null) {
-                            setState(() {
-                              _controller.addExercise(selectedExercise);
-                            });
-                          }
-                        });
+                      onPressed: () async {
+                        final selectedExercise = await context.push<Exercise>(
+                          AppRoutes.workoutAddExercise,
+                        );
+                        if (selectedExercise != null) {
+                          setState(() {
+                            _controller.addExercise(selectedExercise);
+                          });
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
@@ -265,7 +258,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                     const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, WorkoutWidget.routeName);
+                        context.push(AppRoutes.workoutActive);
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
@@ -293,27 +286,7 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                 const SizedBox(height: 24.0),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => WorkoutCompleteWidget(
-                              workoutId: widget.workoutID?.id ?? '',
-                              startTime: DateTime.now().subtract(
-                                Duration(seconds: _controller.duration),
-                              ), // Use the timer's duration
-                              endTime: DateTime.now(),
-                              workoutName:
-                                  _controller.workoutName.isNotEmpty
-                                      ? _controller.workoutName
-                                      : 'Unnamed Workout', // Use the updated workout name
-                              exercises:
-                                  _controller.exercises
-                                      .map((e) => e.name)
-                                      .toList(), // Pass exercises
-                            ),
-                      ),
-                    );
+                    context.push(AppRoutes.workoutSelectTemplate);
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 48.0),

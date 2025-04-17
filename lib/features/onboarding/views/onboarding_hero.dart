@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import 'package:flutter/gestures.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
-import '../../home/views/home_screen.dart';
-// import '../login/login_screen.dart';
+import '../../../core/router/app_routes.dart';
 
 class OnboardingWidget extends StatefulWidget {
   const OnboardingWidget({super.key});
 
-  static String routeName = 'Onboarding';
-  static String routePath = '/onboarding';
+  static String routePath = AppRoutes.onboarding;
 
   @override
   State<OnboardingWidget> createState() => _OnboardingWidgetState();
@@ -103,9 +100,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                         ),
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.of(context).pushNamed(
-                              '/register',
-                            ); // Navigate to RegisterWidget
+                            context.push(AppRoutes.register);
                           },
                           style: ElevatedButton.styleFrom(
                             minimumSize: const Size(double.infinity, 48.0),
@@ -128,7 +123,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                         hoverColor: Colors.transparent,
                         highlightColor: Colors.transparent,
                         onTap: () {
-                          Navigator.of(context).pushNamed('/login');
+                          context.push(AppRoutes.login);
                         },
                         child: RichText(
                           text: TextSpan(
@@ -152,9 +147,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                 recognizer:
                                     TapGestureRecognizer()
                                       ..onTap = () {
-                                        Navigator.of(
-                                          context,
-                                        ).pushNamed('/login');
+                                        context.push(AppRoutes.login);
                                       },
                               ),
                             ],

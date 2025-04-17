@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 import '../../../core/theme.dart';
 
 class EditProfileWidget extends StatefulWidget {
@@ -57,9 +58,7 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
               color: HeronFitTheme.primary,
               size: 30,
             ),
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => context.pop(), // Use context.pop()
           ),
           title: Text(
             'Edit Profile',

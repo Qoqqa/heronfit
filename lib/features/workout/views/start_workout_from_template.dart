@@ -6,6 +6,8 @@ import 'package:heronfit/features/workout/controllers/start_new_workout_controll
 import 'package:heronfit/features/workout/views/add_exercise_screen.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/workout/models/set_data_model.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 
 class StartWorkoutFromTemplate extends StatefulWidget {
   final Workout workout;
@@ -72,7 +74,7 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
             color: HeronFitTheme.primary, // Use the primary color
           ),
           onPressed: () {
-            Navigator.pop(context); // Navigate back
+            context.pop(); // Navigate back using GoRouter
           },
         ),
         title: Text(
@@ -116,14 +118,9 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
               const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () async {
-                  final selectedExercise = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              AddExerciseScreen(workoutId: widget.workout.id),
-                    ),
-                  );
+                  final selectedExercise = await context.push<Exercise>(
+                    AppRoutes.workoutAddExercise,
+                  ); // Navigate using GoRouter
                   if (selectedExercise != null) {
                     setState(() {
                       _controller.addExercise(selectedExercise);
@@ -173,20 +170,20 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
               const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/workoutComplete',
-                    arguments: {
-                      'workoutId': widget.workout.id,
-                      'startTime': DateTime.now().subtract(
-                        Duration(seconds: _controller.duration),
-                      ),
-                      'endTime': DateTime.now(),
-                      'workoutName': widget.workout.name,
-                      'exercises':
-                          _controller.exercises.map((e) => e.name).toList(),
-                    },
-                  );
+                  final workoutData = {
+                    'workoutId': widget.workout.id,
+                    'startTime': DateTime.now().subtract(
+                      Duration(seconds: _controller.duration),
+                    ),
+                    'endTime': DateTime.now(),
+                    'workoutName': widget.workout.name,
+                    'exercises':
+                        _controller.exercises.map((e) => e.name).toList(),
+                  };
+                  context.push(
+                    AppRoutes.workoutActive,
+                    extra: workoutData,
+                  ); // Navigate using GoRouter
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 48.0),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pin_code_fields/pin_code_fields.dart'; // Ensure this package is correctly added to pubspec.yaml
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart'; // Updated import path
 import 'register_screen.dart'; // Import the RegisterWidget
 
@@ -21,7 +23,6 @@ class RegisterVerificationWidget extends StatefulWidget {
   final String firstName;
   final String lastName;
 
-  static String routeName = 'RegisterVerification';
   static String routePath = '/registerVerification';
 
   @override
@@ -124,14 +125,7 @@ class _RegisterVerificationWidgetState
                                 recognizer:
                                     TapGestureRecognizer()
                                       ..onTap = () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const RegisterWidget(),
-                                          ),
-                                        );
+                                        context.go(AppRoutes.login);
                                       },
                               ),
                               TextSpan(
@@ -217,7 +211,7 @@ class _RegisterVerificationWidgetState
                       padding: EdgeInsetsDirectional.fromSTEB(0, 8, 0, 8),
                       child: ElevatedButton(
                         onPressed: () {
-                          // Confirm
+                          context.go(AppRoutes.login);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HeronFitTheme.primaryDark,
@@ -242,12 +236,7 @@ class _RegisterVerificationWidgetState
                       hoverColor: Colors.transparent,
                       highlightColor: Colors.transparent,
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterWidget(),
-                          ),
-                        );
+                        context.go(AppRoutes.login);
                       },
                       child: Text(
                         'Change Email',
