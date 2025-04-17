@@ -39,7 +39,7 @@ dependencies:
   supabase_flutter: ^2.8.4
   flutter_dotenv: ^5.0.2
   image_picker: ^0.8.4+4
-  solar_icons: ^0.0.5
+  solar_icons: ^0.0.5 # Add this line (or latest version)
   shared_preferences: ^2.0.8
   pin_code_fields: ^8.0.1 # Add this line to include the package
 

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
-import 'package:heronfit/widgets/bottom_nav_bar.dart';
-import 'package:heronfit/core/theme.dart'; // Import theme
+import 'package:heronfit/core/theme.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 class MainScreenWrapper extends StatelessWidget {
   final Widget child;
@@ -73,34 +73,54 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final List<BottomNavigationBarItem> navItems = [
+      BottomNavigationBarItem(
+        icon: Icon(
+          currentIndex == 0 ? SolarIconsBold.home : SolarIconsOutline.home,
+        ),
+        label: 'Home',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(
+          currentIndex == 1
+              ? SolarIconsBold.calendar
+              : SolarIconsOutline.calendar,
+        ),
+        label: 'Bookings',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(
+          currentIndex == 2
+              ? SolarIconsBold.dumbbellSmall
+              : SolarIconsOutline.dumbbellSmall,
+        ),
+        label: 'Workout',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(
+          currentIndex == 3 ? SolarIconsBold.graph : SolarIconsOutline.graph,
+        ),
+        label: 'Progress',
+      ),
+      BottomNavigationBarItem(
+        icon: Icon(
+          currentIndex == 4 ? SolarIconsBold.user : SolarIconsOutline.user,
+        ),
+        label: 'Profile',
+      ),
+    ];
+
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
-      type: BottomNavigationBarType.fixed, // Keep items visible
-      backgroundColor: HeronFitTheme.bgLight, // Set background color
-      selectedItemColor:
-          HeronFitTheme.primary, // Color for selected icon and label
-      unselectedItemColor:
-          HeronFitTheme.textMuted, // Color for unselected items
-      selectedFontSize: 12, // Optional: Adjust font size
-      unselectedFontSize: 12, // Optional: Adjust font size
-      elevation: 4.0, // Optional: Add some elevation
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_today),
-          label: 'Bookings',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.fitness_center),
-          label: 'Workout',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.show_chart),
-          label: 'Progress',
-        ),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-      ],
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: HeronFitTheme.bgLight,
+      selectedItemColor: HeronFitTheme.primary,
+      unselectedItemColor: HeronFitTheme.textMuted,
+      selectedFontSize: 12,
+      unselectedFontSize: 12,
+      elevation: 4.0,
+      items: navItems,
     );
   }
 }
