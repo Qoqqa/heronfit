@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Import necessary screen/widget files
+import 'package:heronfit/features/splash/views/splash_screen.dart'; // Import Splash Screen
 import 'package:heronfit/features/auth/views/login_widget.dart';
 import 'package:heronfit/features/auth/views/register_screen.dart';
 import 'package:heronfit/features/auth/views/register_verification.dart';
@@ -39,9 +40,14 @@ final _shellNavigatorKey = GlobalKey<NavigatorState>();
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: AppRoutes.onboarding,
+    initialLocation: AppRoutes.splash, // Ensure this is set to the splash route
     debugLogDiagnostics: true,
     routes: [
+      // Add Splash Screen Route
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const SplashScreenWidget(),
+      ),
       // Routes outside the main navigation shell
       GoRoute(
         path: AppRoutes.onboarding,

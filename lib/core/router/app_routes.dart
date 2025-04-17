@@ -1,5 +1,5 @@
 class AppRoutes {
-  static const splash = '/splash';
+  static const splash = '/splash'; // Add splash route
   static const onboarding = '/onboarding';
   static const login = '/login';
   static const register = '/register';
