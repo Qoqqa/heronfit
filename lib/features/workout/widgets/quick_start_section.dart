@@ -19,10 +19,10 @@ class QuickStartSection extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 8.0),
+          const SizedBox(height: 4.0),
           Text(
             'Begin a new workout instantly.',
-            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+            style: HeronFitTheme.textTheme.labelLarge?.copyWith(
               color: HeronFitTheme.textMuted,
             ),
           ),
@@ -33,13 +33,13 @@ class QuickStartSection extends StatelessWidget {
               context.push(AppRoutes.workoutStartNew, extra: null);
             },
             style: ElevatedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 52.0), // Larger button
+              minimumSize: const Size(double.infinity, 40.0), // Larger button
               backgroundColor: HeronFitTheme.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12.0), // Consistent radius
               ),
-              textStyle: HeronFitTheme.textTheme.titleMedium?.copyWith(
+              textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
                 fontWeight: FontWeight.bold, // Bold text
               ),
             ),

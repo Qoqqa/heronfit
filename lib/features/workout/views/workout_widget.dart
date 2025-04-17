@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 import 'package:heronfit/features/workout/widgets/quick_start_section.dart';
 import 'package:heronfit/features/workout/widgets/workout_carousel_section.dart';
-import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
+import 'package:heronfit/features/workout/widgets/workout_vertical_list_section.dart';
+import 'package:heronfit/core/router/app_routes.dart';
 
 import '../../../core/theme.dart';
 
@@ -40,14 +41,6 @@ class WorkoutWidget extends ConsumerWidget {
             const QuickStartSection(),
             const SizedBox(height: 24.0),
             WorkoutCarouselSection(
-              title: 'Recommended For You',
-              workoutsAsync: recommendedWorkoutsAsync,
-              itemCountToShow: recommendedWorkoutsAsync.value?.length ?? 0,
-              showSeeAllButton: false,
-              onSeeAllTap: null,
-            ),
-            const SizedBox(height: 24.0),
-            WorkoutCarouselSection(
               title: 'My Templates',
               workoutsAsync: savedWorkoutsAsync,
               itemCountToShow: 3,
@@ -57,6 +50,13 @@ class WorkoutWidget extends ConsumerWidget {
                   const SnackBar(content: Text('Navigate to All Templates')),
                 );
               },
+            ),
+            const SizedBox(height: 24.0),
+            WorkoutVerticalListSection(
+              title: 'Recommended For You',
+              workoutsAsync: recommendedWorkoutsAsync,
+              showSeeAllButton: false,
+              onSeeAllTap: null,
             ),
             const SizedBox(height: 24.0),
           ],
