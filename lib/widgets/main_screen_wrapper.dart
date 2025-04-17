@@ -91,8 +91,8 @@ class BottomNavBar extends StatelessWidget {
       BottomNavigationBarItem(
         icon: Icon(
           currentIndex == 2
-              ? SolarIconsBold.dumbbellSmall
-              : SolarIconsOutline.dumbbellSmall,
+              ? SolarIconsBold.dumbbellLarge
+              : SolarIconsOutline.dumbbellLarge,
         ),
         label: 'Workout',
       ),
