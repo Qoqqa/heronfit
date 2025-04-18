@@ -103,13 +103,19 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
   ActiveWorkoutNotifier(this._ref, Workout? initialWorkout)
     : super(
         ActiveWorkoutState(
-          id: initialWorkout?.id ?? UniqueKey().toString(),
+          // Use a new UniqueKey for the active session ID, not the template ID
+          id: UniqueKey().toString(),
           name: initialWorkout?.name ?? 'New Workout',
           exercises:
               initialWorkout?.exercises.map((exName) {
+                // TODO: Fetch full Exercise details from a repository/service based on exName
+                // For now, creating a basic Exercise object
                 return Exercise(
-                  id: UniqueKey().toString(),
+                  id:
+                      UniqueKey()
+                          .toString(), // Each exercise instance needs a unique ID
                   name: exName,
+                  // Initialize other fields as needed, potentially from fetched data
                   force: '',
                   level: '',
                   equipment: '',
@@ -118,18 +124,19 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
                   instructions: [],
                   category: '',
                   imageUrl: '',
+                  sets: [], // Start with empty sets for a new session
                 );
               }).toList() ??
               [],
-          duration: initialWorkout?.duration ?? Duration.zero,
-          originalWorkout: initialWorkout,
+          // Reset duration when starting from a template or new
+          duration: Duration.zero,
+          originalWorkout: initialWorkout, // Keep reference to the template
         ),
       ) {
-    if (initialWorkout == null) {
-      startTimer();
-    } else {
-      state = state.copyWith(duration: initialWorkout.duration);
-    }
+    // Always start the timer when the notifier is created (new workout or from template)
+    startTimer();
+    // The logic to set duration from initialWorkout is removed
+    // as we always want to start fresh.
   }
 
   void setWorkoutName(String name) {

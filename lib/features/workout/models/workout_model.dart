@@ -65,6 +65,26 @@ class Workout {
       'created_at': createdAt?.toIso8601String(), // Add createdAt
     };
   }
+
+  Workout copyWith({
+    String? id,
+    String? name,
+    String? notes,
+    List<String>? exercises,
+    Duration? duration,
+    DateTime? timestamp,
+    DateTime? createdAt,
+  }) {
+    return Workout(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      notes: notes ?? this.notes,
+      exercises: exercises ?? this.exercises,
+      duration: duration ?? this.duration,
+      timestamp: timestamp ?? this.timestamp,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
 }
 
 void testWorkoutSerialization() {}
