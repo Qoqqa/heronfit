@@ -69,45 +69,52 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Workout Name',
-                        labelStyle: HeronFitTheme.textTheme.labelMedium,
+                        // labelText: 'Workout Name',
+                        // labelStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                        //   color:
+                        //       HeronFitTheme
+                        //           .textMuted, // Use muted color for label when not focused
+                        // ),
                         hintText: 'Enter workout name (e.g., Leg Day)',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted,
+                          color: HeronFitTheme.textMuted.withOpacity(
+                            0.7,
+                          ), // Lighter hint
                         ),
-                        enabledBorder: OutlineInputBorder(
+                        // Use UnderlineInputBorder
+                        enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.primary.withAlpha(100),
+                            color: HeronFitTheme.textMuted.withOpacity(
+                              0.5,
+                            ), // Lighter underline when not focused
                             width: 1.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: HeronFitTheme.primary,
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        errorBorder: OutlineInputBorder(
+                        focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.error,
-                            width: 1.0,
+                            color:
+                                HeronFitTheme
+                                    .primary, // Primary color underline when focused
+                            width: 2.0, // Thicker underline when focused
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedErrorBorder: OutlineInputBorder(
+                        errorBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: HeronFitTheme.error,
                             width: 1.5,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        filled: true,
-                        fillColor: HeronFitTheme.bgSecondary.withAlpha(100),
+                        focusedErrorBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: HeronFitTheme.error,
+                            width: 2.0,
+                          ),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14.0,
-                          horizontal: 16.0,
+                          vertical:
+                              12.0, // Adjust vertical padding for underline
+                          horizontal:
+                              0.0, // Minimal horizontal padding for underline
                         ),
                       ),
                       onChanged:
@@ -115,11 +122,11 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                       onFieldSubmitted:
                           (_) => FocusScope.of(context).nextFocus(),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 8.0),
                     Align(
                       alignment: const AlignmentDirectional(-1.0, 0.0),
                       child: Text(
-                        'Duration: ${_formatDuration(workoutState.duration)}',
+                        '${_formatDuration(workoutState.duration)}',
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
                         ),
