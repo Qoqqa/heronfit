@@ -178,12 +178,27 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                     const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: () async {
-                        await workoutNotifier.finishWorkout();
+                        // Call finishWorkout and get the completed workout object
+                        final completedWorkout =
+                            await workoutNotifier.finishWorkout();
                         if (!context.mounted) return;
-                        if (context.canPop()) {
-                          context.pop();
+
+                        // Check if the workout was finished successfully
+                        if (completedWorkout != null) {
+                          // Navigate to the workout complete screen, passing the completed workout data
+                          context.pushReplacement(
+                            AppRoutes.workoutComplete,
+                            extra: completedWorkout,
+                          );
                         } else {
-                          context.go(AppRoutes.workout);
+                          // Handle error case (e.g., show a SnackBar)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Error finishing workout. Please try again.',
+                              ),
+                            ),
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(

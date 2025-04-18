@@ -192,7 +192,7 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     state = state.copyWith(isTimerRunning: false);
   }
 
-  Future<void> finishWorkout() async {
+  Future<Workout?> finishWorkout() async {
     stopTimer();
     final workoutToSave = Workout(
       id: state.id,
@@ -201,13 +201,16 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
       exercises: state.exercises.map((e) => e.name).toList(),
       duration: state.duration,
       createdAt: DateTime.now(),
+      timestamp: DateTime.now(), // Ensure timestamp is set
     );
 
     try {
       await _ref.read(workoutStorageServiceProvider).saveWorkout(workoutToSave);
       debugPrint('Workout Finished and Saved: ${workoutToSave.name}');
+      return workoutToSave; // Return the saved workout
     } catch (e) {
       debugPrint('Error saving workout: $e');
+      return null; // Return null on error
     }
   }
 
