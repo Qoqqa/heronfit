@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart'; // Import for debugPrint
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import icons
@@ -38,12 +39,34 @@ class ExerciseCardState extends State<ExerciseCard> {
   }
 
   // Method to show the rest timer dialog
-  void _showRestTimerDialog() {
+  // Updated to pass required parameters to the new RestTimerDialog
+  void _showRestTimerDialog(int setIndex) {
+    // Pass setIndex
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent closing by tapping outside
       builder: (BuildContext context) {
-        return const RestTimerDialog(); // Use the created dialog widget
+        // Provide all required arguments
+        return RestTimerDialog(
+          initialDuration: const Duration(
+            seconds: 90,
+          ), // Default or from settings
+          exerciseName: widget.exercise.name,
+          setNumber: setIndex + 1, // Pass the current set number (1-based)
+          onSkip: () {
+            // Logic when skip is pressed (dialog closes itself)
+            debugPrint(
+              "Rest skipped for ${widget.exercise.name} Set ${setIndex + 1}",
+            );
+          },
+          onTimerEnd: () {
+            // Logic when timer finishes (dialog closes itself)
+            debugPrint(
+              "Rest finished for ${widget.exercise.name} Set ${setIndex + 1}",
+            );
+            // Optionally add sound/vibration here
+          },
+        );
       },
     );
   }
@@ -230,7 +253,7 @@ class ExerciseCardState extends State<ExerciseCard> {
                               );
                               // Show timer only when checking the box (completing the set)
                               if (value == true) {
-                                _showRestTimerDialog();
+                                _showRestTimerDialog(setsListIndex);
                               }
                             }
                           },
