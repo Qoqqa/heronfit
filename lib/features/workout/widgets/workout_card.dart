@@ -53,7 +53,7 @@ class WorkoutCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
-                      SolarIconsOutline.dumbbellSmall, // Added icon
+                      SolarIconsOutline.dumbbellLarge, // Added icon
                       color: HeronFitTheme.primary,
                       size: 24,
                     ),

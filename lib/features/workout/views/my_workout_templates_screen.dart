@@ -184,7 +184,7 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(
-                      SolarIconsOutline.notebookBookmark,
+                      SolarIconsOutline.dumbbells,
                       size: 64,
                       color: HeronFitTheme.textMuted,
                     ),
@@ -199,11 +199,33 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Create personalized workouts that fit your goals and preferences. Tap the "+" button to start building.',
+                      'Create personalized workouts that fit your goals and preferences. Tap "New Template" below to start building your first workout template.',
                       style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                         color: HeronFitTheme.textMuted,
                       ),
                       textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      icon: const Icon(SolarIconsOutline.addCircle, size: 20),
+                      label: const Text('Create New Template'),
+                      onPressed: () {
+                        context.push(AppRoutes.workoutStartNew);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: HeronFitTheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 12.0,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -240,7 +262,7 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
                     horizontal: 16.0,
                   ),
                   leading: const Icon(
-                    SolarIconsOutline.notebookBookmark,
+                    SolarIconsOutline.dumbbellLarge,
                     color: HeronFitTheme.primary,
                     size: 32,
                   ),

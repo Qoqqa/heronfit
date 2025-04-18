@@ -94,7 +94,7 @@ class WorkoutCarouselSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        SolarIconsOutline.notebookBookmark, // Relevant icon
+                        SolarIconsOutline.dumbbells, // Relevant icon
                         size: 48,
                         color: HeronFitTheme.textMuted,
                       ),
@@ -110,7 +110,7 @@ class WorkoutCarouselSection extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         // Updated empty state description
-                        'Create personalized workouts that fit your goals and preferences. Tap the "+" button to start building.',
+                        'Create personalized workouts that fit your goals and preferences. Click the "Start an Empty Workout" button to start building.',
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
                         ),
