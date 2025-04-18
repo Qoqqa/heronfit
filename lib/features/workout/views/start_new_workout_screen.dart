@@ -9,9 +9,9 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
 
-class StartNewWorkoutWidget extends ConsumerWidget {
+class StartNewWorkoutScreen extends ConsumerWidget {
   final Workout? initialWorkout;
-  const StartNewWorkoutWidget({super.key, this.initialWorkout});
+  const StartNewWorkoutScreen({super.key, this.initialWorkout});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -178,12 +178,32 @@ class StartNewWorkoutWidget extends ConsumerWidget {
                     const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: () async {
-                        await workoutNotifier.finishWorkout();
+                        // Call finishWorkout and get the completed workout object
+                        final completedWorkout =
+                            await workoutNotifier.finishWorkout();
+                        // Get the detailed exercises from the state *before* navigating
+                        final detailedExercises = workoutState.exercises;
                         if (!context.mounted) return;
-                        if (context.canPop()) {
-                          context.pop();
+
+                        // Check if the workout was finished successfully
+                        if (completedWorkout != null) {
+                          // Navigate to the workout complete screen, passing both workout and detailed exercises
+                          context.pushReplacement(
+                            AppRoutes.workoutComplete,
+                            extra: {
+                              'workout': completedWorkout,
+                              'detailedExercises': detailedExercises,
+                            },
+                          );
                         } else {
-                          context.go(AppRoutes.workout);
+                          // Handle error case (e.g., show a SnackBar)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Error finishing workout. Please try again.',
+                              ),
+                            ),
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(

@@ -20,8 +20,24 @@ final workoutRecommendationServiceProvider = Provider(
 // Provider to fetch saved workout templates
 final savedWorkoutsProvider = FutureProvider<List<Workout>>((ref) async {
   final storageService = ref.watch(workoutStorageServiceProvider);
-  return storageService.getSavedWorkouts();
+  // Fetch all workouts first
+  final allWorkouts = await storageService.getSavedWorkouts();
+  // Sort by createdAt descending (newest first)
+  allWorkouts.sort((a, b) {
+    final dateA = a.createdAt ?? DateTime(1970); // Handle null createdAt
+    final dateB = b.createdAt ?? DateTime(1970);
+    return dateB.compareTo(dateA); // Descending order
+  });
+  return allWorkouts;
 });
+
+// Provider to get the most recent N saved workouts
+final recentSavedWorkoutsProvider =
+    Provider.family<AsyncValue<List<Workout>>, int>((ref, count) {
+      return ref.watch(savedWorkoutsProvider).whenData((workouts) {
+        return workouts.take(count).toList();
+      });
+    });
 
 // Provider to fetch recommended workouts
 final recommendedWorkoutsProvider = FutureProvider.autoDispose<List<Workout>>((
@@ -87,13 +103,19 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
   ActiveWorkoutNotifier(this._ref, Workout? initialWorkout)
     : super(
         ActiveWorkoutState(
-          id: initialWorkout?.id ?? UniqueKey().toString(),
+          // Use a new UniqueKey for the active session ID, not the template ID
+          id: UniqueKey().toString(),
           name: initialWorkout?.name ?? 'New Workout',
           exercises:
               initialWorkout?.exercises.map((exName) {
+                // TODO: Fetch full Exercise details from a repository/service based on exName
+                // For now, creating a basic Exercise object
                 return Exercise(
-                  id: UniqueKey().toString(),
+                  id:
+                      UniqueKey()
+                          .toString(), // Each exercise instance needs a unique ID
                   name: exName,
+                  // Initialize other fields as needed, potentially from fetched data
                   force: '',
                   level: '',
                   equipment: '',
@@ -102,18 +124,19 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
                   instructions: [],
                   category: '',
                   imageUrl: '',
+                  sets: [], // Start with empty sets for a new session
                 );
               }).toList() ??
               [],
-          duration: initialWorkout?.duration ?? Duration.zero,
-          originalWorkout: initialWorkout,
+          // Reset duration when starting from a template or new
+          duration: Duration.zero,
+          originalWorkout: initialWorkout, // Keep reference to the template
         ),
       ) {
-    if (initialWorkout == null) {
-      startTimer();
-    } else {
-      state = state.copyWith(duration: initialWorkout.duration);
-    }
+    // Always start the timer when the notifier is created (new workout or from template)
+    startTimer();
+    // The logic to set duration from initialWorkout is removed
+    // as we always want to start fresh.
   }
 
   void setWorkoutName(String name) {
@@ -192,7 +215,7 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     state = state.copyWith(isTimerRunning: false);
   }
 
-  Future<void> finishWorkout() async {
+  Future<Workout?> finishWorkout() async {
     stopTimer();
     final workoutToSave = Workout(
       id: state.id,
@@ -201,13 +224,16 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
       exercises: state.exercises.map((e) => e.name).toList(),
       duration: state.duration,
       createdAt: DateTime.now(),
+      timestamp: DateTime.now(), // Ensure timestamp is set
     );
 
     try {
       await _ref.read(workoutStorageServiceProvider).saveWorkout(workoutToSave);
       debugPrint('Workout Finished and Saved: ${workoutToSave.name}');
+      return workoutToSave; // Return the saved workout
     } catch (e) {
       debugPrint('Error saving workout: $e');
+      return null; // Return null on error
     }
   }
 

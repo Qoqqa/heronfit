@@ -87,7 +87,7 @@ class HeronFitTheme {
       color: textPrimary,
     ),
     titleLarge: GoogleFonts.poppins(
-      fontSize: 22,
+      fontSize: 20,
       fontWeight: FontWeight.w500,
       color: textPrimary,
     ),

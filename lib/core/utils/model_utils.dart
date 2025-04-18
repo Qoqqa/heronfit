@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/auth/views/login_widget.dart';
 import '../../features/auth/models/login_model.dart';
 import '../../features/workout/models/workout_model.dart';
-import '../../features/workout/views/workout_widget.dart';
+import '../../features/workout/views/workout_screen.dart';
 
 T createModel<T>(BuildContext context, T Function() builder) {
   return builder();
