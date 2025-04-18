@@ -1,106 +1,83 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:go_router/go_router.dart';
-import 'package:solar_icons/solar_icons.dart'; // Add this import
+import 'package:solar_icons/solar_icons.dart';
 import '../../../core/theme.dart';
-import '../../../core/services/workout_storage_service.dart';
+import '../controllers/workout_providers.dart'; // Import providers
 
-class WorkoutHistoryScreen extends StatefulWidget {
+// Convert to ConsumerWidget
+class WorkoutHistoryScreen extends ConsumerWidget {
   const WorkoutHistoryScreen({super.key});
 
   static String routePath = '/workoutHistory';
 
   @override
-  State<WorkoutHistoryScreen> createState() => _WorkoutHistoryScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the providers
+    final workoutHistoryAsync = ref.watch(workoutHistoryProvider);
+    final workoutStatsAsync = ref.watch(workoutStatsProvider);
+    final formatDuration = ref.watch(formatDurationProvider);
 
-class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  final WorkoutStorageService _storageService = WorkoutStorageService();
-  List<Workout> _workouts = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWorkouts();
-  }
-
-  Future<void> _loadWorkouts() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final workouts = await _storageService.getSavedWorkouts();
-
-    setState(() {
-      _workouts = workouts;
-      _isLoading = false;
-    });
-  }
-
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    final seconds = duration.inSeconds.remainder(60);
-
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set to transparent
+          backgroundColor: Colors.transparent,
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: const Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: HeronFitTheme.primary, // Use primary color
+              SolarIconsOutline.altArrowLeft,
+              color: HeronFitTheme.primary,
             ),
             onPressed: () => context.pop(),
           ),
           title: Text(
             'Workout History',
             style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-              // Use headlineSmall as base
-              color: HeronFitTheme.primary, // Use primary color
-              fontSize: 20.0, // Set font size to 20
-              fontWeight: FontWeight.bold, // Add bold weight
-              letterSpacing: 0.0, // Keep letterSpacing if needed
+              color: HeronFitTheme.primary,
+              fontSize: 20.0,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.0,
             ),
           ),
           centerTitle: true,
-          elevation: 0, // Keep elevation 0
+          elevation: 0,
         ),
-        body:
-            _isLoading
-                ? Center(
-                  child: CircularProgressIndicator(
-                    color: HeronFitTheme.primary,
-                  ),
-                )
-                : _buildBody(),
+        // Use AsyncValue.when to handle loading/error/data states
+        body: workoutHistoryAsync.when(
+          loading:
+              () => Center(
+                child: CircularProgressIndicator(color: HeronFitTheme.primary),
+              ),
+          error:
+              (error, stackTrace) =>
+                  Center(child: Text('Error loading history: $error')),
+          data:
+              (workouts) => _buildBody(
+                context,
+                ref,
+                workouts,
+                workoutStatsAsync,
+                formatDuration,
+              ),
+        ),
       ),
     );
   }
 
-  Widget _buildBody() {
-    if (_workouts.isEmpty) {
+  Widget _buildBody(
+    BuildContext context,
+    WidgetRef ref,
+    List<Workout> workouts,
+    AsyncValue<Map<String, dynamic>> workoutStatsAsync,
+    String Function(Duration) formatDuration,
+  ) {
+    if (workouts.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -136,7 +113,11 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
           mainAxisSize: MainAxisSize.max,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStatsSection(),
+            workoutStatsAsync.when(
+              loading: () => const Center(child: Text('Loading stats...')),
+              error: (err, st) => Text('Error loading stats: $err'),
+              data: (stats) => _buildStatsSection(stats, formatDuration),
+            ),
             const SizedBox(height: 24),
             Text(
               'Recent Workouts',
@@ -146,22 +127,20 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            _buildWorkoutList(),
+            _buildWorkoutList(ref, workouts, formatDuration),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatsSection() {
-    int totalWorkouts = _workouts.length;
-    int totalDuration = 0;
-    int totalExercises = 0;
-
-    for (var workout in _workouts) {
-      totalDuration += workout.duration.inSeconds;
-      totalExercises += workout.exercises.length;
-    }
+  Widget _buildStatsSection(
+    Map<String, dynamic> stats,
+    String Function(Duration) formatDuration,
+  ) {
+    int totalWorkouts = stats['total_workouts'] ?? 0;
+    int totalDurationSeconds = stats['total_duration'] ?? 0;
+    int totalExercises = stats['total_exercises_performed'] ?? 0;
 
     return Container(
       width: double.infinity,
@@ -187,7 +166,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
               _buildStatItem('Workouts', totalWorkouts.toString()),
               _buildStatItem(
                 'Time',
-                _formatDuration(Duration(seconds: totalDuration)),
+                formatDuration(Duration(seconds: totalDurationSeconds)),
               ),
               _buildStatItem('Exercises', totalExercises.toString()),
             ],
@@ -218,17 +197,20 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
     );
   }
 
-  Widget _buildWorkoutList() {
+  Widget _buildWorkoutList(
+    WidgetRef ref,
+    List<Workout> workouts,
+    String Function(Duration) formatDuration,
+  ) {
+    final formatDate = ref.watch(formatDateProvider);
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: _workouts.length,
+      itemCount: workouts.length,
       itemBuilder: (context, index) {
-        final workout = _workouts[index];
-        final dateStr =
-            workout.timestamp != null
-                ? DateFormat('MMM d, yyyy').format(workout.timestamp)
-                : 'Unknown date';
+        final workout = workouts[index];
+        final dateStr = formatDate(workout.timestamp);
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
@@ -245,13 +227,17 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        workout.name,
-                        style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: HeronFitTheme.primary,
+                      Expanded(
+                        child: Text(
+                          workout.name,
+                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: HeronFitTheme.primary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         dateStr,
                         style: HeronFitTheme.textTheme.bodySmall?.copyWith(
@@ -262,7 +248,7 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${workout.exercises.length} exercises • ${_formatDuration(workout.duration)}',
+                    '${workout.exercises.length} exercises • ${formatDuration(workout.duration)}',
                     style: HeronFitTheme.textTheme.bodyMedium,
                   ),
                   if (workout.exercises.isNotEmpty) ...[
@@ -271,19 +257,25 @@ class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
-                      runSpacing: 8,
+                      runSpacing: 4,
                       children:
                           workout.exercises
                               .map(
                                 (exercise) => Chip(
-                                  label: Text(exercise),
+                                  label: Text(exercise.name),
                                   backgroundColor: HeronFitTheme.bgLight,
                                   side: BorderSide(
                                     color: HeronFitTheme.primary.withOpacity(
                                       0.2,
                                     ),
                                   ),
-                                  labelStyle: TextStyle(fontSize: 12),
+                                  labelStyle: const TextStyle(fontSize: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                               )
                               .toList(),

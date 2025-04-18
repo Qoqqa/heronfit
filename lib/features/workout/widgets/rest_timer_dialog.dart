@@ -1,15 +1,16 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:heronfit/core/theme.dart';
-import 'package:solar_icons/solar_icons.dart';
+import 'package:solar_icons/solar_icons.dart'; // Ensure SolarIcons are imported
+import 'package:vibration/vibration.dart'; // Import vibration package
 
 class RestTimerDialog extends StatefulWidget {
   final Duration initialDuration;
   final VoidCallback onSkip;
   final VoidCallback onTimerEnd;
   final Function(Duration)? onAdjustDuration; // Optional: To update default
-  final String exerciseName; // Added
-  final int setNumber; // Added
+  final String exerciseName;
+  final int setNumber;
 
   const RestTimerDialog({
     Key? key,
@@ -17,8 +18,8 @@ class RestTimerDialog extends StatefulWidget {
     required this.onSkip,
     required this.onTimerEnd,
     this.onAdjustDuration,
-    required this.exerciseName, // Added
-    required this.setNumber, // Added
+    required this.exerciseName,
+    required this.setNumber,
   }) : super(key: key);
 
   @override
@@ -28,15 +29,33 @@ class RestTimerDialog extends StatefulWidget {
 class _RestTimerDialogState extends State<RestTimerDialog> {
   Timer? _timer;
   late Duration _remainingTime;
-  late Duration
-  _currentSetDuration; // To track adjustments for onAdjustDuration
+  late Duration _currentSetDuration;
+  bool _canVibrate = false; // To store vibration capability
 
   @override
   void initState() {
     super.initState();
     _remainingTime = widget.initialDuration;
     _currentSetDuration = widget.initialDuration;
+    _checkVibrationCapability(); // Check if device can vibrate
     _startTimer();
+  }
+
+  // Check if the device has vibration capabilities
+  Future<void> _checkVibrationCapability() async {
+    bool? hasVibrator = await Vibration.hasVibrator();
+    if (mounted) {
+      setState(() {
+        _canVibrate = hasVibrator ?? false;
+      });
+    }
+  }
+
+  // Helper to vibrate if possible
+  void _vibrate() {
+    if (_canVibrate) {
+      Vibration.vibrate(duration: 200); // Vibrate for 200ms
+    }
   }
 
   @override
@@ -46,7 +65,7 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
   }
 
   void _startTimer() {
-    _timer?.cancel(); // Cancel any existing timer
+    _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
@@ -54,9 +73,10 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
       }
       if (_remainingTime <= Duration.zero) {
         timer.cancel();
+        _vibrate(); // Vibrate when timer ends
         widget.onTimerEnd(); // Notify parent timer ended
         if (mounted) {
-          Navigator.of(context).pop(); // Close dialog automatically
+          Navigator.of(context).pop(); // Auto-close dialog
         }
       } else {
         setState(() {
@@ -70,43 +90,58 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
     final newRemaining = _remainingTime + adjustment;
     final newSetDuration = _currentSetDuration + adjustment;
 
-    if (newRemaining >= Duration.zero) {
-      setState(() {
-        _remainingTime = newRemaining;
-        // Only update _currentSetDuration if the adjustment is valid
-        if (newSetDuration >= const Duration(seconds: 15)) {
-          // Prevent going below 15s?
-          _currentSetDuration = newSetDuration;
-          // Optionally notify parent about the adjusted default duration
-          widget.onAdjustDuration?.call(_currentSetDuration);
-        } else if (adjustment < Duration.zero &&
-            _currentSetDuration > const Duration(seconds: 15)) {
-          // Allow decreasing down to 15s
-          _currentSetDuration = const Duration(seconds: 15);
-          widget.onAdjustDuration?.call(_currentSetDuration);
+    // Ensure remaining time doesn't go below zero visually when adjusting
+    final adjustedRemaining =
+        newRemaining < Duration.zero ? Duration.zero : newRemaining;
+
+    setState(() {
+      _remainingTime = adjustedRemaining;
+
+      // Adjust the base duration for potential future use (onAdjustDuration)
+      if (newSetDuration >= const Duration(seconds: 15)) {
+        _currentSetDuration = newSetDuration;
+        widget.onAdjustDuration?.call(_currentSetDuration);
+      } else if (adjustment < Duration.zero &&
+          _currentSetDuration > const Duration(seconds: 15)) {
+        // Allow decreasing down to 15s
+        _currentSetDuration = const Duration(seconds: 15);
+        widget.onAdjustDuration?.call(_currentSetDuration);
+      }
+
+      // If timer was finished and we add time, restart it
+      if ((_timer == null || !_timer!.isActive) &&
+          _remainingTime > Duration.zero) {
+        _startTimer();
+      }
+      // If adjustment makes it zero or less, ensure timer stops and dialog closes soon
+      else if (_remainingTime <= Duration.zero &&
+          (_timer != null && _timer!.isActive)) {
+        _timer?.cancel(); // Stop timer immediately
+        _vibrate(); // Vibrate when time adjusted to zero or less
+        widget.onTimerEnd(); // Trigger end callback
+        if (mounted) {
+          // Use a short delay to allow UI update before popping
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) Navigator.of(context).pop();
+          });
         }
-      });
-      // Restart timer logic might be needed if the timer was already finished
-      // but for +/- buttons, it's usually adjusted while running.
-    } else {
-      // If adjustment makes it zero or less, treat as skip/end
-      _skipTimer();
-    }
+      }
+    });
   }
 
   void _skipTimer() {
     _timer?.cancel();
-    widget.onSkip(); // Notify parent timer was skipped
+    _vibrate(); // Vibrate when skipped
+    widget.onSkip();
     if (mounted) {
-      Navigator.of(context).pop(); // Close dialog
+      Navigator.of(context).pop();
     }
   }
 
   String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes
-        .remainder(60)
-        .toString()
-        .padLeft(1, '0'); // No need for 2 padding if minutes < 10
+    // Ensure negative durations are displayed as 0:00
+    if (duration.isNegative) return '0:00';
+    final minutes = duration.inMinutes.remainder(60).toString();
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
@@ -114,112 +149,130 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
   @override
   Widget build(BuildContext context) {
     double progress = 1.0;
-    // Ensure initialDuration is not zero to avoid division by zero
-    if (widget.initialDuration.inSeconds > 0) {
-      progress = _remainingTime.inSeconds / widget.initialDuration.inSeconds;
+    // Use _currentSetDuration for progress calculation if it was adjusted
+    final totalDurationSeconds = _currentSetDuration.inSeconds;
+    if (totalDurationSeconds > 0) {
+      progress = _remainingTime.inSeconds / totalDurationSeconds;
     }
-
-    // Prevent progress from going below 0 if timer overshoots slightly
     progress = progress.clamp(0.0, 1.0);
 
-    // Get screen width for potentially responsive sizing
+    // --- Size Calculation (Even Larger, Responsive) ---
     final screenWidth = MediaQuery.of(context).size.width;
-    // Aim for a dialog width that's a significant portion of the screen, but not full width
-    final dialogWidth = screenWidth * 0.85;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Define further increased max dimensions
+    const double maxWidth = 400.0; // Further increased max width
+    const double maxHeight = 600.0; // Further increased max height
+
+    // Calculate actual width based on screen size, capped at max width
+    final double dialogWidth = (screenWidth * 0.9).clamp(0.0, maxWidth);
+
+    // Calculate height based on screen height, capped at max height
+    // Increase percentage slightly
+    final double dialogHeight = (screenHeight * 0.75).clamp(
+      0.0,
+      maxHeight,
+    ); // Use 75% of screen height, capped
+
     // Make the timer circle size relative to the dialog width
-    final timerSize = dialogWidth * 0.6;
+    final timerSize = dialogWidth * 0.65; // Keep proportion relative to width
 
     return AlertDialog(
       backgroundColor: HeronFitTheme.bgLight,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24.0),
-      ), // Even larger radius
-      contentPadding: const EdgeInsets.symmetric(
-        vertical: 32.0,
-        horizontal: 24.0,
-      ),
-      // Constrain the width of the dialog
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24.0)),
+      contentPadding: EdgeInsets.zero, // Remove default padding
       insetPadding: EdgeInsets.symmetric(
         horizontal: (screenWidth - dialogWidth) / 2,
-        vertical: 24.0,
+        vertical: (screenHeight - dialogHeight) / 2, // Center vertically
       ),
-      content: SizedBox(
-        width: dialogWidth, // Apply the calculated width
+      content: Container(
+        // Use Container for padding and constraints
+        width: dialogWidth,
+        height: dialogHeight,
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 20.0),
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Keep height determined by content
+          mainAxisAlignment:
+              MainAxisAlignment.spaceBetween, // Space elements vertically
           children: [
-            Text(
-              'Rest Timer',
-              style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-                color: HeronFitTheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+            // --- Title and Subtitle ---
+            Column(
+              children: [
+                Text(
+                  'Rest Timer',
+                  style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+                    color: HeronFitTheme.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${widget.exerciseName} - Set ${widget.setNumber}',
+                  textAlign: TextAlign.center,
+                  style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                    color: HeronFitTheme.textMuted,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              '${widget.exerciseName} - Set ${widget.setNumber}',
-              textAlign: TextAlign.center,
-              style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                color: HeronFitTheme.textMuted,
-              ),
-            ),
-            const SizedBox(height: 36),
+
+            // --- Circular Timer ---
             SizedBox(
-              width: timerSize, // Use calculated size
-              height: timerSize, // Use calculated size
+              width: timerSize,
+              height: timerSize,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   CircularProgressIndicator(
                     value: progress,
-                    strokeWidth: 14, // Slightly thicker stroke
+                    strokeWidth: 16, // Thicker stroke
                     backgroundColor: HeronFitTheme.primary.withOpacity(0.15),
                     valueColor: AlwaysStoppedAnimation<Color>(
                       HeronFitTheme.primary,
                     ),
-                    strokeCap: StrokeCap.round,
+                    strokeCap: StrokeCap.round, // Round ends
                   ),
                   Center(
                     child: Text(
                       _formatDuration(_remainingTime),
-                      // Adjust text style based on size if needed, displayMedium might be too large
                       style: HeronFitTheme.textTheme.displaySmall?.copyWith(
                         color: HeronFitTheme.textPrimary,
                         fontWeight: FontWeight.bold,
+                        fontSize:
+                            timerSize * 0.3, // Slightly larger scaled font size
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+
+            // --- Adjustment Buttons ---
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildAdjustButton(
-                  SolarIconsBold.minusSquare,
+                  SolarIconsBold.minusSquare, // Use SolarIcons
                   const Duration(seconds: -15),
                 ),
                 const SizedBox(width: 24), // Increased spacing
                 _buildAdjustButton(
-                  SolarIconsBold.addSquare,
+                  SolarIconsBold.addSquare, // Use SolarIcons
                   const Duration(seconds: 15),
                 ),
               ],
             ),
-            const SizedBox(height: 32), // Increased spacing
-            // Change to ElevatedButton for background color
+
+            // --- Skip Button ---
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: HeronFitTheme.error, // Red background
-                foregroundColor: Colors.white, // White text
-                minimumSize: const Size(150, 48), // Ensure decent button size
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 100,
-                  vertical: 12,
-                ),
+                backgroundColor: HeronFitTheme.error,
+                foregroundColor: Colors.white,
+                minimumSize: Size(dialogWidth * 0.7, 48), // Relative width
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0), // Rounded corners
+                  borderRadius: BorderRadius.circular(12.0),
                 ),
                 textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
@@ -238,11 +291,10 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
   Widget _buildAdjustButton(IconData icon, Duration adjustment) {
     return IconButton(
       icon: Icon(icon),
-      iconSize: 48, // Increased icon size
+      iconSize: 52, // Larger icon size
       color: HeronFitTheme.primary,
-      padding: EdgeInsets.zero, // Remove default padding if needed
-      constraints:
-          const BoxConstraints(), // Remove default constraints if needed
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(),
       onPressed: () => _adjustTime(adjustment),
     );
   }

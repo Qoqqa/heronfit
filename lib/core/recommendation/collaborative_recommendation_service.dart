@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:uuid/uuid.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/workout/models/workout_model.dart';
+import '../../features/workout/models/exercise_model.dart'; // Import Exercise model
 import 'base_recommendation_service.dart';
 import '../services/exercise_database_service.dart';
 import 'content_based_recommendation_service.dart';
@@ -101,8 +102,9 @@ class CollaborativeRecommendationService extends BaseRecommendationService {
 
       for (var workout in similarUsersWorkouts) {
         // Check if user hasn't done this workout
-        final workoutExercises = (workout['exercises'] as List).cast<String>();
-        final workoutExerciseSet = Set<String>.from(workoutExercises);
+        final workoutExercisesNames =
+            (workout['exercises'] as List).cast<String>();
+        final workoutExerciseSet = Set<String>.from(workoutExercisesNames);
 
         // Skip if user has done many of these exercises together (similarity > 0.7)
         bool isTooSimilar = false;
@@ -116,11 +118,15 @@ class CollaborativeRecommendationService extends BaseRecommendationService {
 
         if (isTooSimilar) continue;
 
+        // Fetch Exercise objects based on names
+        final List<Exercise> workoutExercises = await _exerciseService
+            .getExercisesByNames(workoutExercisesNames);
+
         // Create workout recommendation from similar user's workout
         final recommendedWorkout = Workout(
           id: const Uuid().v4(), // New ID for recommendation
           name: workout['name'] as String,
-          exercises: workoutExercises,
+          exercises: workoutExercises, // Pass List<Exercise>
           duration: Duration(seconds: workout['duration'] as int),
           timestamp: DateTime.now(),
         );
@@ -143,7 +149,6 @@ class CollaborativeRecommendationService extends BaseRecommendationService {
 
       return recommendations;
     } catch (e) {
-      print('Error generating collaborative recommendations: $e');
       return _fallbackService.getRecommendations(userId, count: count);
     }
   }

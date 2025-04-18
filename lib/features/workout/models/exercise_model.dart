@@ -126,6 +126,29 @@ class Exercise {
     return ''; // Return empty string and handle in the UI
   }
 
+  // Add toJson method
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'force': force,
+      'level': level,
+      'mechanic': mechanic,
+      'equipment': equipment,
+      // Supabase expects JSONB arrays, but for local storage, simple lists are fine.
+      // If saving directly to Supabase JSON column elsewhere, adjust accordingly.
+      'primaryMuscles': [primaryMuscle], // Store as list for consistency
+      'secondaryMuscles': secondaryMuscles,
+      'instructions': instructions,
+      'category': category,
+      // Store only the relative image path, reconstruct full URL on load if needed
+      'images': [imageUrl.replaceFirst(_imageBaseUrl, '')],
+      // Note: Sets are typically part of workout history, not the base exercise definition.
+      // If you need to store default sets with the exercise template, include them here.
+      // 'sets': sets.map((s) => s.toJson()).toList(), // Uncomment if needed
+    };
+  }
+
   // Add copyWith method
   Exercise copyWith({
     String? id,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/core/services/workout_storage_service.dart'; // Assuming this exists
 import 'package:heronfit/core/services/workout_recommendation_service.dart'; // Assuming this exists
+import 'package:heronfit/core/services/workout_supabase_service.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/set_data_model.dart'; // Import SetData
@@ -17,6 +18,58 @@ final workoutStorageServiceProvider = Provider(
 final workoutRecommendationServiceProvider = Provider(
   (ref) => WorkoutRecommendationService(),
 );
+
+// Provider for the WorkoutSupabaseService instance
+final workoutServiceProvider = Provider<WorkoutSupabaseService>((ref) {
+  return WorkoutSupabaseService();
+});
+
+// FutureProvider to fetch the workout history list
+final workoutHistoryProvider = FutureProvider<List<Workout>>((ref) async {
+  final workoutService = ref.watch(workoutServiceProvider);
+  return await workoutService.getWorkoutHistory();
+});
+
+// FutureProvider to fetch workout statistics
+final workoutStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+  final workoutService = ref.watch(workoutServiceProvider);
+  return await workoutService.getWorkoutStats();
+});
+
+// Provider for formatting duration (can be kept simple or moved to utils)
+final formatDurationProvider = Provider<String Function(Duration)>((ref) {
+  return (Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    final seconds = duration.inSeconds.remainder(60);
+
+    if (hours > 0) {
+      return '${hours}h ${minutes}m';
+    } else if (minutes > 0) {
+      return '${minutes}m ${seconds}s';
+    } else {
+      return '${seconds}s';
+    }
+  };
+});
+
+// Provider for formatting date (can be kept simple or moved to utils)
+final formatDateProvider = Provider<String Function(DateTime)>((ref) {
+  return (DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    if (dateOnly == today) {
+      return 'Today';
+    } else if (dateOnly == today.subtract(const Duration(days: 1))) {
+      return 'Yesterday';
+    } else {
+      // Consider using intl package for more robust formatting
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  };
+});
 
 // Provider to fetch saved workout templates
 final savedWorkoutsProvider = FutureProvider<List<Workout>>((ref) async {
@@ -74,7 +127,6 @@ final recommendedWorkoutsByCategoryProvider =
 class ActiveWorkoutState {
   final String id;
   final String name;
-  final String notes;
   final List<Exercise> exercises; // Exercise should contain its sets
   final Duration duration;
   final bool isTimerRunning;
@@ -83,7 +135,6 @@ class ActiveWorkoutState {
   const ActiveWorkoutState({
     required this.id,
     this.name = 'New Workout',
-    this.notes = '',
     this.exercises = const [],
     this.duration = Duration.zero,
     this.isTimerRunning = false,
@@ -93,7 +144,6 @@ class ActiveWorkoutState {
   ActiveWorkoutState copyWith({
     String? id,
     String? name,
-    String? notes,
     List<Exercise>? exercises,
     Duration? duration,
     bool? isTimerRunning,
@@ -104,7 +154,6 @@ class ActiveWorkoutState {
     return ActiveWorkoutState(
       id: id ?? this.id,
       name: name ?? this.name,
-      notes: notes ?? this.notes,
       exercises: exercises ?? this.exercises,
       duration: duration ?? this.duration,
       isTimerRunning: isTimerRunning ?? this.isTimerRunning,
@@ -122,48 +171,26 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
   ActiveWorkoutNotifier(this._ref, Workout? initialWorkout)
     : super(
         ActiveWorkoutState(
-          // Use a new UniqueKey for the active session ID, not the template ID
-          id: const Uuid().v4(), // Use UUID for active session ID
+          id: const Uuid().v4(),
           name: initialWorkout?.name ?? 'New Workout',
+          // Correctly map Exercise objects, ensuring sets are initialized
           exercises:
-              initialWorkout?.exercises.map((exName) {
-                // TODO: Fetch full Exercise details from a repository/service based on exName
-                // For now, creating a basic Exercise object
-                return Exercise(
-                  id:
-                      const Uuid()
-                          .v4(), // Each exercise instance needs a unique ID
-                  name: exName,
-                  // Initialize other fields as needed, potentially from fetched data
-                  force: '',
-                  level: '',
-                  equipment: '',
-                  primaryMuscle: '',
-                  secondaryMuscles: [],
-                  instructions: [],
-                  category: '',
-                  imageUrl: '',
-                  sets: [], // Start with empty sets for a new session
-                );
+              initialWorkout?.exercises.map((ex) {
+                // Create a new Exercise instance, copying details and initializing sets
+                return ex.copyWith(
+                  sets: [],
+                ); // Start with empty sets for a new session
               }).toList() ??
               [],
-          // Reset duration when starting from a template or new
           duration: Duration.zero,
-          originalWorkout: initialWorkout, // Keep reference to the template
+          originalWorkout: initialWorkout,
         ),
       ) {
-    // Always start the timer when the notifier is created (new workout or from template)
     startTimer();
-    // The logic to set duration from initialWorkout is removed
-    // as we always want to start fresh.
   }
 
   void setWorkoutName(String name) {
     state = state.copyWith(name: name);
-  }
-
-  void setWorkoutNotes(String notes) {
-    state = state.copyWith(notes: notes);
   }
 
   void addExercise(Exercise exercise) {
@@ -180,7 +207,7 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     final updatedExercises =
         state.exercises.map((e) {
           if (e.id == exercise.id) {
-            // Use the default rest timer duration from SetData
+            // Removed rest timer duration logic
             final newSet = SetData(kg: 0, reps: 0, completed: false);
             return e.copyWith(sets: [...e.sets, newSet]);
           }
@@ -196,7 +223,6 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     int? kg,
     int? reps,
     bool? completed,
-    Duration? restTimerDuration,
   }) {
     final updatedExercises =
         state.exercises.map((e) {
@@ -208,8 +234,6 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
                 kg: kg ?? currentSet.kg,
                 reps: reps ?? currentSet.reps,
                 completed: completed ?? currentSet.completed,
-                restTimerDuration:
-                    restTimerDuration ?? currentSet.restTimerDuration,
               );
             }
             return e.copyWith(sets: updatedSets);
@@ -253,38 +277,46 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
   Future<Workout?> finishWorkout() async {
     stopTimer();
 
-    // Filter exercises to include only those with at least one completed set
     final exercisesWithCompletedSets =
         state.exercises
             .where((ex) => ex.sets.any((set) => set.completed))
+            // Create new Exercise instances with only the completed sets for saving history
+            .map(
+              (ex) => ex.copyWith(
+                sets: ex.sets.where((set) => set.completed).toList(),
+              ),
+            )
             .toList();
 
-    // If no exercises have completed sets, maybe return null or handle differently?
-    // For now, we proceed but the saved workout might have an empty exercise list if nothing was completed.
+    if (exercisesWithCompletedSets.isEmpty) {
+      debugPrint('No exercises with completed sets found. Workout not saved.');
+      return null; // Don't save if nothing was completed
+    }
 
     final workoutToSave = Workout(
-      id: state.id, // Use the active session ID
+      id: state.id,
       name: state.name,
-      notes: state.notes,
-      // Save only exercises that were actually performed (had completed sets)
-      exercises: exercisesWithCompletedSets.map((e) => e.name).toList(),
+      // Save the List<Exercise> with their completed sets
+      exercises: exercisesWithCompletedSets,
       duration: state.duration,
-      createdAt:
-          DateTime.now(), // Timestamp for when the workout record was created
-      timestamp: DateTime.now(), // Timestamp for when the workout session ended
-      // TODO: Consider saving detailed set data (kg, reps, completed) associated with the workout history entry
-      // This would likely involve creating a new table like 'workout_history_details'
+      createdAt: DateTime.now(),
+      timestamp: DateTime.now(),
     );
 
     try {
-      // TODO: Differentiate between saving a workout *history* entry vs. saving/updating a *template*
-      // This might need a different service method, e.g., saveWorkoutHistory()
-      await _ref.read(workoutStorageServiceProvider).saveWorkout(workoutToSave);
-      debugPrint('Workout Finished and Saved: ${workoutToSave.name}');
-      return workoutToSave; // Return the saved workout session data
+      // Use the Supabase service provider to save workout history
+      await _ref.read(workoutServiceProvider).saveWorkout(workoutToSave);
+      debugPrint(
+        'Workout Finished and Saved to Supabase: ${workoutToSave.name}',
+      );
+      // Invalidate providers to refresh history/stats
+      _ref.invalidate(workoutHistoryProvider);
+      _ref.invalidate(workoutStatsProvider);
+      return workoutToSave;
     } catch (e) {
-      debugPrint('Error saving workout: $e');
-      return null; // Return null on error
+      debugPrint('Error saving workout to Supabase: $e');
+      // Consider showing an error message to the user
+      return null;
     }
   }
 

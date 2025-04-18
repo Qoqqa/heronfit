@@ -1,29 +1,36 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/workout_model.dart';
-import '../../../core/services/workout_storage_service.dart';
+import '../../../core/services/workout_supabase_service.dart';
 import '../models/workout_complete_model.dart';
+import 'workout_providers.dart';
 
 class WorkoutCompleteController {
   final WorkoutCompleteModel model;
-  final WorkoutStorageService _storageService = WorkoutStorageService();
+  final WorkoutSupabaseService _supabaseService;
 
-  WorkoutCompleteController(this.model);
+  WorkoutCompleteController(this.model, this._supabaseService);
 
-  // Add these getters to access model properties
   String get workoutName => model.workoutName;
   DateTime get startTime => model.startTime;
   Duration get workoutDuration => model.workoutDuration;
 
-  Future<void> saveWorkout() async {
+  Future<void> saveWorkout(WidgetRef ref) async {
     final workout = Workout(
-      id: const Uuid().v4(),
+      id: const Uuid().v4(), // Placeholder ID
       name: model.workoutName,
-      exercises: model.exercises,
+      exercises: model.exercises, // Pass List<Exercise>
       duration: model.endTime.difference(model.startTime),
       timestamp: model.endTime,
     );
 
-    await _storageService.saveWorkout(workout);
+    try {
+      await _supabaseService.saveWorkout(workout);
+      ref.invalidate(workoutHistoryProvider);
+      ref.invalidate(workoutStatsProvider);
+    } catch (e) {
+      rethrow;
+    }
   }
 
   String getWorkoutDuration() {

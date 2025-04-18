@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:uuid/uuid.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/workout/models/workout_model.dart';
 import 'base_recommendation_service.dart';
 import '../services/exercise_database_service.dart';
@@ -74,20 +73,28 @@ class RandomRecommendationService extends BaseRecommendationService {
     for (int i = 0; i < min(count, _workoutCategories.length); i++) {
       final category = categories[i];
       final names = _workoutNames[category] ?? ['Workout'];
-      final workoutName = '${names[_random.nextInt(names.length)]}';
+      final workoutName =
+          names[_random.nextInt(
+            names.length,
+          )]; // Removed unnecessary interpolation
 
-      // Get 4-6 exercises for this workout
+      // Get 4-6 exercise names for this workout
       final exerciseCount = _random.nextInt(3) + 4; // 4 to 6 exercises
-      final exercises = await _exerciseService.getRandomExercisesByCategory(
+      final exerciseNames = await _exerciseService.getRandomExercisesByCategory(
         category,
         exerciseCount,
+      );
+
+      // Fetch Exercise objects based on names
+      final exercises = await _exerciseService.getExercisesByNames(
+        exerciseNames,
       );
 
       // Create a workout with a random duration between 30-60 minutes
       final workout = Workout(
         id: const Uuid().v4(),
         name: workoutName,
-        exercises: exercises,
+        exercises: exercises, // Pass List<Exercise>
         duration: Duration(minutes: 30 + _random.nextInt(31)),
         timestamp: DateTime.now(),
       );

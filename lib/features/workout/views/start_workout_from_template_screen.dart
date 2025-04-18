@@ -72,11 +72,11 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                         //     ?.copyWith(color: HeronFitTheme.textMuted),
                         hintText: 'Enter workout name',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted.withOpacity(0.7),
+                          color: HeronFitTheme.textMuted.withAlpha(179),
                         ),
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.textMuted.withOpacity(0.5),
+                            color: HeronFitTheme.textMuted.withAlpha(128),
                             width: 1.0,
                           ),
                         ),
@@ -137,20 +137,13 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
                       },
-                      onUpdateSetData: (
-                        setIndex, {
-                        kg,
-                        reps,
-                        completed,
-                        restTimerDuration,
-                      }) {
+                      onUpdateSetData: (setIndex, {kg, reps, completed}) {
                         workoutNotifier.updateSetData(
                           exercise,
                           setIndex,
                           kg: kg,
                           reps: reps,
                           completed: completed,
-                          restTimerDuration: restTimerDuration,
                         );
                       },
                       onRemoveSet: (setIndex) {
