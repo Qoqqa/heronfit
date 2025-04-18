@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:solar_icons/solar_icons.dart'; // Ensure SolarIcons are imported
+import 'package:vibration/vibration.dart'; // Import vibration package
 
 class RestTimerDialog extends StatefulWidget {
   final Duration initialDuration;
@@ -29,13 +30,32 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
   Timer? _timer;
   late Duration _remainingTime;
   late Duration _currentSetDuration;
+  bool _canVibrate = false; // To store vibration capability
 
   @override
   void initState() {
     super.initState();
     _remainingTime = widget.initialDuration;
     _currentSetDuration = widget.initialDuration;
+    _checkVibrationCapability(); // Check if device can vibrate
     _startTimer();
+  }
+
+  // Check if the device has vibration capabilities
+  Future<void> _checkVibrationCapability() async {
+    bool? hasVibrator = await Vibration.hasVibrator();
+    if (mounted) {
+      setState(() {
+        _canVibrate = hasVibrator ?? false;
+      });
+    }
+  }
+
+  // Helper to vibrate if possible
+  void _vibrate() {
+    if (_canVibrate) {
+      Vibration.vibrate(duration: 200); // Vibrate for 200ms
+    }
   }
 
   @override
@@ -53,6 +73,7 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
       }
       if (_remainingTime <= Duration.zero) {
         timer.cancel();
+        _vibrate(); // Vibrate when timer ends
         widget.onTimerEnd(); // Notify parent timer ended
         if (mounted) {
           Navigator.of(context).pop(); // Auto-close dialog
@@ -96,6 +117,7 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
       else if (_remainingTime <= Duration.zero &&
           (_timer != null && _timer!.isActive)) {
         _timer?.cancel(); // Stop timer immediately
+        _vibrate(); // Vibrate when time adjusted to zero or less
         widget.onTimerEnd(); // Trigger end callback
         if (mounted) {
           // Use a short delay to allow UI update before popping
@@ -109,6 +131,7 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
 
   void _skipTimer() {
     _timer?.cancel();
+    _vibrate(); // Vibrate when skipped
     widget.onSkip();
     if (mounted) {
       Navigator.of(context).pop();
