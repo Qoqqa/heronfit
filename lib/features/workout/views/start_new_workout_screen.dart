@@ -9,9 +9,9 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
 
-class StartNewWorkoutWidget extends ConsumerWidget {
+class StartNewWorkoutScreen extends ConsumerWidget {
   final Workout? initialWorkout;
-  const StartNewWorkoutWidget({super.key, this.initialWorkout});
+  const StartNewWorkoutScreen({super.key, this.initialWorkout});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -6,16 +6,16 @@ import 'package:solar_icons/solar_icons.dart'; // Add this import
 import '../../../core/theme.dart';
 import '../../../core/services/workout_storage_service.dart';
 
-class WorkoutHistoryWidget extends StatefulWidget {
-  const WorkoutHistoryWidget({super.key});
+class WorkoutHistoryScreen extends StatefulWidget {
+  const WorkoutHistoryScreen({super.key});
 
   static String routePath = '/workoutHistory';
 
   @override
-  State<WorkoutHistoryWidget> createState() => _WorkoutHistoryWidgetState();
+  State<WorkoutHistoryScreen> createState() => _WorkoutHistoryScreenState();
 }
 
-class _WorkoutHistoryWidgetState extends State<WorkoutHistoryWidget> {
+class _WorkoutHistoryScreenState extends State<WorkoutHistoryScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final WorkoutStorageService _storageService = WorkoutStorageService();
   List<Workout> _workouts = [];

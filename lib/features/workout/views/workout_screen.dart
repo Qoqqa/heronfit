@@ -8,8 +8,8 @@ import 'package:heronfit/core/router/app_routes.dart';
 
 import '../../../core/theme.dart';
 
-class WorkoutWidget extends ConsumerWidget {
-  const WorkoutWidget({super.key});
+class WorkoutScreen extends ConsumerWidget {
+  const WorkoutScreen({super.key});
 
   static String routePath = AppRoutes.workout;
 

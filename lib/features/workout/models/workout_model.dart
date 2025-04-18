@@ -1,21 +1,5 @@
-import '../../../../core/utils/model_utils.dart';
-import 'dart:ui';
-import '../views/workout_widget.dart' show WorkoutWidget;
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'dart:convert';
-
-class WorkoutModel {
-  final WorkoutWidget widget;
-
-  WorkoutModel(this.widget);
-
-  void initState(BuildContext context) {}
-
-  void dispose() {}
-}
 
 class Workout {
   final String id;
@@ -35,7 +19,7 @@ class Workout {
     required this.duration,
     DateTime? timestamp,
     this.createdAt, // Add to constructor
-  }) : this.timestamp = timestamp ?? DateTime.now();
+  }) : timestamp = timestamp ?? DateTime.now();
 
   factory Workout.fromJson(Map<String, dynamic> json) {
     return Workout(
@@ -83,17 +67,4 @@ class Workout {
   }
 }
 
-void testWorkoutSerialization() {
-  final workout = Workout(
-    id: '1',
-    name: 'Test Workout',
-    exercises: ['Push-ups', 'Squats'],
-    duration: Duration(minutes: 30),
-  );
-
-  final json = workout.toJson();
-  print('Serialized workout: $json'); // Debug log
-
-  final deserializedWorkout = Workout.fromJson(json);
-  print('Deserialized workout: $deserializedWorkout'); // Debug log
-}
+void testWorkoutSerialization() {}

@@ -8,14 +8,14 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import 'package:solar_icons/solar_icons.dart'; // Add this import
 
-class WorkoutCompleteWidget extends StatefulWidget {
+class WorkoutCompleteScreen extends StatefulWidget {
   final String workoutId;
   final DateTime startTime;
   final DateTime endTime;
   final String workoutName;
   final List<String> exercises;
 
-  const WorkoutCompleteWidget({
+  const WorkoutCompleteScreen({
     Key? key,
     required this.workoutId,
     required this.startTime,
@@ -27,10 +27,10 @@ class WorkoutCompleteWidget extends StatefulWidget {
   static String routePath = '/workoutComplete';
 
   @override
-  WorkoutCompleteWidgetState createState() => WorkoutCompleteWidgetState();
+  WorkoutCompleteScreenState createState() => WorkoutCompleteScreenState();
 }
 
-class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
+class WorkoutCompleteScreenState extends State<WorkoutCompleteScreen> {
   late WorkoutCompleteController _controller;
 
   @override

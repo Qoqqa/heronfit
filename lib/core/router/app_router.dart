@@ -10,18 +10,18 @@ import 'package:heronfit/features/auth/views/register_verification.dart';
 import 'package:heronfit/features/home/views/home_screen.dart';
 import 'package:heronfit/features/profile/views/profile_screen.dart';
 import 'package:heronfit/features/profile/views/edit_profile.dart';
-import 'package:heronfit/features/workout/views/workout_history_widget.dart';
+import 'package:heronfit/features/workout/views/workout_history_screen.dart'; // Added import
 import 'package:heronfit/features/profile/views/contactUs_screen.dart';
 import 'package:heronfit/features/profile/views/privacyPolicy_screen.dart';
 import 'package:heronfit/features/profile/views/termsOfUse_screen.dart';
 import 'package:heronfit/features/booking/views/my_bookings.dart';
 import 'package:heronfit/features/booking/views/booking_screen.dart';
-import 'package:heronfit/features/workout/views/workout_widget.dart';
+import 'package:heronfit/features/workout/views/workout_screen.dart'; // Added import
 import 'package:heronfit/features/workout/models/workout_model.dart';
-import 'package:heronfit/features/workout/views/workout_complete_widget.dart';
-import 'package:heronfit/features/workout/views/add_exercise_screen.dart';
-import 'package:heronfit/features/workout/views/start_new_workout_widget.dart';
-import 'package:heronfit/features/workout/views/start_workout_from_template.dart';
+import 'package:heronfit/features/workout/views/workout_complete_screen.dart'; // Added import
+import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Corrected import path
+import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
+import 'package:heronfit/features/workout/views/start_workout_from_template_screen.dart'; // Added import
 import 'package:heronfit/features/progress/views/progress_screen.dart';
 import 'package:heronfit/features/progress/views/edit_goals.dart';
 import 'package:heronfit/features/progress/views/update_weight.dart';
@@ -79,18 +79,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.workoutStartNew,
-        builder: (context, state) => const StartNewWorkoutWidget(),
+        builder: (context, state) => const StartNewWorkoutScreen(),
       ),
       GoRoute(
         path: AppRoutes.workoutStartFromTemplate,
         builder: (context, state) {
-          final workout = state.extra as Workout?;
-          if (workout != null) {
-            return StartWorkoutFromTemplate(workout: workout);
-          }
-          return const Scaffold(
-            body: Center(child: Text("Workout data missing")),
-          );
+          final template = state.extra as Workout?;
+          return StartWorkoutFromTemplateScreen(workout: template!);
         },
       ),
       GoRoute(
@@ -100,13 +95,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.workoutComplete,
         builder: (context, state) {
-          final args = state.extra as Map<String, dynamic>? ?? {};
-          return WorkoutCompleteWidget(
-            workoutId: args['workoutId'] as String? ?? 'unknown_id',
-            startTime: args['startTime'] as DateTime? ?? DateTime.now(),
-            endTime: args['endTime'] as DateTime? ?? DateTime.now(),
-            workoutName: args['workoutName'] as String? ?? 'Unnamed Workout',
-            exercises: List<String>.from(args['exercises'] as List? ?? []),
+          final workout = state.extra as Workout?;
+          if (workout == null) {
+            return Scaffold(
+              body: Center(child: Text('Error: Workout data missing.')),
+            );
+          }
+          final startTime = workout.timestamp;
+          final endTime = workout.timestamp.add(workout.duration);
+          return WorkoutCompleteScreen(
+            workoutId: workout.id,
+            startTime: startTime,
+            endTime: endTime,
+            workoutName: workout.name,
+            exercises: workout.exercises,
           );
         },
       ),
@@ -132,7 +134,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.profileHistory,
-        builder: (context, state) => const WorkoutHistoryWidget(),
+        builder: (context, state) => const WorkoutHistoryScreen(),
       ),
       GoRoute(
         path: AppRoutes.profileContact,
@@ -167,9 +169,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.workout,
-            builder: (context, state) {
-              return const WorkoutWidget();
-            },
+            builder: (context, state) => const WorkoutScreen(),
           ),
           GoRoute(
             path: AppRoutes.progress,

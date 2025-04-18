@@ -10,11 +10,11 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart'; // Add this import
 
 // Convert to ConsumerWidget
-class StartWorkoutFromTemplate extends ConsumerWidget {
+class StartWorkoutFromTemplateScreen extends ConsumerWidget {
   final Workout workout;
 
   // Use super parameters
-  const StartWorkoutFromTemplate({super.key, required this.workout});
+  const StartWorkoutFromTemplateScreen({super.key, required this.workout});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
