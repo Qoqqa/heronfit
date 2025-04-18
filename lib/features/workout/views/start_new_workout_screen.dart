@@ -138,10 +138,33 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final exercise = workoutState.exercises[index];
                     return ExerciseCard(
+                      key: ValueKey(
+                        exercise.id,
+                      ), // Add key for state preservation
                       exercise: exercise,
                       workoutId: workoutState.id,
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
+                      },
+                      // Pass callbacks to update set data via the notifier
+                      onUpdateSetData: (
+                        setIndex, {
+                        kg,
+                        reps,
+                        completed,
+                        restTimerDuration,
+                      }) {
+                        workoutNotifier.updateSetData(
+                          exercise,
+                          setIndex,
+                          kg: kg,
+                          reps: reps,
+                          completed: completed,
+                          restTimerDuration: restTimerDuration,
+                        );
+                      },
+                      onRemoveSet: (setIndex) {
+                        workoutNotifier.removeSet(exercise, setIndex);
                       },
                     );
                   },
@@ -181,8 +204,15 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         // Call finishWorkout and get the completed workout object
                         final completedWorkout =
                             await workoutNotifier.finishWorkout();
-                        // Get the detailed exercises from the state *before* navigating
-                        final detailedExercises = workoutState.exercises;
+
+                        // Get the detailed exercises *with updated set data* from the state
+                        // We need the state *after* finishWorkout potentially modifies it or just before saving
+                        // Reading the state again ensures we have the latest set data including 'completed' status
+                        final finalWorkoutState = ref.read(
+                          activeWorkoutProvider(initialWorkout),
+                        );
+                        final detailedExercises = finalWorkoutState.exercises;
+
                         if (!context.mounted) return;
 
                         // Check if the workout was finished successfully
@@ -192,6 +222,7 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                             AppRoutes.workoutComplete,
                             extra: {
                               'workout': completedWorkout,
+                              // Pass the exercises list which contains the detailed set data
                               'detailedExercises': detailedExercises,
                             },
                           );

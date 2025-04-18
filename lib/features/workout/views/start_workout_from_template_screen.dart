@@ -136,10 +136,30 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final exercise = workoutState.exercises[index];
                     return ExerciseCard(
+                      key: ValueKey(exercise.id),
                       exercise: exercise,
                       workoutId: workoutState.id,
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
+                      },
+                      onUpdateSetData: (
+                        setIndex, {
+                        kg,
+                        reps,
+                        completed,
+                        restTimerDuration,
+                      }) {
+                        workoutNotifier.updateSetData(
+                          exercise,
+                          setIndex,
+                          kg: kg,
+                          reps: reps,
+                          completed: completed,
+                          restTimerDuration: restTimerDuration,
+                        );
+                      },
+                      onRemoveSet: (setIndex) {
+                        workoutNotifier.removeSet(exercise, setIndex);
                       },
                     );
                   },
