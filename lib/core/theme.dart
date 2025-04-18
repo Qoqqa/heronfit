@@ -37,12 +37,22 @@ class HeronFitTheme {
   static const Color textDark = Color(0xFF040316);
   static const Color textPrimary = Color(0xFF2C2B3B);
   static const Color textSecondary = Color(0xFF545461);
+  static const Color textWhite = Colors.white;
   static const Color textMuted = Color(0xFF737285);
   static const Color success = Color(0xFF81C784);
   static const Color error = Color(0xFFE57373);
   static const Color warning = Color(0xFFFFB74D);
   static const Color info = Color(0xFF4FC3F7);
   static const Color dropShadow = Colors.black26;
+
+  // Define reusable card shadow based on the progress screen style
+  static final List<BoxShadow> cardShadow = [
+    BoxShadow(
+      blurRadius: 40,
+      color: Colors.black.withOpacity(0.1), // 10% opacity black
+      offset: const Offset(0, 10),
+    ),
+  ];
 
   // ✅ Typography (Material Design 3)
   static final TextTheme textTheme = TextTheme(

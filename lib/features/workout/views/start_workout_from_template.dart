@@ -1,84 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:heronfit/widgets/exercise_card_widget.dart';
-import 'package:heronfit/features/workout/controllers/start_new_workout_controller.dart';
-import 'package:heronfit/features/workout/views/add_exercise_screen.dart';
+import 'package:heronfit/features/workout/controllers/workout_providers.dart'; // Import providers
 import 'package:heronfit/core/theme.dart';
-import 'package:heronfit/features/workout/models/set_data_model.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
+import 'package:solar_icons/solar_icons.dart'; // Add this import
 
-class StartWorkoutFromTemplate extends StatefulWidget {
+// Convert to ConsumerWidget
+class StartWorkoutFromTemplate extends ConsumerWidget {
   final Workout workout;
 
-  const StartWorkoutFromTemplate({Key? key, required this.workout})
-    : super(key: key);
+  // Use super parameters
+  const StartWorkoutFromTemplate({super.key, required this.workout});
 
   @override
-  _StartWorkoutFromTemplateState createState() =>
-      _StartWorkoutFromTemplateState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the active workout state, passing the initial template
+    final workoutState = ref.watch(activeWorkoutProvider(workout));
+    // Get the notifier
+    final workoutNotifier = ref.read(activeWorkoutProvider(workout).notifier);
 
-class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
-  late StartNewWorkoutController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = StartNewWorkoutController(workout: widget.workout);
-
-    // Preload exercises and initialize their sets separately
-    _controller.exercises =
-        widget.workout.exercises
-            .map(
-              (exerciseName) => Exercise(
-                id: '', // Provide a default or unique ID if necessary
-                name: exerciseName,
-                force: '', // Provide default values for other required fields
-                level: '',
-                mechanic: null,
-                equipment: '',
-                primaryMuscle: '',
-                secondaryMuscles: [],
-                instructions: [],
-                category: '',
-                imageUrl: '',
-              ),
-            )
-            .toList();
-
-    // Initialize the sets for each exercise
-    for (var exercise in _controller.exercises) {
-      exercise.sets = []; // Initialize with an empty list of SetData
-    }
-
-    _controller.startTimer(); // Start the timer for the workout
-  }
-
-  @override
-  void dispose() {
-    _controller.stopTimer(); // Stop the timer when the widget is disposed
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
-        automaticallyImplyLeading: false, // Disable default back button
+        backgroundColor: Colors.transparent, // Set to transparent
+        automaticallyImplyLeading: false,
         leading: IconButton(
           icon: Icon(
-            Icons.chevron_left,
-            color: HeronFitTheme.primary, // Use the primary color
+            SolarIconsOutline.altArrowLeft, // Use SolarIcons
+            color: HeronFitTheme.primary,
           ),
           onPressed: () {
-            Navigator.pop(context); // Navigate back
+            workoutNotifier.cancelWorkout(); // Use notifier
+            context.pop();
           },
         ),
         title: Text(
-          widget.workout.name,
+          workoutState.name, // Use state for title
           style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
+            color: HeronFitTheme.primary, // Use primary color
+            fontSize: 20.0, // Set font size to 20
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -91,24 +54,30 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    'Duration: ${_formatDuration(workoutState.duration)}',
+                    style: HeronFitTheme.textTheme.bodyMedium,
+                  ),
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
-                  itemCount: _controller.exercises.length,
+                  itemCount: workoutState.exercises.length, // Use state
                   itemBuilder: (context, index) {
-                    final exercise = _controller.exercises[index];
-                    return Column(
-                      children: [
-                        ExerciseCard(
-                          exercise: exercise,
-                          workoutId: widget.workout.id,
-                          onAddSet: () {
-                            setState(() {
-                              _controller.addSet(exercise);
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 16.0), // Add space between cards
-                      ],
+                    final exercise = workoutState.exercises[index]; // Use state
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: ExerciseCard(
+                        exercise: exercise,
+                        workoutId: workoutState.id, // Use state ID
+                        onAddSet: () {
+                          workoutNotifier.addSet(exercise); // Use notifier
+                        },
+                      ),
                     );
                   },
                 ),
@@ -116,18 +85,13 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
               const SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: () async {
-                  final selectedExercise = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (context) =>
-                              AddExerciseScreen(workoutId: widget.workout.id),
-                    ),
+                  final selectedExercise = await context.push<Exercise>(
+                    AppRoutes.workoutAddExercise,
                   );
                   if (selectedExercise != null) {
-                    setState(() {
-                      _controller.addExercise(selectedExercise);
-                    });
+                    workoutNotifier.addExercise(
+                      selectedExercise,
+                    ); // Use notifier
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -147,15 +111,39 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
               ),
               const SizedBox(height: 16.0),
               ElevatedButton(
+                onPressed: () async {
+                  await workoutNotifier.finishWorkout(); // Use notifier
+                  if (!context.mounted) return;
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go(AppRoutes.workout); // Fallback
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48.0),
+                  backgroundColor: HeronFitTheme.primary,
+                  textStyle: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: const Text('Finish Workout'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
                 onPressed: () {
-                  // Navigator.pushNamed(context, WorkoutWidget.routeName);
+                  workoutNotifier.cancelWorkout(); // Use notifier
+                  context.pop();
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 40.0),
                   backgroundColor: HeronFitTheme.error,
                   textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w500,
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                   shape: RoundedRectangleBorder(
@@ -170,46 +158,16 @@ class _StartWorkoutFromTemplateState extends State<StartWorkoutFromTemplate> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16.0),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/workoutComplete',
-                    arguments: {
-                      'workoutId': widget.workout.id,
-                      'startTime': DateTime.now().subtract(
-                        Duration(seconds: _controller.duration),
-                      ),
-                      'endTime': DateTime.now(),
-                      'workoutName': widget.workout.name,
-                      'exercises':
-                          _controller.exercises.map((e) => e.name).toList(),
-                    },
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48.0),
-                  backgroundColor: HeronFitTheme.bgLight,
-                  textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                    color: HeronFitTheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    side: const BorderSide(
-                      color: HeronFitTheme.primary,
-                      width: 2.0,
-                    ),
-                  ),
-                ),
-                child: const Text('Finish Workout'),
-              ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }

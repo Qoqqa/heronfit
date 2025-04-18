@@ -4,6 +4,9 @@ import 'package:heronfit/features/workout/models/workout_complete_model.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/core/services/workout_storage_service.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
+import 'package:solar_icons/solar_icons.dart'; // Add this import
 
 class WorkoutCompleteWidget extends StatefulWidget {
   final String workoutId;
@@ -21,7 +24,6 @@ class WorkoutCompleteWidget extends StatefulWidget {
     required this.exercises,
   }) : super(key: key);
 
-  static String routeName = 'WorkoutComplete';
   static String routePath = '/workoutComplete';
 
   @override
@@ -48,27 +50,33 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
+        backgroundColor: Colors.transparent, // Set to transparent
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: Icon(
-            Icons.chevron_left_rounded,
+            SolarIconsOutline.altArrowLeft, // Use SolarIcons
             color: HeronFitTheme.primary,
-            size: 30.0,
+            size: 30.0, // Keep size if needed
           ),
           onPressed: () {
-            Navigator.of(context).pop();
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go(AppRoutes.home); // Fallback or intended navigation
+            }
           },
         ),
         title: Text(
           'Workout Complete',
           style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
+            // Use headlineSmall as base
+            color: HeronFitTheme.primary, // Use primary color
+            fontSize: 20.0, // Set font size to 20
             fontWeight: FontWeight.bold,
           ),
         ),
         centerTitle: true,
-        elevation: 0.0,
+        elevation: 0.0, // Keep elevation 0
       ),
       backgroundColor: HeronFitTheme.bgLight,
       body: SafeArea(
@@ -200,7 +208,9 @@ class WorkoutCompleteWidgetState extends State<WorkoutCompleteWidget> {
                         final storageService = WorkoutStorageService();
                         await storageService.saveWorkout(workout);
 
-                        Navigator.pushNamed(context, '/home');
+                        context.go(
+                          AppRoutes.home,
+                        ); // Use context.go to replace the stack
                       },
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 48.0),

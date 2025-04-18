@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 import '../../features/auth/views/login_widget.dart';
 import '../../features/auth/models/login_model.dart';
 import '../../features/workout/models/workout_model.dart';
-import '../../features/auth/views/login_widget.dart';
 import '../../features/workout/views/workout_widget.dart';
 
 T createModel<T>(BuildContext context, T Function() builder) {
@@ -18,8 +16,7 @@ LoginModel createLoginModel(BuildContext context, LoginWidget widget) {
   return model;
 }
 
-WorkoutModel createWorkoutModel(BuildContext context, WorkoutWidget widget) {
-  var model = WorkoutModel(widget);
-  model.initState(context);
-  return model;
-}
+// WorkoutModel createWorkoutModel(BuildContext context, WorkoutWidget widget) {
+//   var model = WorkoutModel();
+//   return model;
+// }

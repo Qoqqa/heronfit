@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/exercise_model.dart';
 import 'package:page_transition/page_transition.dart';
+import 'package:solar_icons/solar_icons.dart'; // Add this import
 
 class ExerciseDetailsScreen extends StatefulWidget {
   final Exercise exercise;
@@ -17,34 +18,37 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context); // Get theme data
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
         key: scaffoldKey,
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: Colors.transparent, // Set to transparent
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 30.0,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.colorScheme.primary,
+              size: 30.0, // Keep size if needed
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Exercise Details',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
+              // Apply standard style
+              color: theme.colorScheme.primary,
               fontSize: 20.0,
               fontWeight: FontWeight.bold,
             ),
           ),
           centerTitle: true,
-          elevation: 0,
+          elevation: 0, // Keep elevation 0
         ),
         body: SafeArea(
           top: true,
@@ -67,7 +71,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                           width: double.infinity,
                           height: 250.0,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.background,
+                            color: theme.colorScheme.background,
                             boxShadow: [
                               BoxShadow(
                                 blurRadius: 10.0,
@@ -77,7 +81,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                             ],
                             borderRadius: BorderRadius.circular(8.0),
                             border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: theme.colorScheme.primary,
                               width: 2.0,
                             ),
                           ),
@@ -107,18 +111,14 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                                 Icons.fitness_center,
                                                 size: 60,
                                                 color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary,
+                                                    theme.colorScheme.primary,
                                               ),
                                               SizedBox(height: 8),
                                               Text(
                                                 'No image available',
                                                 style: TextStyle(
                                                   color:
-                                                      Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary,
+                                                      theme.colorScheme.primary,
                                                 ),
                                               ),
                                             ],
@@ -134,19 +134,13 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                         Icon(
                                           Icons.fitness_center,
                                           size: 60,
-                                          color:
-                                              Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
+                                          color: theme.colorScheme.primary,
                                         ),
                                         SizedBox(height: 8),
                                         Text(
                                           'No image available',
                                           style: TextStyle(
-                                            color:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
+                                            color: theme.colorScheme.primary,
                                           ),
                                         ),
                                       ],
@@ -161,7 +155,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                           style: TextStyle(
                             fontSize: 20.0,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                         SizedBox(height: 8.0),
@@ -204,7 +198,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                         SizedBox(height: 16.0),
                         Divider(
                           thickness: 2.0,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: theme.colorScheme.primary,
                         ),
                         SizedBox(height: 8.0),
 
@@ -214,7 +208,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                           style: TextStyle(
                             fontSize: 18.0,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
+                            color: theme.colorScheme.primary,
                           ),
                         ),
                         SizedBox(height: 8.0),

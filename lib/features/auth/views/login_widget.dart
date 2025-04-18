@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart';
 import 'register01_widget.dart'; // Import RegisterWidget
 
 class LoginWidget extends StatefulWidget {
   const LoginWidget({super.key});
 
-  static String routeName = 'Login';
   static String routePath = '/login';
 
   @override
@@ -137,8 +138,10 @@ class _LoginWidgetState extends State<LoginWidget> {
                                 password: password,
                               );
 
-                          if (response.user != null) {
-                            Navigator.pushNamed(context, '/home');
+                          if (response.user != null && context.mounted) {
+                            context.go(
+                              AppRoutes.home,
+                            ); // Use context.go after successful login
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Login failed')),
@@ -173,12 +176,9 @@ class _LoginWidgetState extends State<LoginWidget> {
                     const SizedBox(height: 8.0),
                     InkWell(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const RegisterWidget(),
-                          ),
-                        );
+                        context.push(
+                          AppRoutes.register,
+                        ); // Navigate to register screen
                       },
                       child: RichText(
                         text: TextSpan(

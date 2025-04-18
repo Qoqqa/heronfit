@@ -1,62 +1,45 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:heronfit/features/workout/controllers/start_new_workout_controller.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
-import 'package:heronfit/features/workout/views/add_exercise_screen.dart';
-import 'package:heronfit/features/workout/views/workout_complete_widget.dart';
-import 'package:heronfit/features/workout/views/workout_widget.dart';
 import 'package:heronfit/core/theme.dart';
-import 'package:flutter/services.dart'; // Import for input formatting
-import 'package:heronfit/widgets/exercise_card_widget.dart'; // Import the ExerciseCard widget
+import 'package:heronfit/widgets/exercise_card_widget.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
+import 'package:solar_icons/solar_icons.dart';
 
-class StartNewWorkoutWidget extends StatefulWidget {
-  const StartNewWorkoutWidget({Key? key, this.workoutID}) : super(key: key);
-
-  final Workout? workoutID;
-  static String routeName = 'StartNewWorkout';
-  static String routePath = '/startNewWorkout';
-
-  @override
-  _StartNewWorkoutWidgetState createState() => _StartNewWorkoutWidgetState();
-}
-
-class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
-  late StartNewWorkoutController _controller;
+class StartNewWorkoutWidget extends ConsumerWidget {
+  final Workout? initialWorkout;
+  const StartNewWorkoutWidget({super.key, this.initialWorkout});
 
   @override
-  void initState() {
-    super.initState();
-    _controller = StartNewWorkoutController(workout: widget.workoutID);
-    _controller.startTimer(); // Start the timer when the widget initializes
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final workoutState = ref.watch(activeWorkoutProvider(initialWorkout));
+    final workoutNotifier = ref.read(
+      activeWorkoutProvider(initialWorkout).notifier,
+    );
 
-  @override
-  void dispose() {
-    _controller.stopTimer(); // Stop the timer when the widget is disposed
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
+        backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false,
         leading: IconButton(
           icon: Icon(
-            Icons.chevron_left_rounded,
+            SolarIconsOutline.altArrowLeft,
             color: HeronFitTheme.primary,
             size: 30.0,
           ),
           onPressed: () {
-            Navigator.of(context).pop();
+            workoutNotifier.cancelWorkout();
+            context.pop();
           },
         ),
         title: Text(
-          'New Workout',
+          workoutState.name.isEmpty ? 'New Workout' : workoutState.name,
           style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
             color: HeronFitTheme.primary,
+            fontSize: 20.0,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -72,128 +55,74 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        // Replace static text with editable TextField for workout name
-                        Container(
-                          width: double.infinity,
-                          child: TextFormField(
-                            initialValue:
-                                widget.workoutID?.name ?? 'New Workout',
-                            autofocus: true,
-                            textCapitalization: TextCapitalization.sentences,
-                            obscureText: false,
-                            style: HeronFitTheme.textTheme.labelMedium
-                                ?.copyWith(
-                                  color: HeronFitTheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.0,
-                                ),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              labelText: 'Workout Name',
-                              labelStyle: HeronFitTheme.textTheme.labelSmall
-                                  ?.copyWith(letterSpacing: 0.0),
-                              hintText: 'Enter workout name',
-                              hintStyle: HeronFitTheme.textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: HeronFitTheme.textMuted,
-                                    letterSpacing: 0.0,
-                                  ),
-                              enabledBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: HeronFitTheme.primary,
-                                  width: 2.0,
-                                ),
-                              ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: HeronFitTheme.primaryDark,
-                                  width: 2.0,
-                                ),
-                              ),
-                              errorBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: HeronFitTheme.error,
-                                  width: 2.0,
-                                ),
-                              ),
-                              focusedErrorBorder: UnderlineInputBorder(
-                                borderSide: BorderSide(
-                                  color: HeronFitTheme.error,
-                                  width: 2.0,
-                                ),
-                              ),
-                              contentPadding:
-                                  const EdgeInsetsDirectional.fromSTEB(
-                                    0.0,
-                                    0.0,
-                                    0.0,
-                                    16.0,
-                                  ),
-                            ),
-                            onChanged:
-                                (value) => _controller.setWorkoutName(value),
-                          ),
+                    TextFormField(
+                      key: ValueKey('workout_name_${workoutState.id}'),
+                      initialValue: workoutState.name,
+                      textCapitalization: TextCapitalization.sentences,
+                      obscureText: false,
+                      style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                        color: HeronFitTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Workout Name',
+                        labelStyle: HeronFitTheme.textTheme.labelMedium,
+                        hintText: 'Enter workout name (e.g., Leg Day)',
+                        hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                          color: HeronFitTheme.textMuted,
                         ),
-                        const SizedBox(height: 16.0),
-                        // Replace static timer display with StreamBuilder for real-time updates
-                        Align(
-                          alignment: const AlignmentDirectional(-1.0, 0.0),
-                          child: StreamBuilder<int>(
-                            stream: _controller.durationStream,
-                            initialData: _controller.duration,
-                            builder: (context, snapshot) {
-                              final minutes = snapshot.data! ~/ 60;
-                              final seconds = snapshot.data! % 60;
-                              return Text(
-                                'Duration: ${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}',
-                                style: HeronFitTheme.textTheme.bodyMedium,
-                              );
-                            },
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: HeronFitTheme.primary.withAlpha(100),
+                            width: 1.0,
                           ),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                      ],
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(
+                            color: HeronFitTheme.primary,
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: HeronFitTheme.error,
+                            width: 1.0,
+                          ),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderSide: BorderSide(
+                            color: HeronFitTheme.error,
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        filled: true,
+                        fillColor: HeronFitTheme.bgSecondary.withAlpha(100),
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14.0,
+                          horizontal: 16.0,
+                        ),
+                      ),
+                      onChanged:
+                          (value) => workoutNotifier.setWorkoutName(value),
+                      onFieldSubmitted:
+                          (_) => FocusScope.of(context).nextFocus(),
                     ),
-                    const SizedBox(height: 24.0),
-                    Container(
-                      width: double.infinity,
-                      child: TextFormField(
-                        decoration: InputDecoration(
-                          labelText: 'Add a note about your workout',
-                          labelStyle: HeronFitTheme.textTheme.labelSmall,
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: Color(0x00000000),
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: const BorderSide(
-                              color: HeronFitTheme.primary,
-                              width: 1.0,
-                            ),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          filled: true,
-                          fillColor: HeronFitTheme.bgSecondary,
-                          prefixIcon: const Icon(
-                            Icons.edit,
-                            color: HeronFitTheme.textMuted,
-                            size: 16.0,
-                          ),
+                    const SizedBox(height: 16.0),
+                    Align(
+                      alignment: const AlignmentDirectional(-1.0, 0.0),
+                      child: Text(
+                        'Duration: ${_formatDuration(workoutState.duration)}',
+                        style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                          color: HeronFitTheme.textMuted,
                         ),
-                        style: HeronFitTheme.textTheme.bodyMedium,
-                        onChanged:
-                            (value) => _controller.setWorkoutNotes(value),
                       ),
                     ),
                   ],
@@ -204,134 +133,96 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
                   primary: false,
                   shrinkWrap: true,
                   scrollDirection: Axis.vertical,
-                  itemCount: _controller.exercises.length,
+                  itemCount: workoutState.exercises.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12.0),
                   itemBuilder: (context, index) {
-                    final exercise = _controller.exercises[index];
+                    final exercise = workoutState.exercises[index];
                     return ExerciseCard(
                       exercise: exercise,
-                      workoutId: widget.workoutID?.id,
+                      workoutId: workoutState.id,
                       onAddSet: () {
-                        setState(() {
-                          _controller.addSet(exercise);
-                        });
+                        workoutNotifier.addSet(exercise);
                       },
                     );
                   },
                 ),
                 const SizedBox(height: 24.0),
                 Column(
-                  mainAxisSize: MainAxisSize.max,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder:
-                                (context) => AddExerciseScreen(
-                                  workoutId: widget.workoutID?.id,
-                                ),
-                          ),
-                        ).then((selectedExercise) {
-                          if (selectedExercise != null) {
-                            setState(() {
-                              _controller.addExercise(selectedExercise);
-                            });
-                          }
-                        });
+                    OutlinedButton.icon(
+                      label: const Text('Add Exercise'),
+                      onPressed: () async {
+                        final selectedExercise = await context.push<Exercise>(
+                          AppRoutes.workoutAddExercise,
+                        );
+                        if (selectedExercise != null) {
+                          workoutNotifier.addExercise(selectedExercise);
+                        }
                       },
-                      style: ElevatedButton.styleFrom(
+                      style: OutlinedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 40.0),
-                        backgroundColor: HeronFitTheme.primary,
-                        textStyle: HeronFitTheme.textTheme.labelMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        foregroundColor: HeronFitTheme.primary,
+                        side: BorderSide(
+                          color: HeronFitTheme.primary.withAlpha(180),
+                        ),
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: Text(
-                        'Add Exercise',
-                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: HeronFitTheme.bgLight,
-                          fontWeight: FontWeight.w600,
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
                       ),
                     ),
                     const SizedBox(height: 16.0),
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, WorkoutWidget.routeName);
+                      onPressed: () async {
+                        await workoutNotifier.finishWorkout();
+                        if (!context.mounted) return;
+                        if (context.canPop()) {
+                          context.pop();
+                        } else {
+                          context.go(AppRoutes.workout);
+                        }
                       },
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 40.0),
-                        backgroundColor: HeronFitTheme.error,
-                        textStyle: HeronFitTheme.textTheme.labelMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
+                        minimumSize: const Size(double.infinity, 44.0),
+                        backgroundColor: HeronFitTheme.primary,
+                        foregroundColor: Colors.white,
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12.0),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
+                        elevation: 0,
                       ),
-                      child: Text(
-                        'Cancel Workout',
-                        style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                          color: HeronFitTheme.bgLight,
+                      child: const Text('Finish Workout'),
+                    ),
+                    const SizedBox(height: 4.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        workoutNotifier.cancelWorkout();
+                        context.pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 44.0),
+                        backgroundColor: HeronFitTheme.error,
+                        foregroundColor: Colors.white,
+                        textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        elevation: 0,
                       ),
+                      child: const Text('Cancel Workout'),
                     ),
                   ],
-                ),
-                const SizedBox(height: 24.0),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => WorkoutCompleteWidget(
-                              workoutId: widget.workoutID?.id ?? '',
-                              startTime: DateTime.now().subtract(
-                                Duration(seconds: _controller.duration),
-                              ), // Use the timer's duration
-                              endTime: DateTime.now(),
-                              workoutName:
-                                  _controller.workoutName.isNotEmpty
-                                      ? _controller.workoutName
-                                      : 'Unnamed Workout', // Use the updated workout name
-                              exercises:
-                                  _controller.exercises
-                                      .map((e) => e.name)
-                                      .toList(), // Pass exercises
-                            ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48.0),
-                    backgroundColor: HeronFitTheme.bgLight,
-                    textStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                      color: HeronFitTheme.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 12.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                      side: const BorderSide(
-                        color: HeronFitTheme.primary,
-                        width: 2.0,
-                      ),
-                    ),
-                  ),
-                  child: const Text('Finish Workout'),
                 ),
               ],
             ),
@@ -339,5 +230,11 @@ class _StartNewWorkoutWidgetState extends State<StartNewWorkoutWidget> {
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }

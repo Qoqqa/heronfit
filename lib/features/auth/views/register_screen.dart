@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart'; // Updated import path
 import 'login_screen.dart'; // Import the LoginWidget
 import 'registerverification_widget.dart'; // Ensure this file defines the RegisterVerificationWidget class
@@ -8,7 +10,6 @@ import 'registerverification_widget.dart'; // Ensure this file defines the Regis
 class RegisterWidget extends StatefulWidget {
   const RegisterWidget({super.key});
 
-  static String routeName = 'Register';
   static String routePath = '/register';
 
   @override
@@ -493,7 +494,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                             hoverColor: Colors.transparent,
                             highlightColor: Colors.transparent,
                             onTap: () {
-                              // Navigate to Terms of Use screen
+                              context.push(AppRoutes.profileTerms);
                             },
                             child: RichText(
                               text: TextSpan(
@@ -508,7 +509,9 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                     recognizer:
                                         TapGestureRecognizer()
                                           ..onTap = () {
-                                            // Navigate to Terms of Use screen
+                                            context.push(
+                                              AppRoutes.profileTerms,
+                                            );
                                           },
                                   ),
                                 ],
@@ -526,20 +529,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder:
-                                  (context) => RegisterVerificationWidget(
-                                    email: emailAddressTextController.text,
-                                    password: passwordTextController.text,
-                                    confirmPassword:
-                                        passwordConfirmTextController.text,
-                                    firstName: firstNameTextController.text,
-                                    lastName: lastNameTextController.text,
-                                  ),
-                            ),
-                          );
+                          context.push(AppRoutes.registerVerify);
                         },
                         child: Text('Register'),
                         style: ElevatedButton.styleFrom(
@@ -564,12 +554,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                           hoverColor: Colors.transparent,
                           highlightColor: Colors.transparent,
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const LoginWidget(),
-                              ),
-                            );
+                            context.go(AppRoutes.login);
                           },
                           child: RichText(
                             text: TextSpan(
@@ -591,14 +576,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                   recognizer:
                                       TapGestureRecognizer()
                                         ..onTap = () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) =>
-                                                      const LoginWidget(),
-                                            ),
-                                          );
+                                          context.go(AppRoutes.login);
                                         },
                                 ),
                               ],

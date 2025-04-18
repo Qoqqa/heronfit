@@ -87,6 +87,86 @@ Follow a **features-first** project structure:
 - **Security:** Implement and test Row Level Security (RLS) policies rigorously. Use `.env` files for keys (`flutter_dotenv`).
 - **Error Handling:** Wrap Supabase calls in `try-catch` blocks within controllers/services. Map Supabase errors to application-specific errors or states.
 
+### Database Schema Overview
+
+_(Based on provided diagram - review data types and relationships. The schema below reflects the visual information provided.)_
+
+**`users`**
+
+```sql
+-- Links to auth.users via id
+id uuid PK
+created_at timestamptz
+first_name text
+last_name text
+email_address text
+birthday text
+gender text
+weight text -- Consider numeric/float type?
+height int8
+goal text
+contact text
+has_session bool
+```
+
+**`exercises`**
+
+```sql
+id uuid PK
+name text
+force text
+level text
+mechanic text
+equipment text
+primaryMuscles jsonb
+secondaryMuscles jsonb
+instructions jsonb
+category text
+images jsonb
+```
+
+**`workouts`**
+
+```sql
+id uuid PK
+name text
+exercises _text -- Note: Seems redundant given workout_exercises table. Verify purpose. Consider if this should be text[] or removed.
+duration int8
+timestamp timestamptz
+user_id uuid FK -> users.id
+```
+
+**`workout_exercises`** (Join Table)
+
+```sql
+id uuid PK
+workout_id uuid FK -> workouts.id
+exercise_id uuid FK -> exercises.id
+order_index int8
+```
+
+**`exercise_sets`**
+
+```sql
+id int8 PK -- Consider uuid if high volume expected?
+workout_exercise_id uuid FK -> workout_exercises.id
+weight_kg numeric
+reps int8
+completed bool
+set_number int8
+```
+
+**`update_weight`**
+
+```sql
+id int8 PK -- Consider uuid?
+date text -- Consider date/timestamp type?
+pic text
+email text
+identifier_id uuid -- Likely FK -> users.id, verify relationship
+weight text -- Consider numeric/float type?
+```
+
 ## 9. Error Handling
 
 - **Centralized Service (Optional but Recommended):** Consider creating an error handling service in `lib/core/services/` for logging errors (e.g., to a remote service like Sentry) and potentially showing standardized user messages.

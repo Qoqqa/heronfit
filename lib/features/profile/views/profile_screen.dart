@@ -1,48 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:page_transition/page_transition.dart';
-import 'edit_profile.dart'; // Import the EditProfileWidget
-import '../../booking/views/my_bookings.dart'; // Import the MyBookingsWidget
-import '../../workout/views/workout_history_widget.dart'; // Import the WorkoutHistoryWidget
-import 'contactUs_screen.dart'; // Import the ContactUsWidget
-import 'privacyPolicy_screen.dart'; // Import the PrivacyPolicyWidget
-import 'termsOfUse_screen.dart'; // Import the TermsOfUseWidget
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
+import 'package:heronfit/core/theme.dart';
+import 'package:solar_icons/solar_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: HeronFitTheme.primary,
       ),
       body: SafeArea(
         top: true,
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          0,
-                          0,
-                          0,
-                          16,
-                        ),
+                        padding: const EdgeInsets.only(bottom: 24.0),
                         child: Row(
                           mainAxisSize: MainAxisSize.max,
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -54,17 +47,15 @@ class ProfileScreen extends StatelessWidget {
                                   width: 72,
                                   height: 72,
                                   decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.secondary,
+                                    color: colorScheme.secondary,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      width: 4,
+                                      color: HeronFitTheme.primary,
+                                      width: 3,
                                     ),
                                   ),
                                   child: Padding(
-                                    padding: const EdgeInsets.all(2),
+                                    padding: const EdgeInsets.all(3),
                                     child: InkWell(
                                       splashColor: Colors.transparent,
                                       focusColor: Colors.transparent,
@@ -82,6 +73,23 @@ class ProfileScreen extends StatelessWidget {
                                                   imageUrl:
                                                       'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60',
                                                   fit: BoxFit.contain,
+                                                  placeholder:
+                                                      (context, url) => Center(
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                              color:
+                                                                  HeronFitTheme
+                                                                      .primary,
+                                                            ),
+                                                      ),
+                                                  errorWidget:
+                                                      (context, url, error) =>
+                                                          Icon(
+                                                            SolarIconsBold.user,
+                                                            color:
+                                                                HeronFitTheme
+                                                                    .primary,
+                                                          ),
                                                 ),
                                               ),
                                             ),
@@ -96,56 +104,62 @@ class ProfileScreen extends StatelessWidget {
                                           width: 60,
                                           height: 60,
                                           fit: BoxFit.cover,
+                                          placeholder:
+                                              (context, url) => Center(
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      color:
+                                                          HeronFitTheme.primary,
+                                                    ),
+                                              ),
+                                          errorWidget:
+                                              (context, url, error) => Icon(
+                                                SolarIconsBold.user,
+                                                color: HeronFitTheme.primary,
+                                              ),
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsetsDirectional.fromSTEB(
-                                    16,
-                                    0,
-                                    0,
-                                    0,
-                                  ),
+                                  padding: const EdgeInsets.only(left: 16.0),
                                   child: Column(
-                                    mainAxisSize: MainAxisSize.max,
+                                    mainAxisSize: MainAxisSize.min,
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Align(
-                                        alignment: AlignmentDirectional(-1, 0),
-                                        child: Text(
-                                          'John Doe',
-                                          textAlign: TextAlign.start,
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.titleSmall?.copyWith(
-                                            color:
-                                                Theme.of(context).primaryColor,
-                                          ),
+                                      Text(
+                                        'John Doe',
+                                        style: textTheme.titleLarge?.copyWith(
+                                          color: HeronFitTheme.primary,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
+                                      const SizedBox(height: 4),
                                       RichText(
                                         text: TextSpan(
                                           children: [
                                             TextSpan(
                                               text: 'Goal | ',
-                                              style:
-                                                  Theme.of(
-                                                    context,
-                                                  ).textTheme.labelMedium,
+                                              style: textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                    color: colorScheme.onSurface
+                                                        .withAlpha(
+                                                          ((0.7 * 255).round()),
+                                                        ),
+                                                  ),
                                             ),
                                             TextSpan(
                                               text: 'Lose Weight',
-                                              style: const TextStyle(),
+                                              style: textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                             ),
                                           ],
-                                          style:
-                                              Theme.of(
-                                                context,
-                                              ).textTheme.labelMedium,
+                                          style: textTheme.bodyMedium,
                                         ),
                                       ),
                                     ],
@@ -155,124 +169,98 @@ class ProfileScreen extends StatelessWidget {
                             ),
                             ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder:
-                                        (context) => const EditProfileWidget(),
-                                  ),
-                                );
+                                context.push(AppRoutes.profileEdit);
                               },
-                              child: const Text('Edit'),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 24,
+                                  horizontal: 20,
                                 ),
-                                backgroundColor:
-                                    Theme.of(context).colorScheme.secondary,
-                                foregroundColor:
-                                    Colors
-                                        .white, // Ensures the text color is white
-                                textStyle: Theme.of(context)
-                                    .textTheme
-                                    .labelMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                                backgroundColor: colorScheme.secondary,
+                                foregroundColor: Colors.white,
+                                textStyle: textTheme.labelMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
+                                elevation: 2,
                               ),
+                              child: const Text('Edit'),
                             ),
                           ],
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          _buildInfoCard(context, '180 cm', 'Height'),
-                          _buildInfoCard(context, '70 kg', 'Weight'),
-                          _buildInfoCard(context, '25 yo', 'Age'),
-                        ],
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildInfoCard(context, '180 cm', 'Height'),
+                            _buildInfoCard(context, '70 kg', 'Weight'),
+                            _buildInfoCard(context, '25 yo', 'Age'),
+                          ],
+                        ),
                       ),
-                      Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children:
-                            [
-                                  _buildAccountSection(context),
-                                  _buildNotificationSection(context),
-                                  _buildOtherSection(context),
-                                  ElevatedButton.icon(
-                                    onPressed: () async {
-                                      // Handle logout
-                                      try {
-                                        await Supabase.instance.client.auth
-                                            .signOut();
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Logged out successfully',
-                                            ),
-                                            backgroundColor: Colors.green,
-                                          ),
-                                        );
-                                        // Navigate to login screen
-                                        Navigator.of(
-                                          context,
-                                        ).pushNamedAndRemoveUntil(
-                                          '/login',
-                                          (route) => false,
-                                        );
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Error logging out: $e',
-                                            ),
-                                            backgroundColor: Colors.red,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    icon: const Icon(Icons.logout, size: 24.0),
-                                    label: const Text('Logout'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor:
-                                          Theme.of(
-                                            context,
-                                          ).colorScheme.secondary,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ), //change to 12 from 8
-                                      textStyle: Theme.of(
-                                        context,
-                                      ).textTheme.titleSmall?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      minimumSize: const Size(
-                                        double.infinity,
-                                        48,
-                                      ), //added
-                                    ),
-                                  ),
-                                ]
-                                .map(
-                                  (widget) => Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 8,
-                                    ),
-                                    child: widget,
-                                  ),
-                                )
-                                .toList(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildAccountSection(context),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildNotificationSection(context),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildOtherSection(context),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await Supabase.instance.client.auth.signOut();
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Logged out successfully'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                              context.go(AppRoutes.onboarding);
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error logging out: $e'),
+                                  backgroundColor: HeronFitTheme.error,
+                                ),
+                              );
+                            }
+                          },
+                          icon: Icon(
+                            SolarIconsOutline.logout,
+                            size: 24.0,
+                            color: Colors.white,
+                          ),
+                          label: Text(
+                            'Logout',
+                            style: textTheme.labelLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.secondary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            minimumSize: const Size(double.infinity, 48),
+                            elevation: 2,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -286,50 +274,41 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _buildInfoCard(BuildContext context, String value, String label) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Expanded(
-      child: Container(
-        width: 100,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.background,
-          /*boxShadow: [
-            BoxShadow(
-              blurRadius: 5,
-              color: Theme.of(context).shadowColor,
-              offset: const Offset(0, 2),
-            ),
-          ],*/
-          //borderRadius: BorderRadius.circular(8),//
-        ),
-        child: Card(
-          clipBehavior: Clip.antiAliasWithSaveLayer,
-          color: Theme.of(context).colorScheme.background,
-          elevation: 0,
-          /*shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),*/
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: value,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).primaryColor,
-                        ),
-                      ),
-                      const TextSpan(text: ' ', style: TextStyle()),
-                    ],
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
+      child: Card(
+        clipBehavior: Clip.antiAliasWithSaveLayer,
+        color: colorScheme.surface,
+        elevation: 4,
+        shadowColor: Theme.of(
+          context,
+        ).shadowColor.withAlpha(((0.5 * 255).round())),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(horizontal: 6.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                value,
+                style: textTheme.bodyLarge?.copyWith(
+                  color: HeronFitTheme.primary,
+                  fontWeight: FontWeight.bold,
                 ),
-                Text(label, style: Theme.of(context).textTheme.labelSmall),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurface.withAlpha(((0.7 * 255).round())),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
       ),
@@ -338,34 +317,19 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildAccountSection(BuildContext context) {
     return _buildSection(context, 'Account', [
-      _buildSectionItem(context, Icons.person, 'Edit Profile', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const EditProfileWidget()),
-        );
+      _buildSectionItem(context, SolarIconsOutline.user, 'Edit Profile', () {
+        context.push(AppRoutes.profileEdit);
       }),
-      _buildSectionItem(context, Icons.book, 'My Bookings', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const MyBookingsWidget()),
-        );
+      _buildSectionItem(context, SolarIconsOutline.notebook, 'My Bookings', () {
+        context.push(AppRoutes.bookings);
       }),
-      _buildSectionItem(context, Icons.history, 'Workout History', () {
-        Navigator.pushNamed(context, '/workoutHistory');
-      }),
-      ElevatedButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/workoutHistory');
+      _buildSectionItem(
+        context,
+        SolarIconsOutline.history,
+        'Workout History',
+        () {
+          context.push(AppRoutes.profileHistory);
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).primaryColor,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-        child: Text(
-          'View Workout History',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
       ),
     ]);
   }
@@ -374,10 +338,10 @@ class ProfileScreen extends StatelessWidget {
     return _buildSection(context, 'Notification', [
       _buildSectionItem(
         context,
-        Icons.notifications,
+        SolarIconsOutline.bell,
         'Pop-up Notification',
         () {
-          // Handle notification settings
+          // Removed print statement
         },
       ),
     ]);
@@ -385,62 +349,75 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildOtherSection(BuildContext context) {
     return _buildSection(context, 'Other', [
-      _buildSectionItem(context, Icons.contact_mail, 'Contact Us', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const ContactUsWidget()),
-        );
+      _buildSectionItem(context, SolarIconsOutline.letter, 'Contact Us', () {
+        context.push(AppRoutes.profileContact);
       }),
-      _buildSectionItem(context, Icons.privacy_tip, 'Privacy Policy', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const PrivacyPolicyWidget()),
-        );
-      }),
-      _buildSectionItem(context, Icons.info, 'Terms Of Use', () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const TermsOfUseWidget()),
-        );
-      }),
+      _buildSectionItem(
+        context,
+        SolarIconsOutline.shieldUser,
+        'Privacy Policy',
+        () {
+          context.push(AppRoutes.profilePrivacy);
+        },
+      ),
+      _buildSectionItem(
+        context,
+        SolarIconsOutline.documentText,
+        'Terms Of Use',
+        () {
+          context.push(AppRoutes.profileTerms);
+        },
+      ),
     ]);
   }
 
   Widget _buildSection(BuildContext context, String title, List<Widget> items) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.background,
-        /*boxShadow: [
+        color: colorScheme.surface,
+        boxShadow: [
           BoxShadow(
-            blurRadius: 5,
-            color: Theme.of(context).shadowColor,
-            offset: const Offset(0, 2),
+            blurRadius: 6,
+            color: Theme.of(
+              context,
+            ).shadowColor.withAlpha(((0.15 * 255).round())),
+            offset: const Offset(0, 3),
           ),
-        ],*/
-        //borderRadius: BorderRadius.circular(16),//
+        ],
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: AlignmentDirectional(-1, 0),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Text(
                 title,
-                style: Theme.of(context).textTheme.titleMedium,
+                style: textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-            ...items
-                .map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: item,
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              itemBuilder: (context, index) => items[index],
+              separatorBuilder:
+                  (context, index) => Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: colorScheme.outline.withAlpha(((0.3 * 255).round())),
+                    indent: 40,
                   ),
-                )
-                .toList(),
+            ),
           ],
         ),
       ),
@@ -453,29 +430,30 @@ class ProfileScreen extends StatelessWidget {
     String label,
     VoidCallback onTap,
   ) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return InkWell(
-      splashColor: Colors.transparent,
-      focusColor: Colors.transparent,
-      hoverColor: Colors.transparent,
-      highlightColor: Colors.transparent,
+      splashColor: HeronFitTheme.primary.withAlpha(((0.1 * 255).round())),
+      focusColor: HeronFitTheme.primary.withAlpha(((0.1 * 255).round())),
+      hoverColor: HeronFitTheme.primary.withAlpha(((0.05 * 255).round())),
+      highlightColor: HeronFitTheme.primary.withAlpha(((0.1 * 255).round())),
       onTap: onTap,
-      child: Row(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(0, 0, 4, 0),
-            child: Icon(icon, color: Theme.of(context).primaryColor, size: 24),
-          ),
-          Text(label, style: Theme.of(context).textTheme.labelMedium),
-          const Spacer(),
-          Icon(
-            Icons.arrow_forward_ios_sharp,
-            color: Theme.of(context).colorScheme.onSurface,
-            size: 16,
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Icon(icon, color: HeronFitTheme.primary, size: 22),
+            const SizedBox(width: 16),
+            Expanded(child: Text(label, style: textTheme.bodyMedium)),
+            Icon(
+              SolarIconsOutline.altArrowRight,
+              color: colorScheme.onSurface.withAlpha(((0.6 * 255).round())),
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }

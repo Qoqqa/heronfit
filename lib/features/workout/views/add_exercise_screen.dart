@@ -3,6 +3,8 @@ import 'dart:async';
 import '../models/exercise_model.dart';
 import '../controllers/exercise_controller.dart';
 import 'exercise_details_screen.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:solar_icons/solar_icons.dart'; // Add this import
 
 class AddExerciseScreen extends StatefulWidget {
   final String? workoutId;
@@ -228,6 +230,8 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context); // Get theme data
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -236,36 +240,39 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: Colors.transparent, // Keep transparent
+          elevation: 0, // Keep elevation 0
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 30.0,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.colorScheme.primary,
+              size: 30.0, // Keep size if needed, or remove for default
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Add Exercises',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
+              // Apply standard style
+              color: theme.colorScheme.primary,
               fontSize: 20.0,
               fontWeight: FontWeight.bold,
             ),
           ),
           centerTitle: true,
-          elevation: 0,
           actions: [
             IconButton(
               icon: Icon(
-                Icons.filter_list,
+                Icons.filter_list, // Keep filter icon
                 color:
                     _selectedEquipment.isNotEmpty
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(context).colorScheme.onSurface,
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.onSurface.withOpacity(
+                          0.6,
+                        ), // Adjust opacity if needed
               ),
               onPressed: () {
                 setState(() {
@@ -592,7 +599,9 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                       duration: Duration(seconds: 2),
                                     ),
                                   );
-                                  Navigator.pop(context, exercise);
+                                  context.pop(
+                                    exercise,
+                                  ); // Pop with the selected exercise as result
                                 },
                                 onLongPress: () {
                                   Navigator.of(context).push(

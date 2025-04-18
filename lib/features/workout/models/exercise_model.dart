@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'set_data_model.dart';
+import 'set_data_model.dart'; // Import SetData
 
 class Exercise {
   final String id;
@@ -13,10 +13,10 @@ class Exercise {
   final List<String> instructions;
   final String category;
   final String imageUrl;
-  List<SetData> sets = [];
+  final List<SetData> sets; // Make final
 
   static const String _imageBaseUrl =
-      'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/'; 
+      'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
 
   Exercise({
     required this.id,
@@ -30,6 +30,7 @@ class Exercise {
     required this.instructions,
     required this.category,
     required this.imageUrl,
+    this.sets = const [], // Add sets to constructor with default
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) {
@@ -51,12 +52,12 @@ class Exercise {
   // Extract first value safely from a JSONB array
   static String _getFirstValue(dynamic data) {
     if (data == null) return 'Unknown';
-    
+
     // If data is already a List (parsed JSON)
     if (data is List && data.isNotEmpty) {
       return data.first.toString();
     }
-    
+
     // If data is a string (JSONB as string)
     if (data is String) {
       try {
@@ -68,19 +69,19 @@ class Exercise {
         print('Error parsing JSON from string: $e');
       }
     }
-    
+
     return 'Unknown';
   }
 
   // Convert JSONB array to List<String>
   static List<String> _parseJsonList(dynamic data) {
     if (data == null) return [];
-    
+
     // If data is already a List (parsed JSON)
     if (data is List) {
       return data.map((e) => e.toString()).toList();
     }
-    
+
     // If data is a string (JSONB as string)
     if (data is String) {
       try {
@@ -90,7 +91,7 @@ class Exercise {
         print('Error parsing JSON from string: $e');
       }
     }
-    
+
     return [];
   }
 
@@ -98,14 +99,14 @@ class Exercise {
   static String _getFullImageUrl(dynamic images) {
     // If images is null, return empty string
     if (images == null) return '';
-    
+
     try {
       // If images is already a List (parsed JSON)
       if (images is List && images.isNotEmpty) {
         final String imagePath = images.first.toString();
         return '$_imageBaseUrl$imagePath';
       }
-      
+
       // If images is a string (JSONB as string)
       if (images is String) {
         try {
@@ -121,7 +122,38 @@ class Exercise {
     } catch (e) {
       print('Error getting full image URL: $e');
     }
-    
+
     return ''; // Return empty string and handle in the UI
+  }
+
+  // Add copyWith method
+  Exercise copyWith({
+    String? id,
+    String? name,
+    String? force,
+    String? level,
+    String? mechanic,
+    String? equipment,
+    String? primaryMuscle,
+    List<String>? secondaryMuscles,
+    List<String>? instructions,
+    String? category,
+    String? imageUrl,
+    List<SetData>? sets,
+  }) {
+    return Exercise(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      force: force ?? this.force,
+      level: level ?? this.level,
+      mechanic: mechanic ?? this.mechanic,
+      equipment: equipment ?? this.equipment,
+      primaryMuscle: primaryMuscle ?? this.primaryMuscle,
+      secondaryMuscles: secondaryMuscles ?? this.secondaryMuscles,
+      instructions: instructions ?? this.instructions,
+      category: category ?? this.category,
+      imageUrl: imageUrl ?? this.imageUrl,
+      sets: sets ?? this.sets,
+    );
   }
 }
