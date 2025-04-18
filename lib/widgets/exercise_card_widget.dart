@@ -1,9 +1,9 @@
-import 'dart:async'; // Import async
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import icons
+import 'package:heronfit/features/workout/widgets/rest_timer_dialog.dart'; // Corrected import path for the dialog
 
 // Define callback types
 typedef UpdateSetDataCallback =
@@ -37,70 +37,46 @@ class ExerciseCard extends StatefulWidget {
 }
 
 class _ExerciseCardState extends State<ExerciseCard> {
-  Timer? _restTimer;
-  Duration? _remainingRestTime;
-  int? _timerSetIndex; // Track which set triggered the timer
+  bool _isResting = false; // Track if rest timer is active for this exercise
 
   @override
   void dispose() {
-    _restTimer?.cancel();
     super.dispose();
   }
 
-  void _startRestTimer(int setIndex, Duration duration) {
-    _restTimer?.cancel(); // Cancel any existing timer
+  void _showRestTimer(int setIndex, Duration duration) {
     setState(() {
-      _remainingRestTime = duration;
-      _timerSetIndex = setIndex;
+      _isResting = true; // Disable Add Set button
     });
-
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingRestTime! <= Duration.zero) {
-        timer.cancel();
-        setState(() {
-          _remainingRestTime = null;
-          _timerSetIndex = null;
-        });
-        // Optionally: Play a sound or vibrate
-      } else {
-        setState(() {
-          _remainingRestTime = _remainingRestTime! - const Duration(seconds: 1);
-        });
-      }
-    });
-  }
-
-  void _adjustRestTime(Duration adjustment) {
-    if (_remainingRestTime != null) {
-      final newDuration = _remainingRestTime! + adjustment;
-      if (newDuration >= Duration.zero) {
-        // Update remaining time immediately
-        setState(() {
-          _remainingRestTime = newDuration;
-        });
-        // Also update the default duration for this set via callback
-        if (_timerSetIndex != null) {
-          widget.onUpdateSetData(
-            _timerSetIndex!,
-            restTimerDuration: newDuration,
-          );
-        }
-      }
-    }
-  }
-
-  void _skipRestTimer() {
-    _restTimer?.cancel();
-    setState(() {
-      _remainingRestTime = null;
-      _timerSetIndex = null;
-    });
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing by tapping outside
+      builder: (BuildContext context) {
+        return RestTimerDialog(
+          initialDuration: duration,
+          onSkip: () {
+            // Timer skipped
+            if (mounted) {
+              setState(() {
+                _isResting = false; // Re-enable Add Set button
+              });
+            }
+          },
+          onTimerEnd: () {
+            // Timer finished normally
+            if (mounted) {
+              setState(() {
+                _isResting = false; // Re-enable Add Set button
+              });
+            }
+          },
+          onAdjustDuration: (newDuration) {
+            // Update the default duration for this specific set in the main state
+            widget.onUpdateSetData(setIndex, restTimerDuration: newDuration);
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -175,7 +151,6 @@ class _ExerciseCardState extends State<ExerciseCard> {
               separatorBuilder: (_, __) => const SizedBox(height: 8.0),
               itemBuilder: (context, setsListIndex) {
                 final set = widget.exercise.sets[setsListIndex];
-                // Use TextEditingControllers to manage TextFormField state and avoid losing input on rebuilds
                 final kgController = TextEditingController(
                   text: set.kg > 0 ? set.kg.toString() : '',
                 );
@@ -282,15 +257,11 @@ class _ExerciseCardState extends State<ExerciseCard> {
                                 setsListIndex,
                                 completed: value,
                               );
-                              if (value) {
-                                _startRestTimer(
+                              if (value && !_isResting) {
+                                _showRestTimer(
                                   setsListIndex,
                                   set.restTimerDuration,
                                 );
-                              } else {
-                                if (_timerSetIndex == setsListIndex) {
-                                  _skipRestTimer();
-                                }
                               }
                             }
                           },
@@ -301,94 +272,25 @@ class _ExerciseCardState extends State<ExerciseCard> {
                 );
               },
             ),
-            if (_remainingRestTime != null && _timerSetIndex != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 8.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: HeronFitTheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Rest:',
-                        style: HeronFitTheme.textTheme.labelLarge?.copyWith(
-                          color: HeronFitTheme.primary,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              SolarIconsOutline.minusCircle,
-                              size: 20,
-                            ),
-                            color: HeronFitTheme.primary,
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            onPressed:
-                                () => _adjustRestTime(
-                                  const Duration(seconds: -15),
-                                ),
-                          ),
-                          Text(
-                            _formatDuration(_remainingRestTime!),
-                            style: HeronFitTheme.textTheme.titleMedium
-                                ?.copyWith(
-                                  color: HeronFitTheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              SolarIconsOutline.addCircle,
-                              size: 20,
-                            ),
-                            color: HeronFitTheme.primary,
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            onPressed:
-                                () => _adjustRestTime(
-                                  const Duration(seconds: 15),
-                                ),
-                          ),
-                        ],
-                      ),
-                      TextButton(
-                        onPressed: _skipRestTimer,
-                        child: Text(
-                          'Skip',
-                          style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                            color: HeronFitTheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed: () {
-                widget.onAddSet();
-              },
+              onPressed:
+                  _isResting
+                      ? null
+                      : () {
+                        widget.onAddSet();
+                      },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 40.0),
-                backgroundColor: HeronFitTheme.primary,
+                backgroundColor:
+                    _isResting ? Colors.grey : HeronFitTheme.primary,
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
               child: Text(
-                'Add Set',
+                _isResting ? 'Resting...' : 'Add Set',
                 style: HeronFitTheme.textTheme.labelMedium?.copyWith(
                   color: HeronFitTheme.bgLight,
                   fontWeight: FontWeight.w600,
