@@ -31,4 +31,10 @@ class WorkoutStorageService {
     print('Saving workouts after deletion: $workoutsJson'); // Debug log
     await prefs.setString(_workoutsKey, jsonEncode(workoutsJson));
   }
+
+  Future<void> deleteAllWorkouts() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_workoutsKey); // Remove the key to delete all
+    print('Deleted all saved workouts.'); // Debug log
+  }
 }

@@ -8,6 +8,7 @@ import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/widgets/loading_indicator.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:intl/intl.dart';
 
 class MyWorkoutTemplatesScreen extends ConsumerWidget {
   const MyWorkoutTemplatesScreen({super.key});
@@ -31,6 +32,93 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
       }
     }
 
+    Future<void> _showDeleteConfirmationDialog(
+      BuildContext context,
+      Workout template,
+    ) async {
+      showDialog<void>(
+        context: context,
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: const Text('Delete Template?'),
+            content: Text(
+              'Are you sure you want to delete the template "${template.name}"?',
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(); // Close the dialog
+                },
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: HeronFitTheme.error,
+                ),
+                child: const Text('Delete'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(); // Close the dialog
+                  deleteTemplate(template.id); // Perform deletion
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
+    Future<void> _showDeleteAllConfirmationDialog(BuildContext context) async {
+      return showDialog<void>(
+        context: context,
+        barrierDismissible: false, // User must tap button!
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: const Text('Delete All Templates?'),
+            content: const SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  Text(
+                    'Are you sure you want to delete all your saved workout templates?',
+                  ),
+                  Text('This action cannot be undone.'),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: HeronFitTheme.error,
+                ),
+                child: const Text('Delete All'),
+                onPressed: () async {
+                  Navigator.of(dialogContext).pop(); // Close the dialog
+                  try {
+                    await storageService.deleteAllWorkouts();
+                    ref.invalidate(savedWorkoutsProvider); // Refresh the list
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('All templates deleted')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error deleting all templates: $e'),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -52,6 +140,26 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
         ),
         centerTitle: true,
         elevation: 0,
+        actions: [
+          templatesAsync.when(
+            data:
+                (templates) =>
+                    templates.isNotEmpty
+                        ? IconButton(
+                          icon: const Icon(
+                            SolarIconsOutline.trashBinMinimalistic,
+                            color: HeronFitTheme.error,
+                          ),
+                          tooltip: 'Delete All Templates',
+                          onPressed:
+                              () => _showDeleteAllConfirmationDialog(context),
+                        )
+                        : const SizedBox.shrink(),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       backgroundColor: HeronFitTheme.bgLight,
       body: templatesAsync.when(
@@ -108,74 +216,61 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
             itemCount: templates.length,
             itemBuilder: (context, index) {
               final template = templates[index];
+              final formattedDate =
+                  template.createdAt != null
+                      ? DateFormat('MMM d, yyyy').format(template.createdAt!)
+                      : 'Date unknown';
+
               return Card(
                 margin: const EdgeInsets.only(bottom: 12.0),
-                elevation: 2,
+                elevation: 1,
+                shadowColor:
+                    HeronFitTheme.cardShadow.isNotEmpty
+                        ? HeronFitTheme.cardShadow[0].color.withOpacity(0.5)
+                        : Colors.black.withAlpha(15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
+                  side: BorderSide(
+                    color: HeronFitTheme.bgSecondary.withAlpha(100),
+                  ),
                 ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(
-                    vertical: 8.0,
+                    vertical: 12.0,
                     horizontal: 16.0,
+                  ),
+                  leading: const Icon(
+                    SolarIconsOutline.notebookBookmark,
+                    color: HeronFitTheme.primary,
+                    size: 32,
                   ),
                   title: Text(
                     template.name,
                     style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: HeronFitTheme.primary,
+                      color: HeronFitTheme.textPrimary,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   subtitle: Text(
-                    '${template.exercises.length} exercises',
-                    style: HeronFitTheme.textTheme.bodyMedium,
+                    '${template.exercises.length} exercises · Created $formattedDate',
+                    style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                      color: HeronFitTheme.textMuted,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   trailing: IconButton(
                     icon: const Icon(
                       SolarIconsOutline.trashBinTrash,
                       color: HeronFitTheme.error,
                     ),
-                    onPressed: () {
-                      // Show confirmation dialog before deleting
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext dialogContext) {
-                          return AlertDialog(
-                            title: const Text('Delete Template?'),
-                            content: Text(
-                              'Are you sure you want to delete the template "${template.name}"?',
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('Cancel'),
-                                onPressed: () {
-                                  Navigator.of(
-                                    dialogContext,
-                                  ).pop(); // Close the dialog
-                                },
-                              ),
-                              TextButton(
-                                style: TextButton.styleFrom(
-                                  foregroundColor: HeronFitTheme.error,
-                                ),
-                                child: const Text('Delete'),
-                                onPressed: () {
-                                  Navigator.of(
-                                    dialogContext,
-                                  ).pop(); // Close the dialog
-                                  deleteTemplate(
-                                    template.id,
-                                  ); // Perform deletion
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
+                    tooltip: 'Delete Template',
+                    onPressed:
+                        () => _showDeleteConfirmationDialog(context, template),
                   ),
                   onTap: () {
-                    // Navigate to start workout from this template
                     context.push(
                       AppRoutes.workoutStartFromTemplate,
                       extra: template,
