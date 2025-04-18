@@ -181,14 +181,19 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         // Call finishWorkout and get the completed workout object
                         final completedWorkout =
                             await workoutNotifier.finishWorkout();
+                        // Get the detailed exercises from the state *before* navigating
+                        final detailedExercises = workoutState.exercises;
                         if (!context.mounted) return;
 
                         // Check if the workout was finished successfully
                         if (completedWorkout != null) {
-                          // Navigate to the workout complete screen, passing the completed workout data
+                          // Navigate to the workout complete screen, passing both workout and detailed exercises
                           context.pushReplacement(
                             AppRoutes.workoutComplete,
-                            extra: completedWorkout,
+                            extra: {
+                              'workout': completedWorkout,
+                              'detailedExercises': detailedExercises,
+                            },
                           );
                         } else {
                           // Handle error case (e.g., show a SnackBar)

@@ -18,6 +18,7 @@ import 'package:heronfit/features/booking/views/my_bookings.dart';
 import 'package:heronfit/features/booking/views/booking_screen.dart';
 import 'package:heronfit/features/workout/views/workout_screen.dart'; // Added import
 import 'package:heronfit/features/workout/models/workout_model.dart';
+import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise model
 import 'package:heronfit/features/workout/views/workout_complete_screen.dart'; // Added import
 import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Corrected import path
 import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
@@ -95,20 +96,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.workoutComplete,
         builder: (context, state) {
-          final workout = state.extra as Workout?;
-          if (workout == null) {
+          // Extract the map from extra
+          final extraData = state.extra as Map<String, dynamic>?;
+          final workout = extraData?['workout'] as Workout?;
+          final detailedExercises =
+              extraData?['detailedExercises'] as List<Exercise>?;
+
+          if (workout == null || detailedExercises == null) {
+            // Handle error case: navigate back or show an error screen
             return Scaffold(
-              body: Center(child: Text('Error: Workout data missing.')),
+              appBar: AppBar(title: const Text('Error')),
+              body: const Center(
+                child: Text('Error: Workout data missing or incomplete.'),
+              ),
             );
           }
-          final startTime = workout.timestamp;
-          final endTime = workout.timestamp.add(workout.duration);
+
+          // Pass both workout and detailedExercises to the screen
           return WorkoutCompleteScreen(
-            workoutId: workout.id,
-            startTime: startTime,
-            endTime: endTime,
-            workoutName: workout.name,
-            exercises: workout.exercises,
+            workout: workout,
+            detailedExercises: detailedExercises,
           );
         },
       ),
