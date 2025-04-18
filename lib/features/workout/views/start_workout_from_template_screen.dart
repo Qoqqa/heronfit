@@ -67,45 +67,40 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Workout Name',
-                        labelStyle: HeronFitTheme.textTheme.labelMedium,
+                        // labelText: 'Workout Name',
+                        // labelStyle: HeronFitTheme.textTheme.labelLarge
+                        //     ?.copyWith(color: HeronFitTheme.textMuted),
                         hintText: 'Enter workout name',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted,
+                          color: HeronFitTheme.textMuted.withOpacity(0.7),
                         ),
-                        enabledBorder: OutlineInputBorder(
+                        enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.primary.withAlpha(100),
+                            color: HeronFitTheme.textMuted.withOpacity(0.5),
                             width: 1.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
                             color: HeronFitTheme.primary,
-                            width: 1.5,
+                            width: 2.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        errorBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: HeronFitTheme.error,
-                            width: 1.0,
-                          ),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        focusedErrorBorder: OutlineInputBorder(
+                        errorBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: HeronFitTheme.error,
                             width: 1.5,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        filled: true,
-                        fillColor: HeronFitTheme.bgSecondary.withAlpha(100),
+                        focusedErrorBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: HeronFitTheme.error,
+                            width: 2.0,
+                          ),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14.0,
-                          horizontal: 16.0,
+                          vertical: 12.0,
+                          horizontal: 0.0,
                         ),
                       ),
                       onChanged:
@@ -113,11 +108,11 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                       onFieldSubmitted:
                           (_) => FocusScope.of(context).nextFocus(),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 8.0),
                     Align(
                       alignment: const AlignmentDirectional(-1.0, 0.0),
                       child: Text(
-                        'Duration: ${_formatDuration(workoutState.duration)}',
+                        '${_formatDuration(workoutState.duration)}',
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
                         ),
@@ -136,10 +131,30 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final exercise = workoutState.exercises[index];
                     return ExerciseCard(
+                      key: ValueKey(exercise.id),
                       exercise: exercise,
                       workoutId: workoutState.id,
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
+                      },
+                      onUpdateSetData: (
+                        setIndex, {
+                        kg,
+                        reps,
+                        completed,
+                        restTimerDuration,
+                      }) {
+                        workoutNotifier.updateSetData(
+                          exercise,
+                          setIndex,
+                          kg: kg,
+                          reps: reps,
+                          completed: completed,
+                          restTimerDuration: restTimerDuration,
+                        );
+                      },
+                      onRemoveSet: (setIndex) {
+                        workoutNotifier.removeSet(exercise, setIndex);
                       },
                     );
                   },

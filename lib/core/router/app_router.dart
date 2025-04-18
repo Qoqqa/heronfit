@@ -24,6 +24,7 @@ import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Co
 import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
 import 'package:heronfit/features/workout/views/start_workout_from_template_screen.dart'; // Added import
 import 'package:heronfit/features/workout/views/my_workout_templates_screen.dart'; // Import the new screen
+import 'package:heronfit/features/workout/views/recommended_workouts_screen.dart'; // Import the new screen
 import 'package:heronfit/features/progress/views/progress_screen.dart';
 import 'package:heronfit/features/progress/views/edit_goals.dart';
 import 'package:heronfit/features/progress/views/update_weight.dart';
@@ -165,6 +166,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.bookings,
         builder: (context, state) => const MyBookingsWidget(),
+      ),
+      GoRoute(
+        path: AppRoutes.recommendedWorkouts,
+        builder: (context, state) => const RecommendedWorkoutsScreen(),
       ),
       // ShellRoute for main app sections
       ShellRoute(

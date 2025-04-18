@@ -6,6 +6,7 @@ import 'package:heronfit/core/services/workout_recommendation_service.dart'; // 
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/set_data_model.dart'; // Import SetData
+import 'package:uuid/uuid.dart'; // Import Uuid for unique IDs
 
 // Provider for the WorkoutStorageService (adjust if already defined elsewhere)
 final workoutStorageServiceProvider = Provider(
@@ -39,16 +40,34 @@ final recentSavedWorkoutsProvider =
       });
     });
 
-// Provider to fetch recommended workouts
+// Provider to fetch recommended workouts for the main screen preview (limit 4)
 final recommendedWorkoutsProvider = FutureProvider.autoDispose<List<Workout>>((
   ref,
 ) async {
-  // TODO: Implement user ID fetching if needed for recommendations
-  // final userId = ref.watch(authControllerProvider).user?.id;
   final recommendationService = ref.watch(workoutRecommendationServiceProvider);
-  // Fetch a specific number, e.g., 4
+  // Fetch a specific number for the preview, e.g., 4
   return recommendationService.getRecommendedWorkouts(4);
 });
+
+// Provider to manage the selected category filter on the RecommendedWorkoutsScreen
+final selectedCategoryProvider = StateProvider<String>((ref) => 'For You');
+
+// Provider to fetch workouts based on the selected category for RecommendedWorkoutsScreen
+final recommendedWorkoutsByCategoryProvider =
+    FutureProvider.autoDispose<List<Workout>>((ref) async {
+      final selectedCategory = ref.watch(selectedCategoryProvider);
+      final recommendationService = ref.watch(
+        workoutRecommendationServiceProvider,
+      );
+
+      if (selectedCategory == 'For You') {
+        // Fetch all "For You" workouts for the dedicated screen
+        return recommendationService.getAllRecommendedWorkouts();
+      } else {
+        // Fetch premade workouts based on the selected goal category
+        return recommendationService.getPremadeWorkouts(selectedCategory);
+      }
+    });
 
 // State for the active workout being created/edited
 @immutable
@@ -104,7 +123,7 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     : super(
         ActiveWorkoutState(
           // Use a new UniqueKey for the active session ID, not the template ID
-          id: UniqueKey().toString(),
+          id: const Uuid().v4(), // Use UUID for active session ID
           name: initialWorkout?.name ?? 'New Workout',
           exercises:
               initialWorkout?.exercises.map((exName) {
@@ -112,8 +131,8 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
                 // For now, creating a basic Exercise object
                 return Exercise(
                   id:
-                      UniqueKey()
-                          .toString(), // Each exercise instance needs a unique ID
+                      const Uuid()
+                          .v4(), // Each exercise instance needs a unique ID
                   name: exName,
                   // Initialize other fields as needed, potentially from fetched data
                   force: '',
@@ -161,6 +180,7 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     final updatedExercises =
         state.exercises.map((e) {
           if (e.id == exercise.id) {
+            // Use the default rest timer duration from SetData
             final newSet = SetData(kg: 0, reps: 0, completed: false);
             return e.copyWith(sets: [...e.sets, newSet]);
           }
@@ -169,13 +189,28 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
     state = state.copyWith(exercises: updatedExercises);
   }
 
-  void updateSet(Exercise exercise, int setIndex, SetData updatedSet) {
+  // Updated method to handle individual field updates
+  void updateSetData(
+    Exercise exercise,
+    int setIndex, {
+    int? kg,
+    int? reps,
+    bool? completed,
+    Duration? restTimerDuration,
+  }) {
     final updatedExercises =
         state.exercises.map((e) {
           if (e.id == exercise.id) {
             final updatedSets = List<SetData>.from(e.sets);
             if (setIndex >= 0 && setIndex < updatedSets.length) {
-              updatedSets[setIndex] = updatedSet;
+              final currentSet = updatedSets[setIndex];
+              updatedSets[setIndex] = currentSet.copyWith(
+                kg: kg ?? currentSet.kg,
+                reps: reps ?? currentSet.reps,
+                completed: completed ?? currentSet.completed,
+                restTimerDuration:
+                    restTimerDuration ?? currentSet.restTimerDuration,
+              );
             }
             return e.copyWith(sets: updatedSets);
           }
@@ -217,20 +252,36 @@ class ActiveWorkoutNotifier extends StateNotifier<ActiveWorkoutState> {
 
   Future<Workout?> finishWorkout() async {
     stopTimer();
+
+    // Filter exercises to include only those with at least one completed set
+    final exercisesWithCompletedSets =
+        state.exercises
+            .where((ex) => ex.sets.any((set) => set.completed))
+            .toList();
+
+    // If no exercises have completed sets, maybe return null or handle differently?
+    // For now, we proceed but the saved workout might have an empty exercise list if nothing was completed.
+
     final workoutToSave = Workout(
-      id: state.id,
+      id: state.id, // Use the active session ID
       name: state.name,
       notes: state.notes,
-      exercises: state.exercises.map((e) => e.name).toList(),
+      // Save only exercises that were actually performed (had completed sets)
+      exercises: exercisesWithCompletedSets.map((e) => e.name).toList(),
       duration: state.duration,
-      createdAt: DateTime.now(),
-      timestamp: DateTime.now(), // Ensure timestamp is set
+      createdAt:
+          DateTime.now(), // Timestamp for when the workout record was created
+      timestamp: DateTime.now(), // Timestamp for when the workout session ended
+      // TODO: Consider saving detailed set data (kg, reps, completed) associated with the workout history entry
+      // This would likely involve creating a new table like 'workout_history_details'
     );
 
     try {
+      // TODO: Differentiate between saving a workout *history* entry vs. saving/updating a *template*
+      // This might need a different service method, e.g., saveWorkoutHistory()
       await _ref.read(workoutStorageServiceProvider).saveWorkout(workoutToSave);
       debugPrint('Workout Finished and Saved: ${workoutToSave.name}');
-      return workoutToSave; // Return the saved workout
+      return workoutToSave; // Return the saved workout session data
     } catch (e) {
       debugPrint('Error saving workout: $e');
       return null; // Return null on error

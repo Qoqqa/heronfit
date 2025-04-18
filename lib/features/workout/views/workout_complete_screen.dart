@@ -21,24 +21,35 @@ class WorkoutCompleteScreen extends ConsumerWidget {
     required this.detailedExercises,
   });
 
-  // Helper function to format sets and reps
+  // Helper function to format sets and reps, considering only completed sets
   String _formatSetsAndReps(List<SetData> sets) {
-    if (sets.isEmpty) {
-      return 'No sets recorded';
+    final completedSets =
+        sets.where((s) => s.completed).toList(); // Filter completed sets
+
+    if (completedSets.isEmpty) {
+      return 'No sets completed'; // Updated message
     }
-    // Example: Group similar sets, e.g., 3 sets of 8 reps -> "3 x 8"
-    // This is a simple example; more complex grouping might be needed
-    final firstSet = sets.first;
+
+    // Try to group similar completed sets
+    final firstSet = completedSets.first;
     int count = 0;
-    for (final set in sets) {
+    bool allSame = true;
+    for (final set in completedSets) {
       if (set.kg == firstSet.kg && set.reps == firstSet.reps) {
         count++;
       } else {
-        // If sets vary, provide a more general summary or list them all
-        return '${sets.length} sets'; // Simple fallback
+        allSame = false;
+        break; // Exit loop if sets vary
       }
     }
-    return '$count x ${firstSet.reps} reps${firstSet.kg > 0 ? ' @ ${firstSet.kg}kg' : ''}';
+
+    if (allSame) {
+      // Format like "3 x 8 @ 50kg" or "3 x 8"
+      return '$count x ${firstSet.reps} reps${firstSet.kg > 0 ? ' @ ${firstSet.kg}kg' : ''}';
+    } else {
+      // If completed sets vary, provide a summary like "3 sets completed"
+      return '${completedSets.length} sets completed'; // Updated fallback
+    }
   }
 
   @override
@@ -187,61 +198,83 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 8.0),
                               // Display detailed exercises with sets/reps
-                              if (detailedExercises.isEmpty)
-                                Text(
-                                  'No exercises recorded.',
-                                  style: HeronFitTheme.textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: HeronFitTheme.textMuted,
-                                      ),
-                                )
-                              else
-                                ListView.builder(
-                                  shrinkWrap: true,
-                                  physics:
-                                      const NeverScrollableScrollPhysics(), // Disable inner scroll
-                                  itemCount: detailedExercises.length,
-                                  itemBuilder: (context, index) {
-                                    final exercise = detailedExercises[index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 4.0,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            // Allow text wrapping
-                                            child: Text(
-                                              exercise.name,
+                              // Filter exercises to show only those with completed sets on the summary
+                              () {
+                                // Corrected filtering syntax
+                                final performedExercises =
+                                    detailedExercises
+                                        .where(
+                                          (ex) =>
+                                              ex.sets.any((s) => s.completed),
+                                        )
+                                        .toList();
+
+                                if (performedExercises.isEmpty) {
+                                  return Text(
+                                    'No exercises completed.', // Updated message
+                                    style: HeronFitTheme.textTheme.bodyMedium
+                                        ?.copyWith(
+                                          color: HeronFitTheme.textMuted,
+                                        ),
+                                  );
+                                } else {
+                                  return ListView.builder(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(), // Disable inner scroll
+                                    itemCount:
+                                        performedExercises
+                                            .length, // Use filtered list
+                                    itemBuilder: (context, index) {
+                                      final exercise =
+                                          performedExercises[index]; // Use filtered list
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          vertical: 4.0,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              // Allow text wrapping
+                                              child: Text(
+                                                exercise.name,
+                                                style: HeronFitTheme
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color:
+                                                          HeronFitTheme
+                                                              .textPrimary,
+                                                    ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Text(
+                                              // Pass only completed sets to the formatter
+                                              // Note: _formatSetsAndReps IS used here, analyzer error might be stale
+                                              _formatSetsAndReps(
+                                                exercise.sets
+                                                    .where((s) => s.completed)
+                                                    .toList(),
+                                              ),
                                               style: HeronFitTheme
                                                   .textTheme
                                                   .bodyMedium
                                                   ?.copyWith(
                                                     color:
-                                                        HeronFitTheme
-                                                            .textPrimary,
+                                                        HeronFitTheme.textMuted,
                                                   ),
-                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Text(
-                                            _formatSetsAndReps(exercise.sets),
-                                            style: HeronFitTheme
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.copyWith(
-                                                  color:
-                                                      HeronFitTheme.textMuted,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
+                              }(), // Immediately invoke the builder function
                             ],
                           ),
                         ),
@@ -255,39 +288,60 @@ class WorkoutCompleteScreen extends ConsumerWidget {
               const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: () async {
-                  // 1. Save the workout as a template
+                  // 1. Save the workout as a template (using completed exercise data)
                   final storageService = ref.read(
                     workoutStorageServiceProvider,
                   ); // Use ref.read
                   bool savedSuccessfully = false;
-                  try {
-                    // Create a new Workout object specifically for saving as a template
-                    // Use a new ID or let the service handle ID generation if needed
-                    final templateToSave = Workout(
-                      id:
-                          UniqueKey()
-                              .toString(), // Generate new ID for template
-                      name: workout.name,
-                      exercises:
-                          detailedExercises
-                              .map((e) => e.name)
-                              .toList(), // Save exercise names
-                      duration:
-                          workout
-                              .duration, // Duration might be less relevant for a template?
-                      createdAt:
-                          DateTime.now(), // Set the creation timestamp for sorting
-                      // timestamp/createdAt are not needed for a template definition
-                    );
-                    await storageService.saveWorkout(
-                      templateToSave,
-                    ); // Assuming this saves as a template
-                    savedSuccessfully = true;
-                  } catch (e) {
-                    // Show error message immediately if save fails
-                    if (!context.mounted) return; // Add mounted check
+
+                  // Filter exercises again for the template, ensuring we only save names of performed exercises
+                  final performedExerciseNames =
+                      detailedExercises
+                          .where((ex) => ex.sets.any((s) => s.completed))
+                          .map((e) => e.name)
+                          .toList();
+
+                  // Only attempt to save if at least one exercise was performed
+                  if (performedExerciseNames.isNotEmpty) {
+                    try {
+                      // Create a new Workout object specifically for saving as a template
+                      final templateToSave = Workout(
+                        id:
+                            UniqueKey()
+                                .toString(), // Generate new ID for template
+                        name:
+                            workout
+                                .name, // Use the name from the completed session
+                        exercises:
+                            performedExerciseNames, // Save names of performed exercises
+                        createdAt:
+                            DateTime.now(), // Set the creation timestamp for sorting templates
+                        timestamp:
+                            DateTime.now(), // Added timestamp for template creation
+                        duration:
+                            Duration
+                                .zero, // Add required duration, 0 for templates
+                      );
+                      await storageService.saveWorkout(
+                        templateToSave,
+                      ); // Assuming this saves as a template
+                      savedSuccessfully = true;
+                    } catch (e) {
+                      // Show error message immediately if save fails
+                      if (!context.mounted) return; // Add mounted check
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error saving template: $e')),
+                      );
+                    }
+                  } else {
+                    // Optionally inform the user nothing was saved as no exercises were completed
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Error saving template: $e')),
+                      const SnackBar(
+                        content: Text(
+                          'Template not saved (no exercises completed).',
+                        ),
+                      ),
                     );
                   }
 

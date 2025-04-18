@@ -69,45 +69,52 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
-                        labelText: 'Workout Name',
-                        labelStyle: HeronFitTheme.textTheme.labelMedium,
+                        // labelText: 'Workout Name',
+                        // labelStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                        //   color:
+                        //       HeronFitTheme
+                        //           .textMuted, // Use muted color for label when not focused
+                        // ),
                         hintText: 'Enter workout name (e.g., Leg Day)',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted,
+                          color: HeronFitTheme.textMuted.withOpacity(
+                            0.7,
+                          ), // Lighter hint
                         ),
-                        enabledBorder: OutlineInputBorder(
+                        // Use UnderlineInputBorder
+                        enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.primary.withAlpha(100),
+                            color: HeronFitTheme.textMuted.withOpacity(
+                              0.5,
+                            ), // Lighter underline when not focused
                             width: 1.0,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: const BorderSide(
-                            color: HeronFitTheme.primary,
-                            width: 1.5,
-                          ),
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        errorBorder: OutlineInputBorder(
+                        focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.error,
-                            width: 1.0,
+                            color:
+                                HeronFitTheme
+                                    .primary, // Primary color underline when focused
+                            width: 2.0, // Thicker underline when focused
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        focusedErrorBorder: OutlineInputBorder(
+                        errorBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
                             color: HeronFitTheme.error,
                             width: 1.5,
                           ),
-                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        filled: true,
-                        fillColor: HeronFitTheme.bgSecondary.withAlpha(100),
+                        focusedErrorBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            color: HeronFitTheme.error,
+                            width: 2.0,
+                          ),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical: 14.0,
-                          horizontal: 16.0,
+                          vertical:
+                              12.0, // Adjust vertical padding for underline
+                          horizontal:
+                              0.0, // Minimal horizontal padding for underline
                         ),
                       ),
                       onChanged:
@@ -115,11 +122,11 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                       onFieldSubmitted:
                           (_) => FocusScope.of(context).nextFocus(),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 8.0),
                     Align(
                       alignment: const AlignmentDirectional(-1.0, 0.0),
                       child: Text(
-                        'Duration: ${_formatDuration(workoutState.duration)}',
+                        '${_formatDuration(workoutState.duration)}',
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
                         ),
@@ -138,10 +145,33 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final exercise = workoutState.exercises[index];
                     return ExerciseCard(
+                      key: ValueKey(
+                        exercise.id,
+                      ), // Add key for state preservation
                       exercise: exercise,
                       workoutId: workoutState.id,
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
+                      },
+                      // Pass callbacks to update set data via the notifier
+                      onUpdateSetData: (
+                        setIndex, {
+                        kg,
+                        reps,
+                        completed,
+                        restTimerDuration,
+                      }) {
+                        workoutNotifier.updateSetData(
+                          exercise,
+                          setIndex,
+                          kg: kg,
+                          reps: reps,
+                          completed: completed,
+                          restTimerDuration: restTimerDuration,
+                        );
+                      },
+                      onRemoveSet: (setIndex) {
+                        workoutNotifier.removeSet(exercise, setIndex);
                       },
                     );
                   },
@@ -181,8 +211,15 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         // Call finishWorkout and get the completed workout object
                         final completedWorkout =
                             await workoutNotifier.finishWorkout();
-                        // Get the detailed exercises from the state *before* navigating
-                        final detailedExercises = workoutState.exercises;
+
+                        // Get the detailed exercises *with updated set data* from the state
+                        // We need the state *after* finishWorkout potentially modifies it or just before saving
+                        // Reading the state again ensures we have the latest set data including 'completed' status
+                        final finalWorkoutState = ref.read(
+                          activeWorkoutProvider(initialWorkout),
+                        );
+                        final detailedExercises = finalWorkoutState.exercises;
+
                         if (!context.mounted) return;
 
                         // Check if the workout was finished successfully
@@ -192,6 +229,7 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                             AppRoutes.workoutComplete,
                             extra: {
                               'workout': completedWorkout,
+                              // Pass the exercises list which contains the detailed set data
                               'detailedExercises': detailedExercises,
                             },
                           );
