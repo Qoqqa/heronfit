@@ -37,6 +37,7 @@ class WorkoutCarouselSection extends StatelessWidget {
             children: [
               Text(
                 title,
+                // Use titleLarge for the section header
                 style: HeronFitTheme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

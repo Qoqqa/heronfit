@@ -32,8 +32,8 @@ class WorkoutVerticalListSection extends StatelessWidget {
             children: [
               Text(
                 title,
-                // Use titleMedium for consistency with carousel section title style
-                style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                // Use titleLarge for the section header
+                style: HeronFitTheme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
