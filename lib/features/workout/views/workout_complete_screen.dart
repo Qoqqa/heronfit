@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 import 'package:heronfit/core/theme.dart';
-import 'package:heronfit/core/services/workout_storage_service.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise
 import 'package:heronfit/features/workout/models/set_data_model.dart'; // Import SetData
@@ -276,6 +275,8 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                       duration:
                           workout
                               .duration, // Duration might be less relevant for a template?
+                      createdAt:
+                          DateTime.now(), // Set the creation timestamp for sorting
                       // timestamp/createdAt are not needed for a template definition
                     );
                     await storageService.saveWorkout(
@@ -298,6 +299,8 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                         content: Text('Workout saved as template!'),
                       ),
                     );
+                    // Invalidate the provider to refresh the list on the workout screen
+                    ref.invalidate(savedWorkoutsProvider);
                   }
 
                   // 2. Navigate home regardless of save success/failure

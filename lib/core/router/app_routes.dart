@@ -31,6 +31,7 @@ class AppRoutes {
       '/workout/start-new'; // Route for StartNewWorkoutWidget
   static const workoutStartFromTemplate =
       '/workout/start-template'; // Route for StartWorkoutFromTemplate
+  static const workoutMyTemplates = '/workout/my-templates'; // Added route
 
   // Progress Routes
   static const progress = '/progress'; // Base route for progress dashboard

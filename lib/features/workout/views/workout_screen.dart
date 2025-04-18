@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 import 'package:heronfit/features/workout/widgets/quick_start_section.dart';
 import 'package:heronfit/features/workout/widgets/workout_carousel_section.dart';
@@ -15,7 +16,8 @@ class WorkoutScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final savedWorkoutsAsync = ref.watch(savedWorkoutsProvider);
+    // Use the new provider to get the 3 most recent saved workouts
+    final recentSavedWorkoutsAsync = ref.watch(recentSavedWorkoutsProvider(3));
     final recommendedWorkoutsAsync = ref.watch(recommendedWorkoutsProvider);
 
     return Scaffold(
@@ -29,13 +31,14 @@ class WorkoutScreen extends ConsumerWidget {
             const SizedBox(height: 24.0),
             WorkoutCarouselSection(
               title: 'My Templates',
-              workoutsAsync: savedWorkoutsAsync,
-              itemCountToShow: 3,
+              workoutsAsync:
+                  recentSavedWorkoutsAsync, // Use the recent workouts provider
+              itemCountToShow:
+                  3, // This is now handled by the provider, but kept for clarity
               showSeeAllButton: true,
               onSeeAllTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Navigate to All Templates')),
-                );
+                // Navigate to the full list of templates
+                context.push(AppRoutes.workoutMyTemplates);
               },
             ),
             const SizedBox(height: 24.0),

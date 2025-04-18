@@ -20,8 +20,24 @@ final workoutRecommendationServiceProvider = Provider(
 // Provider to fetch saved workout templates
 final savedWorkoutsProvider = FutureProvider<List<Workout>>((ref) async {
   final storageService = ref.watch(workoutStorageServiceProvider);
-  return storageService.getSavedWorkouts();
+  // Fetch all workouts first
+  final allWorkouts = await storageService.getSavedWorkouts();
+  // Sort by createdAt descending (newest first)
+  allWorkouts.sort((a, b) {
+    final dateA = a.createdAt ?? DateTime(1970); // Handle null createdAt
+    final dateB = b.createdAt ?? DateTime(1970);
+    return dateB.compareTo(dateA); // Descending order
+  });
+  return allWorkouts;
 });
+
+// Provider to get the most recent N saved workouts
+final recentSavedWorkoutsProvider =
+    Provider.family<AsyncValue<List<Workout>>, int>((ref, count) {
+      return ref.watch(savedWorkoutsProvider).whenData((workouts) {
+        return workouts.take(count).toList();
+      });
+    });
 
 // Provider to fetch recommended workouts
 final recommendedWorkoutsProvider = FutureProvider.autoDispose<List<Workout>>((

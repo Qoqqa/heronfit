@@ -22,4 +22,13 @@ class WorkoutStorageService {
     final List<dynamic> decoded = jsonDecode(workoutsJson);
     return decoded.map((json) => Workout.fromJson(json)).toList();
   }
+
+  Future<void> deleteWorkout(String workoutId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final workouts = await getSavedWorkouts();
+    workouts.removeWhere((workout) => workout.id == workoutId);
+    final workoutsJson = workouts.map((w) => w.toJson()).toList();
+    print('Saving workouts after deletion: $workoutsJson'); // Debug log
+    await prefs.setString(_workoutsKey, jsonEncode(workoutsJson));
+  }
 }
