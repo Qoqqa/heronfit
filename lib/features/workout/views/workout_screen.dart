@@ -42,8 +42,10 @@ class WorkoutScreen extends ConsumerWidget {
               title:
                   'Recommended For You', // Header style is inside this widget
               workoutsAsync: recommendedWorkoutsAsync,
-              showSeeAllButton: false,
-              onSeeAllTap: null,
+              showSeeAllButton: true,
+              onSeeAllTap: () {
+                context.push(AppRoutes.recommendedWorkouts);
+              },
             ),
             const SizedBox(height: 24.0),
           ],

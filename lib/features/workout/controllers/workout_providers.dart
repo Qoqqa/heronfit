@@ -39,16 +39,34 @@ final recentSavedWorkoutsProvider =
       });
     });
 
-// Provider to fetch recommended workouts
+// Provider to fetch recommended workouts for the main screen preview (limit 4)
 final recommendedWorkoutsProvider = FutureProvider.autoDispose<List<Workout>>((
   ref,
 ) async {
-  // TODO: Implement user ID fetching if needed for recommendations
-  // final userId = ref.watch(authControllerProvider).user?.id;
   final recommendationService = ref.watch(workoutRecommendationServiceProvider);
-  // Fetch a specific number, e.g., 4
+  // Fetch a specific number for the preview, e.g., 4
   return recommendationService.getRecommendedWorkouts(4);
 });
+
+// Provider to manage the selected category filter on the RecommendedWorkoutsScreen
+final selectedCategoryProvider = StateProvider<String>((ref) => 'For You');
+
+// Provider to fetch workouts based on the selected category for RecommendedWorkoutsScreen
+final recommendedWorkoutsByCategoryProvider =
+    FutureProvider.autoDispose<List<Workout>>((ref) async {
+      final selectedCategory = ref.watch(selectedCategoryProvider);
+      final recommendationService = ref.watch(
+        workoutRecommendationServiceProvider,
+      );
+
+      if (selectedCategory == 'For You') {
+        // Fetch all "For You" workouts for the dedicated screen
+        return recommendationService.getAllRecommendedWorkouts();
+      } else {
+        // Fetch premade workouts based on the selected goal category
+        return recommendationService.getPremadeWorkouts(selectedCategory);
+      }
+    });
 
 // State for the active workout being created/edited
 @immutable

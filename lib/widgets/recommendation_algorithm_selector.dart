@@ -1,108 +1,85 @@
 import 'package:flutter/material.dart';
-import '../core/recommendation/recommendation_factory.dart';
-import '../core/services/workout_recommendation_service.dart';
-import '../core/theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/core/services/workout_recommendation_service.dart'; // Ensure this path is correct
+import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/features/workout/controllers/workout_providers.dart'; // Assuming service provider is here
+import 'package:heronfit/widgets/loading_indicator.dart';
 
-class RecommendationAlgorithmSelector extends StatefulWidget {
-  final WorkoutRecommendationService recommendationService;
-  final Function() onAlgorithmChanged;
-  
-  const RecommendationAlgorithmSelector({
-    Key? key,
-    required this.recommendationService,
-    required this.onAlgorithmChanged,
-  }) : super(key: key);
-  
-  @override
-  _RecommendationAlgorithmSelectorState createState() =>
-      _RecommendationAlgorithmSelectorState();
-}
+// Make the provider public
+final selectedAlgorithmProvider = StateProvider<String?>((ref) => null);
 
-class _RecommendationAlgorithmSelectorState extends State<RecommendationAlgorithmSelector> {
-  late List<Map<String, dynamic>> _algorithms;
-  late RecommendationAlgorithm _selectedAlgorithm;
-  
+class RecommendationAlgorithmSelector extends ConsumerWidget {
+  // Use super parameters for key
+  const RecommendationAlgorithmSelector({super.key});
+
   @override
-  void initState() {
-    super.initState();
-    _algorithms = widget.recommendationService.getAvailableAlgorithms();
-    _selectedAlgorithm = RecommendationAlgorithm.hybrid;
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: HeronFitTheme.bgSecondary,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Recommendation Algorithm',
-            style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final recommendationService = ref.watch(
+      workoutRecommendationServiceProvider,
+    );
+    final availableAlgorithmsAsync = ref.watch(availableAlgorithmsProvider);
+    final selectedAlgorithm = ref.watch(selectedAlgorithmProvider);
+
+    return availableAlgorithmsAsync.when(
+      data: (algorithms) {
+        // Initialize the provider if null and algorithms are available
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (selectedAlgorithm == null && algorithms.isNotEmpty) {
+            ref.read(selectedAlgorithmProvider.notifier).state =
+                algorithms.first;
+          }
+        });
+
+        if (algorithms.isEmpty) {
+          return const Text('No recommendation algorithms available.');
+        }
+
+        return DropdownButtonFormField<String>(
+          value: selectedAlgorithm,
+          decoration: InputDecoration(
+            labelText: 'Recommendation Algorithm',
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            filled: true,
+            fillColor: HeronFitTheme.bgSecondary,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
             ),
           ),
-          const SizedBox(height: 8),
-          Container(
-            padding: EdgeInsets.zero,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: HeronFitTheme.primary.withOpacity(0.3)),
-            ),
-            child: DropdownButton<RecommendationAlgorithm>(
-              value: _selectedAlgorithm,
-              isExpanded: true,
-              underline: Container(),
-              icon: Icon(Icons.arrow_drop_down, color: HeronFitTheme.primary),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              borderRadius: BorderRadius.circular(8),
-              items: _algorithms.map((algorithm) {
-                return DropdownMenuItem<RecommendationAlgorithm>(
-                  value: algorithm['algorithm'],
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          algorithm['name'],
-                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          algorithm['description'],
-                          style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                            color: HeronFitTheme.textMuted,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
+          items:
+              algorithms.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
                 );
               }).toList(),
-              onChanged: (RecommendationAlgorithm? value) {
-                if (value != null) {
-                  setState(() {
-                    _selectedAlgorithm = value;
-                  });
-                  widget.recommendationService.setAlgorithm(value);
-                  widget.onAlgorithmChanged();
-                }
-              },
-            ),
+          onChanged: (String? newValue) {
+            if (newValue != null) {
+              ref.read(selectedAlgorithmProvider.notifier).state = newValue;
+              // Call the service method to potentially save the preference
+              recommendationService.setAlgorithm(newValue);
+            }
+          },
+          // Style the dropdown menu itself
+          dropdownColor: HeronFitTheme.bgSecondary,
+          style: HeronFitTheme.textTheme.bodyMedium,
+          icon: const Icon(Icons.arrow_drop_down, color: HeronFitTheme.primary),
+        );
+      },
+      loading: () => const LoadingIndicator(),
+      error:
+          (error, stack) => Text(
+            'Error loading algorithms: $error',
+            style: const TextStyle(color: HeronFitTheme.error),
           ),
-        ],
-      ),
     );
   }
 }
+
+// Provider to fetch available algorithms
+final availableAlgorithmsProvider = FutureProvider<List<String>>((ref) async {
+  final recommendationService = ref.watch(workoutRecommendationServiceProvider);
+  return recommendationService.getAvailableAlgorithms();
+});
