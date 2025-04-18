@@ -8,6 +8,8 @@ class RestTimerDialog extends StatefulWidget {
   final VoidCallback onSkip;
   final VoidCallback onTimerEnd;
   final Function(Duration)? onAdjustDuration; // Optional: To update default
+  final String exerciseName; // Added
+  final int setNumber; // Added
 
   const RestTimerDialog({
     Key? key,
@@ -15,6 +17,8 @@ class RestTimerDialog extends StatefulWidget {
     required this.onSkip,
     required this.onTimerEnd,
     this.onAdjustDuration,
+    required this.exerciseName, // Added
+    required this.setNumber, // Added
   }) : super(key: key);
 
   @override
@@ -110,83 +114,136 @@ class _RestTimerDialogState extends State<RestTimerDialog> {
   @override
   Widget build(BuildContext context) {
     double progress = 1.0;
+    // Ensure initialDuration is not zero to avoid division by zero
     if (widget.initialDuration.inSeconds > 0) {
       progress = _remainingTime.inSeconds / widget.initialDuration.inSeconds;
     }
 
+    // Prevent progress from going below 0 if timer overshoots slightly
+    progress = progress.clamp(0.0, 1.0);
+
+    // Get screen width for potentially responsive sizing
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Aim for a dialog width that's a significant portion of the screen, but not full width
+    final dialogWidth = screenWidth * 0.85;
+    // Make the timer circle size relative to the dialog width
+    final timerSize = dialogWidth * 0.6;
+
     return AlertDialog(
       backgroundColor: HeronFitTheme.bgLight,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
-      contentPadding: const EdgeInsets.all(24.0),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Rest Timer',
-            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-              color: HeronFitTheme.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: 150,
-            height: 150,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 10,
-                  backgroundColor: HeronFitTheme.primary.withOpacity(0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    HeronFitTheme.primary,
-                  ),
-                ),
-                Center(
-                  child: Text(
-                    _formatDuration(_remainingTime),
-                    style: HeronFitTheme.textTheme.displaySmall?.copyWith(
-                      color: HeronFitTheme.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(SolarIconsOutline.minusCircle),
-                iconSize: 36,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24.0),
+      ), // Even larger radius
+      contentPadding: const EdgeInsets.symmetric(
+        vertical: 32.0,
+        horizontal: 24.0,
+      ),
+      // Constrain the width of the dialog
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: (screenWidth - dialogWidth) / 2,
+        vertical: 24.0,
+      ),
+      content: SizedBox(
+        width: dialogWidth, // Apply the calculated width
+        child: Column(
+          mainAxisSize: MainAxisSize.min, // Keep height determined by content
+          children: [
+            Text(
+              'Rest Timer',
+              style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
                 color: HeronFitTheme.primary,
-                onPressed: () => _adjustTime(const Duration(seconds: -15)),
-              ),
-              const SizedBox(width: 40),
-              IconButton(
-                icon: const Icon(SolarIconsOutline.addCircle),
-                iconSize: 36,
-                color: HeronFitTheme.primary,
-                onPressed: () => _adjustTime(const Duration(seconds: 15)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: _skipTimer,
-            child: Text(
-              'Skip Rest',
-              style: HeronFitTheme.textTheme.labelLarge?.copyWith(
-                color: HeronFitTheme.error, // Changed from secondary to error
                 fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 4),
+            Text(
+              '${widget.exerciseName} - Set ${widget.setNumber}',
+              textAlign: TextAlign.center,
+              style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                color: HeronFitTheme.textMuted,
+              ),
+            ),
+            const SizedBox(height: 36),
+            SizedBox(
+              width: timerSize, // Use calculated size
+              height: timerSize, // Use calculated size
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 14, // Slightly thicker stroke
+                    backgroundColor: HeronFitTheme.primary.withOpacity(0.15),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      HeronFitTheme.primary,
+                    ),
+                    strokeCap: StrokeCap.round,
+                  ),
+                  Center(
+                    child: Text(
+                      _formatDuration(_remainingTime),
+                      // Adjust text style based on size if needed, displayMedium might be too large
+                      style: HeronFitTheme.textTheme.displaySmall?.copyWith(
+                        color: HeronFitTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildAdjustButton(
+                  SolarIconsBold.minusSquare,
+                  const Duration(seconds: -15),
+                ),
+                const SizedBox(width: 24), // Increased spacing
+                _buildAdjustButton(
+                  SolarIconsBold.addSquare,
+                  const Duration(seconds: 15),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32), // Increased spacing
+            // Change to ElevatedButton for background color
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: HeronFitTheme.error, // Red background
+                foregroundColor: Colors.white, // White text
+                minimumSize: const Size(150, 48), // Ensure decent button size
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 100,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0), // Rounded corners
+                ),
+                textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              onPressed: _skipTimer,
+              child: const Text('Skip Rest'),
+            ),
+          ],
+        ),
       ),
+    );
+  }
+
+  // Helper widget for adjustment buttons
+  Widget _buildAdjustButton(IconData icon, Duration adjustment) {
+    return IconButton(
+      icon: Icon(icon),
+      iconSize: 48, // Increased icon size
+      color: HeronFitTheme.primary,
+      padding: EdgeInsets.zero, // Remove default padding if needed
+      constraints:
+          const BoxConstraints(), // Remove default constraints if needed
+      onPressed: () => _adjustTime(adjustment),
     );
   }
 }

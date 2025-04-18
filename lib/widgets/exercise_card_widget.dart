@@ -54,6 +54,9 @@ class _ExerciseCardState extends State<ExerciseCard> {
       builder: (BuildContext context) {
         return RestTimerDialog(
           initialDuration: duration,
+          // Pass exercise name and set number (1-based)
+          exerciseName: widget.exercise.name,
+          setNumber: setIndex + 1,
           onSkip: () {
             // Timer skipped
             if (mounted) {
