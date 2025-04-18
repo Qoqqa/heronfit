@@ -1,39 +1,62 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'exercise_model.dart'; // Import Exercise model
 
 class Workout {
   final String id;
   final String name;
-  final String? notes; // Add notes field
-  final List<String> exercises;
+  final List<Exercise> exercises; // Changed from List<String>
   final Duration duration;
-  final DateTime
-  timestamp; // Renamed from createdAt for consistency? Keep as timestamp.
-  final DateTime? createdAt; // Add createdAt field
+  final DateTime timestamp;
+  final DateTime? createdAt;
 
   Workout({
     required this.id,
     required this.name,
-    this.notes, // Add to constructor
-    required this.exercises,
+    required this.exercises, // Keep as required
     required this.duration,
     DateTime? timestamp,
-    this.createdAt, // Add to constructor
+    this.createdAt,
   }) : timestamp = timestamp ?? DateTime.now();
 
   factory Workout.fromJson(Map<String, dynamic> json) {
+    var exerciseListFromJson = json['exercises'] as List? ?? [];
+    List<Exercise> exercises =
+        exerciseListFromJson.map((exJson) {
+          // Handle potential type mismatch during deserialization
+          if (exJson is Map<String, dynamic>) {
+            return Exercise.fromJson(exJson);
+          } else {
+            // Log or handle unexpected data format if necessary
+            print("Warning: Unexpected exercise format in JSON: $exJson");
+            // Return a default/empty Exercise or throw an error
+            return Exercise(
+              id: '',
+              name: 'Invalid Exercise Data',
+              force: '',
+              level: '',
+              equipment: '',
+              primaryMuscle: '',
+              secondaryMuscles: [],
+              instructions: [],
+              category: '',
+              imageUrl: '',
+            ); // Example default
+          }
+        }).toList();
+
     return Workout(
-      id: json['id'],
-      name: json['name'],
-      notes: json['notes'], // Add notes
-      exercises: List<String>.from(json['exercises']),
-      duration: Duration(seconds: json['duration']),
+      id: json['id'] ?? '', // Provide default value if null
+      name: json['name'] ?? 'Unnamed Workout', // Provide default value if null
+      exercises: exercises, // Use parsed list
+      duration: Duration(seconds: json['duration'] ?? 0), // Provide default
       timestamp:
-          json['timestamp'] != null ? DateTime.parse(json['timestamp']) : null,
+          json['timestamp'] != null
+              ? DateTime.tryParse(json['timestamp']) ??
+                  DateTime.now() // Use tryParse
+              : DateTime.now(),
       createdAt:
           json['created_at'] != null
-              ? DateTime.parse(json['created_at'])
-              : null, // Add createdAt
+              ? DateTime.tryParse(json['created_at']) // Use tryParse
+              : null,
     );
   }
 
@@ -41,16 +64,13 @@ class Workout {
     return Workout(
       id: json['id'].toString(),
       name: json['name'],
-      notes: json['notes'], // Add notes
-      exercises: List<String>.from(json['exercises']),
-      duration: Duration(seconds: json['duration']),
-      timestamp: DateTime.parse(
-        json['timestamp'],
-      ), // Assuming 'timestamp' exists from Supabase
+      exercises: [], // Will be populated later by the service layer
+      duration: Duration(seconds: json['duration'] ?? 0),
+      timestamp: DateTime.parse(json['timestamp']),
       createdAt:
           json['created_at'] != null
               ? DateTime.parse(json['created_at'])
-              : null, // Add createdAt
+              : null,
     );
   }
 
@@ -58,19 +78,20 @@ class Workout {
     return {
       'id': id,
       'name': name,
-      'notes': notes, // Add notes
-      'exercises': exercises,
+      'exercises':
+          exercises
+              .map((ex) => ex.toJson()) // Use Exercise.toJson()
+              .toList(),
       'duration': duration.inSeconds,
       'timestamp': timestamp.toIso8601String(),
-      'created_at': createdAt?.toIso8601String(), // Add createdAt
+      'created_at': createdAt?.toIso8601String(),
     };
   }
 
   Workout copyWith({
     String? id,
     String? name,
-    String? notes,
-    List<String>? exercises,
+    List<Exercise>? exercises, // Changed type
     Duration? duration,
     DateTime? timestamp,
     DateTime? createdAt,
@@ -78,13 +99,10 @@ class Workout {
     return Workout(
       id: id ?? this.id,
       name: name ?? this.name,
-      notes: notes ?? this.notes,
-      exercises: exercises ?? this.exercises,
+      exercises: exercises ?? this.exercises, // Use updated type
       duration: duration ?? this.duration,
       timestamp: timestamp ?? this.timestamp,
       createdAt: createdAt ?? this.createdAt,
     );
   }
 }
-
-void testWorkoutSerialization() {}

@@ -3,17 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import icons
-import 'package:heronfit/features/workout/widgets/rest_timer_dialog.dart'; // Corrected import path for the dialog
+import 'package:heronfit/features/workout/widgets/rest_timer_dialog.dart'; // Import the dialog
 
 // Define callback types
 typedef UpdateSetDataCallback =
-    void Function(
-      int setIndex, {
-      int? kg,
-      int? reps,
-      bool? completed,
-      Duration? restTimerDuration,
-    });
+    void Function(int setIndex, {int? kg, int? reps, bool? completed});
 typedef RemoveSetCallback = void Function(int setIndex);
 
 class ExerciseCard extends StatefulWidget {
@@ -24,60 +18,32 @@ class ExerciseCard extends StatefulWidget {
   final RemoveSetCallback onRemoveSet; // Callback for removing a set
 
   const ExerciseCard({
-    Key? key,
+    super.key, // Use super parameter
     required this.exercise,
     required this.workoutId,
     required this.onAddSet,
     required this.onUpdateSetData, // Require callback
     required this.onRemoveSet, // Require callback
-  }) : super(key: key);
+  });
 
   @override
-  _ExerciseCardState createState() => _ExerciseCardState();
+  ExerciseCardState createState() => ExerciseCardState(); // Make state public
 }
 
-class _ExerciseCardState extends State<ExerciseCard> {
-  bool _isResting = false; // Track if rest timer is active for this exercise
-
+// Make state class public
+class ExerciseCardState extends State<ExerciseCard> {
   @override
   void dispose() {
     super.dispose();
   }
 
-  void _showRestTimer(int setIndex, Duration duration) {
-    setState(() {
-      _isResting = true; // Disable Add Set button
-    });
+  // Method to show the rest timer dialog
+  void _showRestTimerDialog() {
     showDialog(
       context: context,
-      barrierDismissible: false, // Prevent dismissing by tapping outside
+      barrierDismissible: false, // Prevent closing by tapping outside
       builder: (BuildContext context) {
-        return RestTimerDialog(
-          initialDuration: duration,
-          // Pass exercise name and set number (1-based)
-          exerciseName: widget.exercise.name,
-          setNumber: setIndex + 1,
-          onSkip: () {
-            // Timer skipped
-            if (mounted) {
-              setState(() {
-                _isResting = false; // Re-enable Add Set button
-              });
-            }
-          },
-          onTimerEnd: () {
-            // Timer finished normally
-            if (mounted) {
-              setState(() {
-                _isResting = false; // Re-enable Add Set button
-              });
-            }
-          },
-          onAdjustDuration: (newDuration) {
-            // Update the default duration for this specific set in the main state
-            widget.onUpdateSetData(setIndex, restTimerDuration: newDuration);
-          },
-        );
+        return const RestTimerDialog(); // Use the created dialog widget
       },
     );
   }
@@ -91,7 +57,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
         boxShadow: [
           BoxShadow(
             blurRadius: 40.0,
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withAlpha(77), // Use withAlpha (0.3 * 255)
             offset: const Offset(0.0, 10.0),
           ),
         ],
@@ -179,7 +145,9 @@ class _ExerciseCardState extends State<ExerciseCard> {
                     );
                   },
                   background: Container(
-                    color: HeronFitTheme.error.withOpacity(0.8),
+                    color: HeronFitTheme.error.withAlpha(
+                      204,
+                    ), // Use withAlpha (0.8 * 255)
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     child: const Icon(
@@ -260,11 +228,9 @@ class _ExerciseCardState extends State<ExerciseCard> {
                                 setsListIndex,
                                 completed: value,
                               );
-                              if (value && !_isResting) {
-                                _showRestTimer(
-                                  setsListIndex,
-                                  set.restTimerDuration,
-                                );
+                              // Show timer only when checking the box (completing the set)
+                              if (value == true) {
+                                _showRestTimerDialog();
                               }
                             }
                           },
@@ -277,23 +243,20 @@ class _ExerciseCardState extends State<ExerciseCard> {
             ),
             const SizedBox(height: 16.0),
             ElevatedButton(
-              onPressed:
-                  _isResting
-                      ? null
-                      : () {
-                        widget.onAddSet();
-                      },
+              onPressed: () {
+                widget.onAddSet();
+              },
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 40.0),
                 backgroundColor:
-                    _isResting ? Colors.grey : HeronFitTheme.primary,
+                    HeronFitTheme.primary, // Always primary color now
                 padding: const EdgeInsets.symmetric(vertical: 12.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
               child: Text(
-                _isResting ? 'Resting...' : 'Add Set',
+                'Add Set', // Always 'Add Set' now
                 style: HeronFitTheme.textTheme.labelMedium?.copyWith(
                   color: HeronFitTheme.bgLight,
                   fontWeight: FontWeight.w600,

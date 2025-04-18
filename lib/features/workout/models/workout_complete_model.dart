@@ -1,9 +1,11 @@
+import '../models/exercise_model.dart'; // Import Exercise model
+
 class WorkoutCompleteModel {
   final String workoutId;
   final DateTime startTime;
   final DateTime endTime;
   final String workoutName;
-  final List<String> exercises;
+  final List<Exercise> exercises; // Changed type
 
   WorkoutCompleteModel({
     required this.workoutId,

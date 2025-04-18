@@ -36,7 +36,9 @@ class WorkoutCard extends StatelessWidget {
         ),
         shadowColor:
             HeronFitTheme.cardShadow.isNotEmpty
-                ? HeronFitTheme.cardShadow[0].color.withOpacity(0.5)
+                ? HeronFitTheme.cardShadow[0].color.withAlpha(
+                  (255 * 0.5).round(),
+                ) // Use withAlpha
                 : Colors.black.withAlpha(15),
         child: InkWell(
           onTap: () {
@@ -98,8 +100,11 @@ class WorkoutCard extends StatelessWidget {
                           workout.exercises
                               .take(3)
                               .map(
-                                (exerciseName) => Chip(
-                                  label: Text(exerciseName),
+                                (exercise) => Chip(
+                                  // Changed variable name
+                                  label: Text(
+                                    exercise.name,
+                                  ), // Access name property
                                   labelStyle: HeronFitTheme.textTheme.labelSmall
                                       ?.copyWith(
                                         fontSize: 10,

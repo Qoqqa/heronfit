@@ -77,16 +77,16 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         // ),
                         hintText: 'Enter workout name (e.g., Leg Day)',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted.withOpacity(
-                            0.7,
-                          ), // Lighter hint
+                          color: HeronFitTheme.textMuted.withAlpha(
+                            179,
+                          ), // Use withAlpha (0.7 * 255)
                         ),
                         // Use UnderlineInputBorder
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.textMuted.withOpacity(
-                              0.5,
-                            ), // Lighter underline when not focused
+                            color: HeronFitTheme.textMuted.withAlpha(
+                              128,
+                            ), // Use withAlpha (0.5 * 255)
                             width: 1.0,
                           ),
                         ),
@@ -147,27 +147,20 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                     return ExerciseCard(
                       key: ValueKey(
                         exercise.id,
-                      ), // Add key for state preservation
+                      ), // Remove unnecessary interpolation
                       exercise: exercise,
                       workoutId: workoutState.id,
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
                       },
                       // Pass callbacks to update set data via the notifier
-                      onUpdateSetData: (
-                        setIndex, {
-                        kg,
-                        reps,
-                        completed,
-                        restTimerDuration,
-                      }) {
+                      onUpdateSetData: (setIndex, {kg, reps, completed}) {
                         workoutNotifier.updateSetData(
                           exercise,
                           setIndex,
                           kg: kg,
                           reps: reps,
                           completed: completed,
-                          restTimerDuration: restTimerDuration,
                         );
                       },
                       onRemoveSet: (setIndex) {

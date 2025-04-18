@@ -295,16 +295,16 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                   bool savedSuccessfully = false;
 
                   // Filter exercises again for the template, ensuring we only save names of performed exercises
-                  final performedExerciseNames =
+                  final performedExercises =
                       detailedExercises
                           .where((ex) => ex.sets.any((s) => s.completed))
-                          .map((e) => e.name)
                           .toList();
 
                   // Only attempt to save if at least one exercise was performed
-                  if (performedExerciseNames.isNotEmpty) {
+                  if (performedExercises.isNotEmpty) {
                     try {
                       // Create a new Workout object specifically for saving as a template
+                      // Use the actual Exercise objects that were performed
                       final templateToSave = Workout(
                         id:
                             UniqueKey()
@@ -313,7 +313,7 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                             workout
                                 .name, // Use the name from the completed session
                         exercises:
-                            performedExerciseNames, // Save names of performed exercises
+                            performedExercises, // Pass the List<Exercise> of performed exercises
                         createdAt:
                             DateTime.now(), // Set the creation timestamp for sorting templates
                         timestamp:

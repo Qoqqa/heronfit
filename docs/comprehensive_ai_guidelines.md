@@ -90,6 +90,7 @@ Follow a **features-first** project structure:
 - **Real-time:** Utilize Supabase Realtime subscriptions for live updates (e.g., gym occupancy, booking status) via `StreamProvider` in Riverpod. Ensure subscriptions are properly managed and disposed.
 - **Edge Functions:** If used (e.g., for simple backend logic or proxying), define clear API endpoints, manage dependencies, and ensure secure invocation from the Flutter app.
 - **Data Models:** Finalize PostgreSQL table schemas, ensuring appropriate relationships, constraints, and indexing for performance.
+  - **Workout History Update:** The schema now includes `workouts`, `exercises`, `workout_exercises`, and `exercise_sets` tables to store detailed workout history. A Supabase database function `save_full_workout` is used for transactional saving of workout data.
 - **Security:**
   - Implement and test comprehensive Row Level Security (RLS) policies for all tables containing user-specific or sensitive data. Ensure users can only access their own data or data they are permitted to see.
   - Use `.env` files for Supabase URL and Anon Key. Do not commit `.env` files.

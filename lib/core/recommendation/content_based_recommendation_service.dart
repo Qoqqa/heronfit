@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:uuid/uuid.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/workout/models/workout_model.dart';
 import 'base_recommendation_service.dart';
 import '../services/exercise_database_service.dart';
@@ -125,10 +124,15 @@ class ContentBasedRecommendationService extends BaseRecommendationService {
 
       for (var category in topCategories) {
         // Get random exercises from this category, preferring user's favorites
-        final exercises = await _getExercisesBasedOnPreferences(
+        final exerciseNames = await _getExercisesBasedOnPreferences(
           category,
           topExercises,
           5, // 5 exercises per workout
+        );
+
+        // Fetch Exercise objects based on names
+        final exercises = await _exerciseService.getExercisesByNames(
+          exerciseNames,
         );
 
         final nameOptions = _workoutNames[category] ?? ['Personalized Workout'];
@@ -136,8 +140,8 @@ class ContentBasedRecommendationService extends BaseRecommendationService {
 
         final workout = Workout(
           id: const Uuid().v4(),
-          name: '$workoutName',
-          exercises: exercises,
+          name: workoutName, // Removed unnecessary interpolation
+          exercises: exercises, // Pass List<Exercise>
           duration: Duration(minutes: 30 + _random.nextInt(31)),
           timestamp: DateTime.now(),
         );
@@ -156,7 +160,7 @@ class ContentBasedRecommendationService extends BaseRecommendationService {
 
       return recommendations;
     } catch (e) {
-      print('Error generating content-based recommendations: $e');
+      // Consider using a logging framework here
       return _fallbackService.getRecommendations(userId, count: count);
     }
   }
@@ -185,6 +189,10 @@ class ContentBasedRecommendationService extends BaseRecommendationService {
       );
     }
 
+    // Ensure the final list has exactly 'count' exercises if possible, trimming excess
+    if (result.length > count) {
+      return result.sublist(0, count);
+    }
     return result;
   }
 

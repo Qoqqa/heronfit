@@ -1,28 +1,27 @@
 class SetData {
-  int kg;
-  int reps;
-  bool completed;
-  Duration restTimerDuration; // Added rest timer duration
+  final int kg;
+  final int reps;
+  final bool completed;
 
-  SetData({
-    required this.kg,
-    required this.reps,
-    required this.completed,
-    this.restTimerDuration = const Duration(seconds: 90), // Default 90 seconds
-  });
+  SetData({required this.kg, required this.reps, this.completed = false});
 
-  // Optional: Add copyWith for easier updates if needed elsewhere
-  SetData copyWith({
-    int? kg,
-    int? reps,
-    bool? completed,
-    Duration? restTimerDuration,
-  }) {
+  SetData copyWith({int? kg, int? reps, bool? completed}) {
     return SetData(
       kg: kg ?? this.kg,
       reps: reps ?? this.reps,
       completed: completed ?? this.completed,
-      restTimerDuration: restTimerDuration ?? this.restTimerDuration,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'kg': kg, 'reps': reps, 'completed': completed};
+  }
+
+  factory SetData.fromJson(Map<String, dynamic> json) {
+    return SetData(
+      kg: json['kg'] ?? 0,
+      reps: json['reps'] ?? 0,
+      completed: json['completed'] ?? false,
     );
   }
 }

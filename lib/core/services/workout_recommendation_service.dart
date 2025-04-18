@@ -1,5 +1,25 @@
 import 'package:heronfit/features/workout/models/workout_model.dart';
+import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise
 import 'dart:math';
+
+// Helper function to create dummy exercises
+Exercise _dummyExercise(
+  String id,
+  String name, {
+  String category = 'strength',
+}) => Exercise(
+  id: id,
+  name: name,
+  force: 'push', // Placeholder
+  level: 'beginner', // Placeholder
+  equipment: 'body only', // Placeholder
+  primaryMuscle: 'chest', // Placeholder
+  secondaryMuscles: [],
+  instructions: [],
+  category: category, // Use provided category
+  imageUrl: '', // Placeholder
+  // No sets needed for recommendations/templates initially
+);
 
 // Placeholder service for workout recommendations
 class WorkoutRecommendationService {
@@ -9,11 +29,11 @@ class WorkoutRecommendationService {
       id: 'rec1',
       name: 'Full Body Strength',
       exercises: [
-        'Barbell Squat',
-        'Bench Press',
-        'Deadlift',
-        'Overhead Press',
-        'Bent Over Row',
+        _dummyExercise('ex1', 'Barbell Squat', category: 'strength'),
+        _dummyExercise('ex2', 'Bench Press', category: 'strength'),
+        _dummyExercise('ex3', 'Deadlift', category: 'strength'),
+        _dummyExercise('ex4', 'Overhead Press', category: 'strength'),
+        _dummyExercise('ex5', 'Bent Over Row', category: 'strength'),
       ],
       duration: const Duration(minutes: 60),
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
@@ -22,11 +42,11 @@ class WorkoutRecommendationService {
       id: 'rec2',
       name: 'Upper Body Focus',
       exercises: [
-        'Pull-up',
-        'Dumbbell Bench Press',
-        'Seated Cable Row',
-        'Lateral Raise',
-        'Triceps Pushdown',
+        _dummyExercise('ex6', 'Pull-up', category: 'strength'),
+        _dummyExercise('ex7', 'Dumbbell Bench Press', category: 'strength'),
+        _dummyExercise('ex8', 'Seated Cable Row', category: 'strength'),
+        _dummyExercise('ex9', 'Lateral Raise', category: 'strength'),
+        _dummyExercise('ex10', 'Triceps Pushdown', category: 'strength'),
       ],
       duration: const Duration(minutes: 45),
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -35,11 +55,11 @@ class WorkoutRecommendationService {
       id: 'rec3',
       name: 'Lower Body & Core',
       exercises: [
-        'Romanian Deadlift',
-        'Leg Press',
-        'Hamstring Curl',
-        'Calf Raise',
-        'Plank',
+        _dummyExercise('ex11', 'Romanian Deadlift', category: 'strength'),
+        _dummyExercise('ex12', 'Leg Press', category: 'strength'),
+        _dummyExercise('ex13', 'Hamstring Curl', category: 'strength'),
+        _dummyExercise('ex14', 'Calf Raise', category: 'strength'),
+        _dummyExercise('ex15', 'Plank', category: 'core'), // Corrected category
       ],
       duration: const Duration(minutes: 50),
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -48,10 +68,14 @@ class WorkoutRecommendationService {
       id: 'rec4',
       name: 'Quick HIIT',
       exercises: [
-        'Burpees',
-        'Jumping Jacks',
-        'High Knees',
-        'Mountain Climbers',
+        _dummyExercise(
+          'ex16',
+          'Burpees',
+          category: 'cardio',
+        ), // Corrected category
+        _dummyExercise('ex17', 'Jumping Jacks', category: 'cardio'),
+        _dummyExercise('ex18', 'High Knees', category: 'cardio'),
+        _dummyExercise('ex19', 'Mountain Climbers', category: 'cardio'),
       ],
       duration: const Duration(minutes: 20),
       createdAt: DateTime.now().subtract(const Duration(days: 4)),
@@ -60,11 +84,11 @@ class WorkoutRecommendationService {
       id: 'rec5',
       name: 'Bodyweight Basics',
       exercises: [
-        'Squat',
-        'Push-up',
-        'Walking Lunges',
-        'Plank',
-        'Glute Bridge',
+        _dummyExercise('ex20', 'Squat', category: 'strength'),
+        _dummyExercise('ex21', 'Push-up', category: 'strength'),
+        _dummyExercise('ex22', 'Walking Lunges', category: 'strength'),
+        _dummyExercise('ex15', 'Plank', category: 'core'), // Re-use plank
+        _dummyExercise('ex23', 'Glute Bridge', category: 'strength'),
       ],
       duration: const Duration(minutes: 30),
       createdAt: DateTime.now().subtract(const Duration(days: 5)),
@@ -74,12 +98,12 @@ class WorkoutRecommendationService {
       id: 'premade_gain1',
       name: 'Muscle Builder Phase 1',
       exercises: [
-        'Barbell Squat',
-        'Bench Press',
-        'Bent Over Row',
-        'Overhead Press',
-        'Bicep Curl',
-        'Triceps Extension',
+        _dummyExercise('ex1', 'Barbell Squat', category: 'strength'),
+        _dummyExercise('ex2', 'Bench Press', category: 'strength'),
+        _dummyExercise('ex5', 'Bent Over Row', category: 'strength'),
+        _dummyExercise('ex4', 'Overhead Press', category: 'strength'),
+        _dummyExercise('ex24', 'Bicep Curl', category: 'strength'),
+        _dummyExercise('ex25', 'Triceps Extension', category: 'strength'),
       ],
       duration: const Duration(minutes: 65),
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
@@ -88,11 +112,19 @@ class WorkoutRecommendationService {
       id: 'premade_lose1',
       name: 'Fat Burner Circuit',
       exercises: [
-        'Kettlebell Swing',
-        'Box Jump',
-        'Battle Ropes',
-        'Rowing Machine',
-        'Burpees',
+        _dummyExercise(
+          'ex26',
+          'Kettlebell Swing',
+          category: 'strength',
+        ), // Often strength/cardio
+        _dummyExercise(
+          'ex27',
+          'Box Jump',
+          category: 'plyometrics',
+        ), // More specific
+        _dummyExercise('ex28', 'Battle Ropes', category: 'cardio'),
+        _dummyExercise('ex29', 'Rowing Machine', category: 'cardio'),
+        _dummyExercise('ex16', 'Burpees', category: 'cardio'),
       ],
       duration: const Duration(minutes: 40),
       createdAt: DateTime.now().subtract(const Duration(days: 11)),
@@ -101,12 +133,12 @@ class WorkoutRecommendationService {
       id: 'premade_overall1',
       name: 'Foundation Fitness',
       exercises: [
-        'Goblet Squat',
-        'Dumbbell Bench Press',
-        'Lat Pulldown',
-        'Dumbbell Shoulder Press',
-        'Plank',
-        'Farmer\'s Walk', // Corrected this line
+        _dummyExercise('ex30', 'Goblet Squat', category: 'strength'),
+        _dummyExercise('ex7', 'Dumbbell Bench Press', category: 'strength'),
+        _dummyExercise('ex31', 'Lat Pulldown', category: 'strength'),
+        _dummyExercise('ex32', 'Dumbbell Shoulder Press', category: 'strength'),
+        _dummyExercise('ex15', 'Plank', category: 'core'),
+        _dummyExercise('ex33', 'Farmer\'s Walk', category: 'strength'),
       ],
       duration: const Duration(minutes: 55),
       createdAt: DateTime.now().subtract(const Duration(days: 12)),
@@ -165,7 +197,8 @@ class WorkoutRecommendationService {
   // Simulates setting the preferred algorithm (placeholder)
   Future<void> setAlgorithm(String algorithm) async {
     await Future.delayed(const Duration(milliseconds: 50)); // Simulate delay
-    print('Algorithm set to: $algorithm (Placeholder)');
+    // TODO: Replace print with proper logging
     // In a real app, this would likely update user preferences in the backend
+    // Removed print statement
   }
 }
