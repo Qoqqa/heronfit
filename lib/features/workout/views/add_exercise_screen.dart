@@ -5,6 +5,7 @@ import '../controllers/exercise_controller.dart';
 import 'exercise_details_screen.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:solar_icons/solar_icons.dart'; // Add this import
+import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
 
 class AddExerciseScreen extends StatefulWidget {
   final String? workoutId;
@@ -52,7 +53,8 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
+    if (_searchQuery.isEmpty &&
+        _scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * 0.8 &&
         !_exerciseController.isFetchingMore &&
         _exerciseController.hasMorePages &&
@@ -81,7 +83,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   }
 
   Future<void> _loadMoreExercises() async {
-    if (_isSearching) return;
+    if (_searchQuery.isNotEmpty || _isSearching) return;
 
     try {
       final exercises = await _exerciseController.fetchMoreExercises();
@@ -182,32 +184,31 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      setState(() {
-        _searchQuery = value;
-      });
+      final trimmedValue = value.trim();
+      if (trimmedValue != _searchQuery ||
+          (trimmedValue.isEmpty && _searchQuery.isNotEmpty)) {
+        setState(() {
+          _searchQuery = trimmedValue;
+          _showAutocomplete = false;
+        });
 
-      if (value.isEmpty) {
-        _loadExercises();
-      } else {
-        _getAutocompleteSuggestions(value);
+        if (trimmedValue.isEmpty) {
+          _loadExercises();
+        } else {
+          _searchExercises(trimmedValue);
+        }
       }
     });
   }
 
   void _onSuggestionSelected(String suggestion) {
-    _searchController.text = suggestion;
+    final trimmedSuggestion = suggestion.trim();
+    _searchController.text = trimmedSuggestion;
     setState(() {
-      _searchQuery = suggestion;
+      _searchQuery = trimmedSuggestion;
       _showAutocomplete = false;
     });
-    _searchExercises(suggestion);
-  }
-
-  void _performSearch() {
-    setState(() {
-      _showAutocomplete = false;
-    });
-    _searchExercises(_searchQuery);
+    _searchExercises(trimmedSuggestion);
   }
 
   void _toggleEquipment(String equipment) {
@@ -230,7 +231,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context); // Get theme data
+    final ThemeData theme = Theme.of(context);
 
     return GestureDetector(
       onTap: () {
@@ -242,21 +243,20 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       child: Scaffold(
         backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Keep transparent
-          elevation: 0, // Keep elevation 0
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              SolarIconsOutline.altArrowLeft,
               color: theme.colorScheme.primary,
-              size: 30.0, // Keep size if needed, or remove for default
+              size: 30.0,
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Add Exercises',
             style: TextStyle(
-              // Apply standard style
               color: theme.colorScheme.primary,
               fontSize: 20.0,
               fontWeight: FontWeight.bold,
@@ -266,13 +266,11 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           actions: [
             IconButton(
               icon: Icon(
-                Icons.filter_list, // Keep filter icon
+                Icons.filter_list,
                 color:
                     _selectedEquipment.isNotEmpty
                         ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withOpacity(
-                          0.6,
-                        ), // Adjust opacity if needed
+                        : theme.colorScheme.onSurface.withOpacity(0.6),
               ),
               onPressed: () {
                 setState(() {
@@ -298,7 +296,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                         controller: _searchController,
                         focusNode: _searchFocusNode,
                         onChanged: _onSearchChanged,
-                        onFieldSubmitted: (_) => _performSearch(),
                         decoration: InputDecoration(
                           hintText: 'Search Exercises...',
                           prefixIcon: Icon(
@@ -313,11 +310,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                     icon: Icon(Icons.clear, color: Colors.grey),
                                     onPressed: () {
                                       _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                        _showAutocomplete = false;
-                                      });
-                                      _loadExercises();
+                                      _onSearchChanged('');
                                     },
                                   )
                                   : null,
@@ -336,13 +329,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                             borderRadius: BorderRadius.circular(8.0),
                           ),
                           filled: true,
-                          fillColor: Theme.of(
-                            context,
-                          ).colorScheme.surface.withOpacity(0.8),
+                          fillColor: HeronFitTheme.bgPrimary,
                         ),
                       ),
                     ),
-
                     if (_showAutocomplete)
                       Positioned(
                         top: 60,
@@ -383,7 +373,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                   ],
                 ),
               ),
-
               AnimatedContainer(
                 duration: Duration(milliseconds: 300),
                 height: _isFilterExpanded ? null : 0,
@@ -481,7 +470,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                         )
                         : SizedBox.shrink(),
               ),
-
               if (_selectedEquipment.isNotEmpty && !_isFilterExpanded)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
@@ -515,7 +503,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                     ],
                   ),
                 ),
-
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -529,7 +516,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                 ),
               ),
               SizedBox(height: 8),
-
               Expanded(
                 child:
                     _isLoading
@@ -599,11 +585,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                       duration: Duration(seconds: 2),
                                     ),
                                   );
-                                  context.pop(
-                                    exercise,
-                                  ); // Pop with the selected exercise as result
+                                  context.pop(exercise);
                                 },
                                 onLongPress: () {
+                                  FocusScope.of(context).unfocus();
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
                                       builder:
@@ -712,7 +697,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                           ),
                                         ),
                                         SizedBox(width: 12.0),
-
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
