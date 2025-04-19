@@ -16,7 +16,7 @@ final workoutStorageServiceProvider = Provider(
 
 // Provider for the WorkoutRecommendationService (adjust if already defined elsewhere)
 final workoutRecommendationServiceProvider = Provider(
-  (ref) => WorkoutRecommendationService(),
+  (ref) => WorkoutRecommendationService(ref), // Pass ref to the constructor
 );
 
 // Provider for the WorkoutSupabaseService instance

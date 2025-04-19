@@ -129,6 +129,31 @@ class WorkoutSupabaseService {
     }
   }
 
+  // New method to fetch exercises by IDs
+  Future<List<Exercise>> getExercisesByIds(List<String> ids) async {
+    if (ids.isEmpty) {
+      return [];
+    }
+    try {
+      final response = await _supabase
+          .from('exercises')
+          .select()
+          .inFilter('id', ids);
+
+      final exercises =
+          response.map((data) => Exercise.fromJson(data)).toList();
+
+      // Create a map for quick lookup
+      final exerciseMap = {for (var ex in exercises) ex.id: ex};
+
+      // Return exercises in the original order of IDs
+      return ids.map((id) => exerciseMap[id]).whereType<Exercise>().toList();
+    } catch (e) {
+      debugPrint('Error fetching exercises by IDs: $e');
+      rethrow;
+    }
+  }
+
   // Updated getWorkoutStats to use workout_exercises and exercise_sets
   Future<Map<String, dynamic>> getWorkoutStats() async {
     final userId = _supabase.auth.currentUser!.id;
