@@ -136,6 +136,7 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                     borderRadius: BorderRadius.circular(12.0),
                   ),
                   child: Row(
+                    // Changed Column back to Row
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // First Column
@@ -207,6 +208,11 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
                                   widget.exercise.mechanic!,
                                 ),
                               ),
+                            // Add SizedBox if Mechanic is not shown but Secondary is
+                            // This ensures consistent spacing below Force if Mechanic is absent
+                            if (widget.exercise.mechanic == null ||
+                                widget.exercise.mechanic!.isEmpty)
+                              const SizedBox(height: 8.0),
                             _buildDetailRow(
                               theme,
                               textTheme,
@@ -352,39 +358,36 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
     bool isList = false, // Keep this parameter if needed elsewhere
   }) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
       children: [
         Padding(
-          padding: const EdgeInsets.only(top: 1.0), // Adjust alignment slightly
+          padding: const EdgeInsets.only(right: 6.0), // Add padding after icon
           child: Icon(
             icon,
             size: 18,
             color: theme.colorScheme.primary,
           ), // Smaller icon
         ),
-        const SizedBox(width: 6),
-        SizedBox(
-          width: 75, // Reduced label width
-          child: Padding(
-            padding: const EdgeInsets.only(
-              top: 1.0,
-            ), // Adjust alignment slightly
-            child: Text(
-              label,
-              style: textTheme.labelMedium?.copyWith(
-                // Slightly larger than value
-                fontWeight: FontWeight.w600,
-              ),
-              overflow: TextOverflow.ellipsis, // Prevent label overflow
-            ),
+        // Remove fixed width SizedBox for label to allow natural sizing
+        Padding(
+          padding: const EdgeInsets.only(right: 4.0), // Add padding after label
+          child: Text(
+            label,
+            style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+            overflow: TextOverflow.ellipsis, // Prevent label overflow
           ),
         ),
-        const SizedBox(width: 4),
         Expanded(
-          child: Text(
-            _capitalizeWords(value),
-            style: textTheme.labelSmall, // Use labelSmall for value
-            softWrap: true, // Explicitly allow wrapping
+          child: Center(
+            // Center the value text within the expanded space
+            child: Text(
+              _capitalizeWords(value),
+              style: textTheme.labelSmall, // Use labelSmall for value
+              textAlign:
+                  TextAlign
+                      .center, // Ensure text itself is centered if it wraps
+              softWrap: true, // Explicitly allow wrapping
+            ),
           ),
         ),
       ],
