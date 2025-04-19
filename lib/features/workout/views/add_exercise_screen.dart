@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../models/exercise_model.dart';
@@ -5,17 +6,19 @@ import '../controllers/exercise_controller.dart';
 import 'exercise_details_screen.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:solar_icons/solar_icons.dart'; // Add this import
+import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
+import '../widgets/add_exercise_list_item.dart'; // Import the new widget
 
 class AddExerciseScreen extends StatefulWidget {
   final String? workoutId;
 
-  const AddExerciseScreen({Key? key, this.workoutId}) : super(key: key);
+  const AddExerciseScreen({super.key, this.workoutId});
 
   @override
-  _AddExerciseScreenState createState() => _AddExerciseScreenState();
+  AddExerciseScreenState createState() => AddExerciseScreenState();
 }
 
-class _AddExerciseScreenState extends State<AddExerciseScreen> {
+class AddExerciseScreenState extends State<AddExerciseScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
   final ScrollController _scrollController = ScrollController();
@@ -23,10 +26,8 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   Timer? _debounce;
   String _searchQuery = '';
   List<Exercise> _exercises = [];
-  List<String> _autocompleteSuggestions = [];
   bool _isLoading = true;
   bool _isSearching = false;
-  bool _showAutocomplete = false;
   final ExerciseController _exerciseController = ExerciseController();
 
   List<String> _availableEquipment = [];
@@ -52,7 +53,8 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
+    if (_searchQuery.isEmpty &&
+        _scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent * 0.8 &&
         !_exerciseController.isFetchingMore &&
         _exerciseController.hasMorePages &&
@@ -81,7 +83,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
   }
 
   Future<void> _loadMoreExercises() async {
-    if (_isSearching) return;
+    if (_searchQuery.isNotEmpty || _isSearching) return;
 
     try {
       final exercises = await _exerciseController.fetchMoreExercises();
@@ -120,28 +122,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     }
   }
 
-  Future<void> _getAutocompleteSuggestions(String query) async {
-    if (query.isEmpty) {
-      setState(() {
-        _autocompleteSuggestions = [];
-        _showAutocomplete = false;
-      });
-      return;
-    }
-
-    try {
-      final suggestions = await _exerciseController.getAutocompleteSuggestions(
-        query,
-      );
-      setState(() {
-        _autocompleteSuggestions = suggestions;
-        _showAutocomplete = suggestions.isNotEmpty;
-      });
-    } catch (e) {
-      print('Error getting autocomplete suggestions: $e');
-    }
-  }
-
   Future<void> _loadAvailableEquipment() async {
     setState(() {
       _isLoadingEquipment = true;
@@ -157,7 +137,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
       setState(() {
         _isLoadingEquipment = false;
       });
-      print('Error loading equipment: $e');
+      debugPrint('Error loading equipment: $e');
     }
   }
 
@@ -182,32 +162,20 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
 
     _debounce = Timer(const Duration(milliseconds: 500), () {
-      setState(() {
-        _searchQuery = value;
-      });
+      final trimmedValue = value.trim();
+      if (trimmedValue != _searchQuery) {
+        setState(() {
+          _searchQuery = trimmedValue;
+        });
 
-      if (value.isEmpty) {
-        _loadExercises();
-      } else {
-        _getAutocompleteSuggestions(value);
+        if (trimmedValue.isEmpty) {
+          _exerciseController.resetPagination();
+          _loadExercises();
+        } else {
+          _searchExercises(trimmedValue);
+        }
       }
     });
-  }
-
-  void _onSuggestionSelected(String suggestion) {
-    _searchController.text = suggestion;
-    setState(() {
-      _searchQuery = suggestion;
-      _showAutocomplete = false;
-    });
-    _searchExercises(suggestion);
-  }
-
-  void _performSearch() {
-    setState(() {
-      _showAutocomplete = false;
-    });
-    _searchExercises(_searchQuery);
   }
 
   void _toggleEquipment(String equipment) {
@@ -230,33 +198,29 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context); // Get theme data
+    final ThemeData theme = Theme.of(context);
 
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _showAutocomplete = false;
-        });
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
+        backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Keep transparent
-          elevation: 0, // Keep elevation 0
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              SolarIconsOutline.altArrowLeft,
               color: theme.colorScheme.primary,
-              size: 30.0, // Keep size if needed, or remove for default
+              size: 30.0,
             ),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Text(
             'Add Exercises',
             style: TextStyle(
-              // Apply standard style
               color: theme.colorScheme.primary,
               fontSize: 20.0,
               fontWeight: FontWeight.bold,
@@ -266,13 +230,11 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           actions: [
             IconButton(
               icon: Icon(
-                Icons.filter_list, // Keep filter icon
+                Icons.filter_list,
                 color:
                     _selectedEquipment.isNotEmpty
                         ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withOpacity(
-                          0.6,
-                        ), // Adjust opacity if needed
+                        : theme.colorScheme.onSurface.withAlpha(153),
               ),
               onPressed: () {
                 setState(() {
@@ -287,103 +249,53 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: TextFormField(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: _onSearchChanged,
+                    decoration: InputDecoration(
+                      hintText: 'Search Exercises...',
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha(153),
+                      ),
+                      suffixIcon:
+                          _searchController.text.isNotEmpty
+                              ? IconButton(
+                                icon: Icon(Icons.clear, color: Colors.grey),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _onSearchChanged('');
+                                },
+                              )
+                              : null,
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.transparent),
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      child: TextFormField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        onChanged: _onSearchChanged,
-                        onFieldSubmitted: (_) => _performSearch(),
-                        decoration: InputDecoration(
-                          hintText: 'Search Exercises...',
-                          prefixIcon: Icon(
-                            Icons.search,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withOpacity(0.6),
-                          ),
-                          suffixIcon:
-                              _searchController.text.isNotEmpty
-                                  ? IconButton(
-                                    icon: Icon(Icons.clear, color: Colors.grey),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                        _showAutocomplete = false;
-                                      });
-                                      _loadExercises();
-                                    },
-                                  )
-                                  : null,
-                          border: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.transparent),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderSide: BorderSide(color: Colors.transparent),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderSide: BorderSide(
-                              color: Theme.of(context).colorScheme.secondary,
-                            ),
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          filled: true,
-                          fillColor: Theme.of(
-                            context,
-                          ).colorScheme.surface.withOpacity(0.8),
-                        ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.transparent),
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      filled: true,
+                      fillColor: HeronFitTheme.bgPrimary,
                     ),
-
-                    if (_showAutocomplete)
-                      Positioned(
-                        top: 60,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            borderRadius: BorderRadius.circular(8.0),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4.0,
-                                spreadRadius: 1.0,
-                              ),
-                            ],
-                          ),
-                          constraints: BoxConstraints(maxHeight: 200),
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            itemCount: _autocompleteSuggestions.length,
-                            itemBuilder: (context, index) {
-                              final suggestion =
-                                  _autocompleteSuggestions[index];
-                              return ListTile(
-                                dense: true,
-                                title: Text(
-                                  _capitalizeWords(suggestion),
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                onTap: () => _onSuggestionSelected(suggestion),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                  ],
+                  ),
                 ),
               ),
-
               AnimatedContainer(
                 duration: Duration(milliseconds: 300),
                 height: _isFilterExpanded ? null : 0,
@@ -408,14 +320,14 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                   ),
                                   if (_selectedEquipment.isNotEmpty)
                                     TextButton(
-                                      onPressed: _clearFilters,
-                                      child: Text('Clear All'),
                                       style: TextButton.styleFrom(
                                         padding: EdgeInsets.zero,
                                         minimumSize: Size(50, 30),
                                         tapTargetSize:
                                             MaterialTapTargetSize.shrinkWrap,
                                       ),
+                                      child: Text('Clear All'),
+                                      onPressed: _clearFilters,
                                     ),
                                 ],
                               ),
@@ -450,10 +362,9 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                                 Theme.of(
                                                   context,
                                                 ).colorScheme.surface,
-                                            selectedColor: Theme.of(context)
-                                                .colorScheme
-                                                .primary
-                                                .withOpacity(0.2),
+                                            selectedColor: Theme.of(
+                                              context,
+                                            ).colorScheme.primary.withAlpha(51),
                                             checkmarkColor:
                                                 Theme.of(
                                                   context,
@@ -467,10 +378,12 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                                                         ? Theme.of(
                                                           context,
                                                         ).colorScheme.primary
-                                                        : Colors.grey
-                                                            .withOpacity(0.5),
+                                                        : Colors.grey.withAlpha(
+                                                          128,
+                                                        ),
                                               ),
                                             ),
+                                            padding: EdgeInsets.zero,
                                           );
                                         }).toList(),
                                   ),
@@ -481,7 +394,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                         )
                         : SizedBox.shrink(),
               ),
-
               if (_selectedEquipment.isNotEmpty && !_isFilterExpanded)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
@@ -501,21 +413,27 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                         ),
                       ),
                       Spacer(),
-                      GestureDetector(
+                      InkWell(
                         onTap: _clearFilters,
-                        child: Text(
-                          'Clear',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4.0,
+                            vertical: 2.0,
+                          ),
+                          child: Text(
+                            'Clear',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16.0),
                 child: Text(
@@ -529,11 +447,10 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                 ),
               ),
               SizedBox(height: 8),
-
               Expanded(
                 child:
                     _isLoading
-                        ? Center(child: CircularProgressIndicator())
+                        ? _buildSkeletonList()
                         : _exercises.isEmpty
                         ? Center(
                           child: Column(
@@ -542,7 +459,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                               Icon(
                                 Icons.fitness_center,
                                 size: 64,
-                                color: Colors.grey.withOpacity(0.5),
+                                color: Colors.grey.withAlpha(128),
                               ),
                               SizedBox(height: 16),
                               Text(
@@ -555,13 +472,13 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                               if (_selectedEquipment.isNotEmpty) ...[
                                 SizedBox(height: 8),
                                 ElevatedButton(
-                                  onPressed: _clearFilters,
-                                  child: Text('Clear Filters'),
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor:
                                         Theme.of(context).colorScheme.secondary,
                                     foregroundColor: Colors.white,
                                   ),
+                                  child: Text('Clear Filters'),
+                                  onPressed: _clearFilters,
                                 ),
                               ],
                             ],
@@ -569,200 +486,150 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                         )
                         : ListView.builder(
                           controller: _scrollController,
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           itemCount:
                               _exercises.length +
-                              (_exerciseController.hasMorePages && !_isSearching
+                              (_exerciseController.hasMorePages &&
+                                      _searchQuery.isEmpty &&
+                                      !_isSearching
                                   ? 1
                                   : 0),
                           itemBuilder: (context, index) {
-                            if (index == _exercises.length) {
-                              return Center(
+                            if (index == _exercises.length &&
+                                _searchQuery.isEmpty &&
+                                !_isSearching) {
+                              return const Center(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16.0),
                                   child: CircularProgressIndicator(),
                                 ),
                               );
                             }
+                            if (index >= _exercises.length) {
+                              return const SizedBox.shrink();
+                            }
 
                             final exercise = _exercises[index];
 
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 12.0),
-                              child: InkWell(
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${exercise.name} to workout',
-                                      ),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                  context.pop(
-                                    exercise,
-                                  ); // Pop with the selected exercise as result
-                                },
-                                onLongPress: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => ExerciseDetailsScreen(
-                                            exercise: exercise,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 10.0,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 64,
-                                          height: 64,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8.0,
-                                            ),
-                                            border: Border.all(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                                  .withOpacity(0.5),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              7.0,
-                                            ),
-                                            child:
-                                                exercise.imageUrl.isNotEmpty
-                                                    ? Image.network(
-                                                      exercise.imageUrl,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return Center(
-                                                          child: Icon(
-                                                            Icons
-                                                                .fitness_center,
-                                                            size: 28,
-                                                            color:
-                                                                Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .colorScheme
-                                                                    .primary,
-                                                          ),
-                                                        );
-                                                      },
-                                                      loadingBuilder: (
-                                                        context,
-                                                        child,
-                                                        loadingProgress,
-                                                      ) {
-                                                        if (loadingProgress ==
-                                                            null)
-                                                          return child;
-                                                        return Center(
-                                                          child: CircularProgressIndicator(
-                                                            strokeWidth: 2.0,
-                                                            value:
-                                                                loadingProgress
-                                                                            .expectedTotalBytes !=
-                                                                        null
-                                                                    ? loadingProgress
-                                                                            .cumulativeBytesLoaded /
-                                                                        loadingProgress
-                                                                            .expectedTotalBytes!
-                                                                    : null,
-                                                          ),
-                                                        );
-                                                      },
-                                                    )
-                                                    : Center(
-                                                      child: Icon(
-                                                        Icons.fitness_center,
-                                                        size: 28,
-                                                        color:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .primary,
-                                                      ),
-                                                    ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12.0),
-
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                _capitalizeWords(exercise.name),
-                                                style: TextStyle(
-                                                  color:
-                                                      Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary,
-                                                  fontSize: 16.0,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              SizedBox(height: 4.0),
-                                              Text(
-                                                'Target: ${_capitalizeWords(exercise.primaryMuscle)}',
-                                                style: TextStyle(
-                                                  fontSize: 14.0,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Text(
-                                                'Equipment: ${_capitalizeWords(exercise.equipment)}',
-                                                style: TextStyle(
-                                                  fontSize: 13.0,
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withOpacity(0.7),
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            return AddExerciseListItem(
+                              key: ValueKey(
+                                exercise.id,
+                              ), // Add key for potential list updates
+                              exercise: exercise,
+                              searchQuery: _searchQuery,
+                              buildHighlightedText: _buildHighlightedText,
+                              capitalizeWords: _capitalizeWords,
                             );
                           },
                         ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  TextSpan _buildHighlightedText(
+    String text,
+    String highlight,
+    TextStyle style,
+  ) {
+    if (highlight.isEmpty ||
+        text.toLowerCase().indexOf(highlight.toLowerCase()) == -1) {
+      return TextSpan(text: text, style: style);
+    }
+
+    final TextStyle highlightStyle = style.copyWith(
+      fontWeight: FontWeight.bold,
+    );
+
+    List<TextSpan> spans = [];
+    int start = 0;
+    int indexOfHighlight;
+    while ((indexOfHighlight = text.toLowerCase().indexOf(
+          highlight.toLowerCase(),
+          start,
+        )) !=
+        -1) {
+      if (indexOfHighlight > start) {
+        spans.add(
+          TextSpan(text: text.substring(start, indexOfHighlight), style: style),
+        );
+      }
+      spans.add(
+        TextSpan(
+          text: text.substring(
+            indexOfHighlight,
+            indexOfHighlight + highlight.length,
+          ),
+          style: highlightStyle,
+        ),
+      );
+      start = indexOfHighlight + highlight.length;
+    }
+    if (start < text.length) {
+      spans.add(TextSpan(text: text.substring(start), style: style));
+    }
+
+    return TextSpan(
+      children: spans.isNotEmpty ? spans : [TextSpan(text: text, style: style)],
+    );
+  }
+
+  Widget _buildSkeletonList() {
+    return ListView.builder(
+      padding: EdgeInsets.all(16),
+      itemCount: 5,
+      itemBuilder: (context, index) => _buildSkeletonItem(),
+    );
+  }
+
+  Widget _buildSkeletonItem() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+              SizedBox(width: 12.0),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      height: 16.0,
+                      color: Colors.grey[300],
+                    ),
+                    SizedBox(height: 8.0),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.5,
+                      height: 14.0,
+                      color: Colors.grey[300],
+                    ),
+                    SizedBox(height: 4.0),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.3,
+                      height: 13.0,
+                      color: Colors.grey[300],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),

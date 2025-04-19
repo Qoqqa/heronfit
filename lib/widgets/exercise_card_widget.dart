@@ -87,14 +87,15 @@ class ExerciseCardState extends State<ExerciseCard> {
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(16.0), // Adjusted padding
         child: Column(
-          mainAxisSize: MainAxisSize.max,
+          mainAxisSize: MainAxisSize.min, // Use min to fit content
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(
               mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment:
+                  CrossAxisAlignment.center, // Align items vertically
               children: [
                 Expanded(
                   child: Text(
@@ -102,38 +103,74 @@ class ExerciseCardState extends State<ExerciseCard> {
                     textAlign: TextAlign.start,
                     style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                       color: HeronFitTheme.primary,
+                      fontWeight: FontWeight.bold, // Make title bold
+                    ),
+                    maxLines: 2, // Allow wrapping
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16.0), // Increased spacing
+            // Header Row for SET, KG, REPS
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+              ), // Add padding
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween, // Space out headers
+                children: [
+                  SizedBox(
+                    width: 30, // Match width of set number column
+                    child: Text(
+                      'SET',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.textMuted, // Muted color
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(
+                    width: 70, // Adjust width for KG input
+                    child: Text(
+                      'KG',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 70, // Adjust width for Reps input
+                    child: Text(
+                      'REPS',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 40, // Adjust width for Checkbox column
+                    child: Text(
+                      'DONE', // Header for checkbox
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.labelSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.textMuted,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 8.0),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Text(
-                  'SET',
-                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'KG',
-                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  'REPS',
-                  style: HeronFitTheme.textTheme.labelSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                VerticalDivider(color: Colors.grey[400]),
-              ],
-            ),
-            const SizedBox(height: 8.0),
+            const Divider(height: 16.0), // Use Divider instead of SizedBox
+            // Sets List
             ListView.separated(
               padding: EdgeInsets.zero,
               primary: false,
@@ -178,112 +215,180 @@ class ExerciseCardState extends State<ExerciseCard> {
                       color: Colors.white,
                     ),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 30,
-                        child: Text(
-                          '${setsListIndex + 1}',
-                          textAlign: TextAlign.center,
-                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                            color: HeronFitTheme.textMuted,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 60,
-                        child: TextFormField(
-                          controller: kgController,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: 'KG',
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 8.0,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 4.0,
+                    ), // Add vertical padding
+                    child: Row(
+                      mainAxisAlignment:
+                          MainAxisAlignment.spaceBetween, // Space out columns
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 30, // Consistent width
+                          child: Text(
+                            '${setsListIndex + 1}',
+                            textAlign: TextAlign.center,
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.textMuted,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          onChanged: (value) {
-                            widget.onUpdateSetData(
-                              setsListIndex,
-                              kg: int.tryParse(value) ?? 0,
-                            );
-                          },
                         ),
-                      ),
-                      SizedBox(
-                        width: 60,
-                        child: TextFormField(
-                          controller: repsController,
-                          textAlign: TextAlign.center,
-                          decoration: InputDecoration(
-                            hintText: 'Reps',
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 8.0,
+                        SizedBox(
+                          width: 70, // Consistent width
+                          child: TextFormField(
+                            controller: kgController,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              hintText: '0', // Default hint
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                                horizontal: 4.0, // Add horizontal padding
+                              ),
+                              border: OutlineInputBorder(
+                                // Add border
+                                borderRadius: BorderRadius.circular(4.0),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4.0),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4.0),
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.primary,
+                                ),
+                              ),
                             ),
-                          ),
-                          keyboardType: TextInputType.number,
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly,
-                          ],
-                          onChanged: (value) {
-                            widget.onUpdateSetData(
-                              setsListIndex,
-                              reps: int.tryParse(value) ?? 0,
-                            );
-                          },
-                        ),
-                      ),
-                      Transform.scale(
-                        scale: 1.2,
-                        child: Checkbox(
-                          value: set.completed,
-                          visualDensity: VisualDensity.compact,
-                          onChanged: (bool? value) {
-                            if (value != null) {
+                            keyboardType: TextInputType.number,
+                            inputFormatters: <TextInputFormatter>[
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            onChanged: (value) {
                               widget.onUpdateSetData(
                                 setsListIndex,
-                                completed: value,
+                                kg: int.tryParse(value) ?? 0,
                               );
-                              // Show timer only when checking the box (completing the set)
-                              if (value == true) {
-                                _showRestTimerDialog(setsListIndex);
-                              }
-                            }
-                          },
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                        SizedBox(
+                          width: 70, // Consistent width
+                          child: TextFormField(
+                            controller: repsController,
+                            textAlign: TextAlign.center,
+                            decoration: InputDecoration(
+                              hintText: '0', // Default hint
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 8.0,
+                                horizontal: 4.0, // Add horizontal padding
+                              ),
+                              border: OutlineInputBorder(
+                                // Add border
+                                borderRadius: BorderRadius.circular(4.0),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4.0),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4.0),
+                                borderSide: BorderSide(
+                                  color: HeronFitTheme.primary,
+                                ),
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: <TextInputFormatter>[
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            onChanged: (value) {
+                              widget.onUpdateSetData(
+                                setsListIndex,
+                                reps: int.tryParse(value) ?? 0,
+                              );
+                            },
+                          ),
+                        ),
+                        SizedBox(
+                          width: 40, // Consistent width
+                          child: Transform.scale(
+                            scale: 1.1, // Slightly smaller checkbox
+                            child: Checkbox(
+                              value: set.completed,
+                              visualDensity: VisualDensity.compact,
+                              activeColor:
+                                  HeronFitTheme.primary, // Use theme color
+                              side: BorderSide(
+                                color: Colors.grey.shade400,
+                              ), // Border for unchecked
+                              shape: RoundedRectangleBorder(
+                                // Rounded corners
+                                borderRadius: BorderRadius.circular(4.0),
+                              ),
+                              onChanged: (bool? value) {
+                                if (value != null) {
+                                  widget.onUpdateSetData(
+                                    setsListIndex,
+                                    completed: value,
+                                  );
+                                  // Show timer only when checking the box (completing the set)
+                                  if (value == true) {
+                                    _showRestTimerDialog(setsListIndex);
+                                  }
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
             const SizedBox(height: 16.0),
-            ElevatedButton(
-              onPressed: () {
-                widget.onAddSet();
-              },
-              style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 40.0),
-                backgroundColor:
-                    HeronFitTheme.primary, // Always primary color now
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              child: Text(
-                'Add Set', // Always 'Add Set' now
+            // Add Set Button
+            ElevatedButton.icon(
+              // Use icon button
+              icon: const Icon(
+                SolarIconsOutline.addCircle,
+                size: 18,
+              ), // Add icon
+              label: Text(
+                'Add Set',
                 style: HeronFitTheme.textTheme.labelMedium?.copyWith(
                   color: HeronFitTheme.bgLight,
                   fontWeight: FontWeight.w600,
                 ),
+              ),
+              onPressed: () {
+                widget.onAddSet();
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(
+                  double.infinity,
+                  44.0,
+                ), // Slightly taller button
+                backgroundColor: HeronFitTheme.primary,
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                elevation: 2, // Add subtle elevation
               ),
             ),
           ],
