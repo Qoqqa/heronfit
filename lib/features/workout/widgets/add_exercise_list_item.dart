@@ -33,6 +33,9 @@ class AddExerciseListItem extends StatelessWidget {
     final Color primaryColor = theme.colorScheme.primary;
     final Color surfaceColor = theme.colorScheme.surface;
 
+    // Define Hero tag
+    final String heroTag = 'exercise-image-${exercise.id}';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
@@ -56,7 +59,11 @@ class AddExerciseListItem extends StatelessWidget {
           FocusScope.of(context).unfocus();
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) => ExerciseDetailsScreen(exercise: exercise),
+              builder:
+                  (context) => ExerciseDetailsScreen(
+                    exercise: exercise,
+                    heroTag: heroTag, // Pass the heroTag
+                  ),
             ),
           );
         },
@@ -71,31 +78,36 @@ class AddExerciseListItem extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Nested CircleAvatars for double border effect
-                CircleAvatar(
-                  radius: 32, // Outer radius (defines total size 64x64)
-                  backgroundColor: primaryColor, // Outer border color (primary)
+                // Wrap the image part with Hero widget
+                Hero(
+                  tag: heroTag,
                   child: CircleAvatar(
-                    radius: 30, // Radius for white border (Outer - 2dp)
+                    radius: 32, // Outer radius (defines total size 64x64)
                     backgroundColor:
-                        surfaceColor, // Middle border color (white/surface)
+                        primaryColor, // Outer border color (primary)
                     child: CircleAvatar(
-                      radius: 28, // Inner radius for image/icon (Middle - 2dp)
-                      backgroundColor: primaryColor.withAlpha(
-                        51,
-                      ), // Placeholder bg
-                      backgroundImage:
-                          exercise.imageUrl.isNotEmpty
-                              ? CachedNetworkImageProvider(exercise.imageUrl)
-                              : null,
-                      child:
-                          exercise.imageUrl.isEmpty
-                              ? Icon(
-                                SolarIconsOutline.dumbbellSmall,
-                                size: 26, // Icon size
-                                color: primaryColor,
-                              )
-                              : null,
+                      radius: 30, // Radius for white border (Outer - 2dp)
+                      backgroundColor:
+                          surfaceColor, // Middle border color (white/surface)
+                      child: CircleAvatar(
+                        radius:
+                            28, // Inner radius for image/icon (Middle - 2dp)
+                        backgroundColor: primaryColor.withAlpha(
+                          51,
+                        ), // Placeholder bg
+                        backgroundImage:
+                            exercise.imageUrl.isNotEmpty
+                                ? CachedNetworkImageProvider(exercise.imageUrl)
+                                : null,
+                        child:
+                            exercise.imageUrl.isEmpty
+                                ? Icon(
+                                  SolarIconsOutline.dumbbellSmall,
+                                  size: 26, // Icon size
+                                  color: primaryColor,
+                                )
+                                : null,
+                      ),
                     ),
                   ),
                 ),
