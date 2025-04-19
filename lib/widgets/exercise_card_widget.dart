@@ -10,6 +10,7 @@ import 'package:heronfit/features/workout/widgets/rest_timer_dialog.dart'; // Im
 typedef UpdateSetDataCallback =
     void Function(int setIndex, {int? kg, int? reps, bool? completed});
 typedef RemoveSetCallback = void Function(int setIndex);
+typedef ShowDetailsCallback = void Function(); // New callback type
 
 class ExerciseCard extends StatefulWidget {
   final Exercise exercise;
@@ -17,6 +18,7 @@ class ExerciseCard extends StatefulWidget {
   final VoidCallback onAddSet;
   final UpdateSetDataCallback onUpdateSetData; // Callback for updating set data
   final RemoveSetCallback onRemoveSet; // Callback for removing a set
+  final ShowDetailsCallback onShowDetails; // New callback for showing details
 
   const ExerciseCard({
     super.key, // Use super parameter
@@ -25,6 +27,7 @@ class ExerciseCard extends StatefulWidget {
     required this.onAddSet,
     required this.onUpdateSetData, // Require callback
     required this.onRemoveSet, // Require callback
+    required this.onShowDetails, // Require new callback
   });
 
   @override
@@ -108,6 +111,18 @@ class ExerciseCardState extends State<ExerciseCard> {
                     maxLines: 2, // Allow wrapping
                     overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                const SizedBox(width: 8), // Add spacing before the icon
+                IconButton(
+                  icon: const Icon(
+                    SolarIconsOutline.questionCircle,
+                    color: HeronFitTheme.primary, // Use a muted color
+                    size: 20, // Adjust size as needed
+                  ),
+                  padding: EdgeInsets.zero, // Remove default padding
+                  constraints: const BoxConstraints(), // Remove constraints
+                  tooltip: 'View Exercise Details', // Add tooltip
+                  onPressed: widget.onShowDetails, // Call the new callback
                 ),
               ],
             ),

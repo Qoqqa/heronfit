@@ -31,6 +31,7 @@ import 'package:heronfit/features/progress/views/update_weight.dart';
 import 'package:heronfit/features/progress/views/progress_tracker.dart';
 import 'package:heronfit/features/progress/views/progress_photo_list.dart';
 import 'package:heronfit/features/onboarding/views/onboarding_hero.dart';
+import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
 
 import 'app_routes.dart';
@@ -100,6 +101,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.workoutAddExercise,
         builder: (context, state) => const AddExerciseScreen(),
+      ),
+      // Add the new route for Exercise Details
+      GoRoute(
+        path: AppRoutes.exerciseDetails, // Use the constant from AppRoutes
+        builder: (context, state) {
+          final exercise = state.extra as Exercise?;
+          if (exercise == null) {
+            // Handle error case: navigate back or show an error screen
+            return Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: const Center(child: Text('Error: Exercise data missing.')),
+            );
+          }
+          // Provide the required heroTag
+          return ExerciseDetailsScreen(
+            exercise: exercise,
+            // Example heroTag, ensure it's unique if needed across screens
+            heroTag: 'exercise_image_${exercise.id}',
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.workoutComplete,

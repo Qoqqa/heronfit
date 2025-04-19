@@ -24,6 +24,8 @@ class AppRoutes {
   // Workout Routes
   static const workout = '/workout'; // Maybe a base screen
   static const workoutAddExercise = '/workout/add-exercise';
+  static const exerciseDetails =
+      '/workout/exercise-details'; // Added route for details
   static const workoutActive = '/workout/active';
   static const workoutComplete = '/workout/complete';
   static const workoutSelectTemplate = '/workout/select-template';
