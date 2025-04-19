@@ -7,6 +7,7 @@ import 'exercise_details_screen.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:solar_icons/solar_icons.dart'; // Add this import
 import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
+import '../widgets/add_exercise_list_item.dart'; // Import the new widget
 
 class AddExerciseScreen extends StatefulWidget {
   final String? workoutId;
@@ -485,7 +486,7 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
                         )
                         : ListView.builder(
                           controller: _scrollController,
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           itemCount:
                               _exercises.length +
                               (_exerciseController.hasMorePages &&
@@ -497,7 +498,7 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
                             if (index == _exercises.length &&
                                 _searchQuery.isEmpty &&
                                 !_isSearching) {
-                              return Center(
+                              return const Center(
                                 child: Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16.0),
                                   child: CircularProgressIndicator(),
@@ -510,183 +511,14 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
 
                             final exercise = _exercises[index];
 
-                            return Padding(
-                              padding: EdgeInsets.only(bottom: 12.0),
-                              child: InkWell(
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Added ${exercise.name} to workout',
-                                      ),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                  context.pop(exercise);
-                                },
-                                onLongPress: () {
-                                  FocusScope.of(context).unfocus();
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => ExerciseDetailsScreen(
-                                            exercise: exercise,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(8.0),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 10.0,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          width: 64,
-                                          height: 64,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8.0,
-                                            ),
-                                            border: Border.all(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                                  .withAlpha(128),
-                                              width: 1.0,
-                                            ),
-                                          ),
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              7.0,
-                                            ),
-                                            child:
-                                                exercise.imageUrl.isNotEmpty
-                                                    ? Image.network(
-                                                      exercise.imageUrl,
-                                                      fit: BoxFit.cover,
-                                                      errorBuilder: (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return Center(
-                                                          child: Icon(
-                                                            Icons
-                                                                .fitness_center,
-                                                            size: 28,
-                                                            color:
-                                                                Theme.of(
-                                                                      context,
-                                                                    )
-                                                                    .colorScheme
-                                                                    .primary,
-                                                          ),
-                                                        );
-                                                      },
-                                                      loadingBuilder: (
-                                                        context,
-                                                        child,
-                                                        loadingProgress,
-                                                      ) {
-                                                        if (loadingProgress ==
-                                                            null) {
-                                                          return child;
-                                                        }
-                                                        return Center(
-                                                          child: CircularProgressIndicator(
-                                                            strokeWidth: 2.0,
-                                                            value:
-                                                                loadingProgress
-                                                                            .expectedTotalBytes !=
-                                                                        null
-                                                                    ? loadingProgress
-                                                                            .cumulativeBytesLoaded /
-                                                                        loadingProgress
-                                                                            .expectedTotalBytes!
-                                                                    : null,
-                                                          ),
-                                                        );
-                                                      },
-                                                    )
-                                                    : Center(
-                                                      child: Icon(
-                                                        Icons.fitness_center,
-                                                        size: 28,
-                                                        color:
-                                                            Theme.of(context)
-                                                                .colorScheme
-                                                                .primary,
-                                                      ),
-                                                    ),
-                                          ),
-                                        ),
-                                        SizedBox(width: 12.0),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              RichText(
-                                                text: _buildHighlightedText(
-                                                  _capitalizeWords(
-                                                    exercise.name,
-                                                  ),
-                                                  _searchQuery,
-                                                  TextStyle(
-                                                    color:
-                                                        Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary,
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              SizedBox(height: 4.0),
-                                              Text(
-                                                'Target: ${_capitalizeWords(exercise.primaryMuscle)}',
-                                                style: TextStyle(
-                                                  fontSize: 14.0,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                              Text(
-                                                'Equipment: ${_capitalizeWords(exercise.equipment)}',
-                                                style: TextStyle(
-                                                  fontSize: 13.0,
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onSurface
-                                                      .withAlpha(178),
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                            return AddExerciseListItem(
+                              key: ValueKey(
+                                exercise.id,
+                              ), // Add key for potential list updates
+                              exercise: exercise,
+                              searchQuery: _searchQuery,
+                              buildHighlightedText: _buildHighlightedText,
+                              capitalizeWords: _capitalizeWords,
                             );
                           },
                         ),
@@ -703,7 +535,8 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
     String highlight,
     TextStyle style,
   ) {
-    if (highlight.isEmpty) {
+    if (highlight.isEmpty ||
+        text.toLowerCase().indexOf(highlight.toLowerCase()) == -1) {
       return TextSpan(text: text, style: style);
     }
 
@@ -739,7 +572,9 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
       spans.add(TextSpan(text: text.substring(start), style: style));
     }
 
-    return TextSpan(children: spans);
+    return TextSpan(
+      children: spans.isNotEmpty ? spans : [TextSpan(text: text, style: style)],
+    );
   }
 
   Widget _buildSkeletonList() {
