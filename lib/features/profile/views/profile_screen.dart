@@ -37,289 +37,208 @@ class ProfileScreen extends ConsumerWidget {
     final userProfileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Profile',
-          style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-            color: HeronFitTheme.textWhite,
-            fontSize: 20,
-            letterSpacing: 0.0,
-          ),
-        ),
-        backgroundColor: HeronFitTheme.primary,
-        centerTitle: true,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-      ),
-      body: SafeArea(
-        top: true,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: userProfileAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, stack) => Center(child: Text('Error: $error')),
-            data: (user) {
-              if (user == null) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Could not load profile data.'),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: () => ref.refresh(userProfileProvider),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              final ageString = _calculateAge(user.birthday);
-              final profileImageUrl =
-                  user.avatar ??
-                  'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60';
-
-              ImageProvider? avatarProvider;
-              if (user.avatar != null && user.avatar!.isNotEmpty) {
-                avatarProvider = CachedNetworkImageProvider(user.avatar!);
-              } else {
-                avatarProvider = const AssetImage(
-                  'assets/images/heronfit_icon.png',
-                );
-              }
-
-              return Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: userProfileAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(child: Text('Error: $error')),
+        data: (user) {
+          if (user == null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 24.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    CircleAvatar(
-                                      // Outer border
-                                      radius:
-                                          40 +
-                                          2 +
-                                          2, // Base radius + inner width (4) + outer width (4)
-                                      backgroundColor:
-                                          colorScheme
-                                              .primary, // Outer border color
-                                      child: CircleAvatar(
-                                        // Inner border
-                                        radius:
-                                            40 +
-                                            2, // Base radius + inner width (4)
-                                        backgroundColor:
-                                            Colors.white, // Inner border color
-                                        child: CircleAvatar(
-                                          // Original Avatar with image
-                                          radius: 40,
-                                          backgroundImage: avatarProvider,
-                                          backgroundColor:
-                                              colorScheme.surfaceVariant,
-                                          child:
-                                              avatarProvider == null
-                                                  ? Icon(
-                                                    Icons.person,
-                                                    size: 40,
-                                                    color:
-                                                        colorScheme
-                                                            .onSurfaceVariant,
-                                                  )
-                                                  : null,
-                                        ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        left: 16.0,
-                                      ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            '${user.first_name ?? ''} ${user.last_name ?? ''}'
-                                                    .trim()
-                                                    .isEmpty
-                                                ? 'User Name'
-                                                : '${user.first_name ?? ''} ${user.last_name ?? ''}',
-                                            style: textTheme.titleLarge
-                                                ?.copyWith(
-                                                  color: HeronFitTheme.primary,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 0),
-                                          RichText(
-                                            text: TextSpan(
-                                              children: [
-                                                TextSpan(
-                                                  text: 'Goal | ',
-                                                  style: textTheme.bodyLarge
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color:
-                                                            colorScheme
-                                                                .onSurface,
-                                                      ),
-                                                ),
-                                                TextSpan(
-                                                  text: user.goal ?? 'Not Set',
-                                                  style: textTheme.bodyLarge
-                                                      ?.copyWith(
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color:
-                                                            colorScheme
-                                                                .onSurface,
-                                                      ),
-                                                ),
-                                              ],
-                                              style: textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    color:
-                                                        colorScheme.onSurface,
-                                                  ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    context.push(AppRoutes.profileEdit);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 32,
-                                    ),
-                                    backgroundColor: colorScheme.secondary,
-                                    foregroundColor: Colors.white,
-                                    textStyle: textTheme.labelLarge?.copyWith(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                  child: const Text('Edit'),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildInfoCard(
-                                  context,
-                                  '${user.height?.toString() ?? '--'} cm',
-                                  'Height',
-                                ),
-                                _buildInfoCard(
-                                  context,
-                                  '${user.weight?.toString() ?? '--'} kg',
-                                  'Weight',
-                                ),
-                                _buildInfoCard(context, ageString, 'Age'),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: _buildAccountSection(context),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: _buildNotificationSection(context),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: _buildOtherSection(context),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16.0),
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                try {
-                                  await Supabase.instance.client.auth.signOut();
-                                  ref.invalidate(userProfileProvider);
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Logged out successfully'),
-                                      backgroundColor: Colors.green,
-                                    ),
-                                  );
-                                  context.go(AppRoutes.onboarding);
-                                } catch (e) {
-                                  if (!context.mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error logging out: $e'),
-                                      backgroundColor: HeronFitTheme.error,
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(
-                                SolarIconsOutline.logout,
-                                size: 24.0,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                'Logout',
-                                style: textTheme.labelLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colorScheme.secondary,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                minimumSize: const Size(double.infinity, 48),
-                                elevation: 0,
-                              ),
-                            ),
-                          ),
-                        ],
+                  const Text('Could not load profile data.'),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () => ref.refresh(userProfileProvider),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final ageString = _calculateAge(user.birthday);
+
+          ImageProvider? avatarProvider;
+          if (user.avatar != null && user.avatar!.isNotEmpty) {
+            avatarProvider = CachedNetworkImageProvider(user.avatar!);
+          } else {
+            avatarProvider = const AssetImage(
+              'assets/images/heronfit_icon.png',
+            );
+          }
+
+          return ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 40 + 2 + 2,
+                    backgroundColor: colorScheme.primary,
+                    child: CircleAvatar(
+                      radius: 40 + 2,
+                      backgroundColor: Colors.white,
+                      child: CircleAvatar(
+                        radius: 40,
+                        backgroundImage: avatarProvider,
+                        backgroundColor: colorScheme.surfaceVariant,
+                        child:
+                            avatarProvider == null
+                                ? Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: colorScheme.onSurfaceVariant,
+                                )
+                                : null,
                       ),
                     ),
                   ),
+                  const SizedBox(width: 16.0),
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${user.first_name ?? ''} ${user.last_name ?? ''}'
+                                  .trim()
+                                  .isEmpty
+                              ? 'User Name'
+                              : '${user.first_name ?? ''} ${user.last_name ?? ''}',
+                          style: textTheme.titleLarge?.copyWith(
+                            color: HeronFitTheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 0),
+                        RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(
+                                text: 'Goal | ',
+                                style: textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              TextSpan(
+                                text: user.goal ?? 'Not Set',
+                                style: textTheme.bodyLarge?.copyWith(
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurface,
+                            ),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+                  ElevatedButton(
+                    onPressed: () {
+                      context.push(AppRoutes.profileEdit);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      backgroundColor: colorScheme.secondary,
+                      foregroundColor: Colors.white,
+                      textStyle: textTheme.labelLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text('Edit'),
+                  ),
                 ],
-              );
-            },
-          ),
-        ),
+              ),
+              const SizedBox(height: 24.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildInfoCard(
+                    context,
+                    '${user.height?.toString() ?? '--'} cm',
+                    'Height',
+                  ),
+                  _buildInfoCard(
+                    context,
+                    '${user.weight?.toString() ?? '--'} kg',
+                    'Weight',
+                  ),
+                  _buildInfoCard(context, ageString, 'Age'),
+                ],
+              ),
+              const SizedBox(height: 24.0),
+              _buildAccountSection(context),
+              const SizedBox(height: 16.0),
+              _buildNotificationSection(context),
+              const SizedBox(height: 16.0),
+              _buildOtherSection(context),
+              const SizedBox(height: 16.0),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    await Supabase.instance.client.auth.signOut();
+                    ref.invalidate(userProfileProvider);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Logged out successfully'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    context.go(AppRoutes.onboarding);
+                  } catch (e) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error logging out: $e'),
+                        backgroundColor: HeronFitTheme.error,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(
+                  SolarIconsOutline.logout,
+                  size: 24.0,
+                  color: Colors.white,
+                ),
+                label: Text(
+                  'Logout',
+                  style: textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.secondary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  minimumSize: const Size(double.infinity, 48),
+                  elevation: 0,
+                ),
+              ),
+              const SizedBox(height: 16.0),
+            ],
+          );
+        },
       ),
     );
   }
@@ -329,15 +248,13 @@ class ProfileScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Expanded(
-      child: Card(
-        clipBehavior: Clip.antiAliasWithSaveLayer,
-        color: colorScheme.surface,
-        elevation: 0,
-        shadowColor: Theme.of(
-          context,
-        ).shadowColor.withAlpha(((0.5 * 255).round())),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 6.0),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: HeronFitTheme.cardShadow,
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           child: Column(
@@ -432,15 +349,7 @@ class ProfileScreen extends ConsumerWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            color: Theme.of(
-              context,
-            ).shadowColor.withAlpha(((0.15 * 255).round())),
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: HeronFitTheme.cardShadow,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
