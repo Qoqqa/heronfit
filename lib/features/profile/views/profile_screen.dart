@@ -1,272 +1,366 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:page_transition/page_transition.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/features/profile/controllers/profile_controller.dart';
+import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  String _calculateAge(String? birthdayString) {
+    if (birthdayString == null || birthdayString.isEmpty) {
+      return '-- yo';
+    }
+    try {
+      final birthDate = DateFormat('yyyy-MM-dd').parse(birthdayString);
+      final today = DateTime.now();
+      int age = today.year - birthDate.year;
+      if (today.month < birthDate.month ||
+          (today.month == birthDate.month && today.day < birthDate.day)) {
+        age--;
+      }
+      return '$age yo';
+    } catch (e) {
+      return '-- yo';
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final userProfileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(
+          'Profile',
+          style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+            color: HeronFitTheme.textWhite,
+            fontSize: 20,
+            letterSpacing: 0.0,
+          ),
+        ),
         backgroundColor: HeronFitTheme.primary,
+        centerTitle: true,
+        elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: SafeArea(
         top: true,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
+          child: userProfileAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => Center(child: Text('Error: $error')),
+            data: (user) {
+              if (user == null) {
+                return Center(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Container(
-                                  width: 72,
-                                  height: 72,
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.secondary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: HeronFitTheme.primary,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () async {
-                                        await Navigator.push(
-                                          context,
-                                          PageTransition(
-                                            type: PageTransitionType.fade,
-                                            child: Scaffold(
-                                              appBar: AppBar(),
-                                              body: Center(
-                                                child: CachedNetworkImage(
-                                                  imageUrl:
-                                                      'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60',
-                                                  fit: BoxFit.contain,
-                                                  placeholder:
-                                                      (context, url) => Center(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              color:
-                                                                  HeronFitTheme
-                                                                      .primary,
-                                                            ),
-                                                      ),
-                                                  errorWidget:
-                                                      (context, url, error) =>
-                                                          Icon(
-                                                            SolarIconsBold.user,
-                                                            color:
-                                                                HeronFitTheme
-                                                                    .primary,
-                                                          ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(50),
-                                        child: CachedNetworkImage(
-                                          imageUrl:
-                                              'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60',
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                          placeholder:
-                                              (context, url) => Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      color:
-                                                          HeronFitTheme.primary,
-                                                    ),
-                                              ),
-                                          errorWidget:
-                                              (context, url, error) => Icon(
-                                                SolarIconsBold.user,
-                                                color: HeronFitTheme.primary,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'John Doe',
-                                        style: textTheme.titleLarge?.copyWith(
-                                          color: HeronFitTheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: 'Goal | ',
-                                              style: textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    color: colorScheme.onSurface
-                                                        .withAlpha(
-                                                          ((0.7 * 255).round()),
-                                                        ),
-                                                  ),
-                                            ),
-                                            TextSpan(
-                                              text: 'Lose Weight',
-                                              style: textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            ),
-                                          ],
-                                          style: textTheme.bodyMedium,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.push(AppRoutes.profileEdit);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                backgroundColor: colorScheme.secondary,
-                                foregroundColor: Colors.white,
-                                textStyle: textTheme.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                elevation: 2,
-                              ),
-                              child: const Text('Edit'),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildInfoCard(context, '180 cm', 'Height'),
-                            _buildInfoCard(context, '70 kg', 'Weight'),
-                            _buildInfoCard(context, '25 yo', 'Age'),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: _buildAccountSection(context),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: _buildNotificationSection(context),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: _buildOtherSection(context),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await Supabase.instance.client.auth.signOut();
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Logged out successfully'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              context.go(AppRoutes.onboarding);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error logging out: $e'),
-                                  backgroundColor: HeronFitTheme.error,
-                                ),
-                              );
-                            }
-                          },
-                          icon: Icon(
-                            SolarIconsOutline.logout,
-                            size: 24.0,
-                            color: Colors.white,
-                          ),
-                          label: Text(
-                            'Logout',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.secondary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            minimumSize: const Size(double.infinity, 48),
-                            elevation: 2,
-                          ),
-                        ),
+                      const Text('Could not load profile data.'),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: () => ref.refresh(userProfileProvider),
+                        child: const Text('Retry'),
                       ),
                     ],
                   ),
-                ),
-              ),
-            ],
+                );
+              }
+
+              final ageString = _calculateAge(user.birthday);
+              final profileImageUrl =
+                  user.avatar ??
+                  'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60';
+
+              return Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 24.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  children: [
+                                    Container(
+                                      width: 72,
+                                      height: 72,
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.secondary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: HeronFitTheme.primary,
+                                          width: 3,
+                                        ),
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(3),
+                                        child: InkWell(
+                                          splashColor: Colors.transparent,
+                                          focusColor: Colors.transparent,
+                                          hoverColor: Colors.transparent,
+                                          highlightColor: Colors.transparent,
+                                          onTap: () async {
+                                            showDialog(
+                                              context: context,
+                                              builder:
+                                                  (_) => Dialog(
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            8.0,
+                                                          ),
+                                                      child: CachedNetworkImage(
+                                                        imageUrl:
+                                                            profileImageUrl,
+                                                        fit: BoxFit.contain,
+                                                        placeholder:
+                                                            (
+                                                              context,
+                                                              url,
+                                                            ) => const Center(
+                                                              child:
+                                                                  CircularProgressIndicator(),
+                                                            ),
+                                                        errorWidget:
+                                                            (
+                                                              context,
+                                                              url,
+                                                              error,
+                                                            ) => const Icon(
+                                                              SolarIconsBold
+                                                                  .user,
+                                                              size: 100,
+                                                            ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                            );
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              50,
+                                            ),
+                                            child: CachedNetworkImage(
+                                              imageUrl: profileImageUrl,
+                                              width: 60,
+                                              height: 60,
+                                              fit: BoxFit.cover,
+                                              placeholder:
+                                                  (context, url) => Center(
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          color:
+                                                              HeronFitTheme
+                                                                  .primary,
+                                                          strokeWidth: 2,
+                                                        ),
+                                                  ),
+                                              errorWidget:
+                                                  (context, url, error) => Icon(
+                                                    SolarIconsBold.user,
+                                                    color:
+                                                        HeronFitTheme.primary,
+                                                    size: 30,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        left: 16.0,
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            '${user.first_name ?? ''} ${user.last_name ?? ''}'
+                                                    .trim()
+                                                    .isEmpty
+                                                ? 'User Name'
+                                                : '${user.first_name ?? ''} ${user.last_name ?? ''}',
+                                            style: textTheme.titleLarge
+                                                ?.copyWith(
+                                                  color: HeronFitTheme.primary,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: 'Goal | ',
+                                                  style: textTheme.bodyMedium
+                                                      ?.copyWith(
+                                                        color: colorScheme
+                                                            .onSurface
+                                                            .withAlpha(
+                                                              ((0.7 * 255)
+                                                                  .round()),
+                                                            ),
+                                                      ),
+                                                ),
+                                                TextSpan(
+                                                  text: user.goal ?? 'Not Set',
+                                                  style: textTheme.bodyMedium
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            colorScheme
+                                                                .onSurface,
+                                                      ),
+                                                ),
+                                              ],
+                                              style: textTheme.bodyMedium
+                                                  ?.copyWith(
+                                                    color:
+                                                        colorScheme.onSurface,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    context.push(AppRoutes.profileEdit);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    backgroundColor: colorScheme.secondary,
+                                    foregroundColor: Colors.white,
+                                    textStyle: textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  child: const Text('Edit'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildInfoCard(
+                                  context,
+                                  '${user.height?.toString() ?? '--'} cm',
+                                  'Height',
+                                ),
+                                _buildInfoCard(
+                                  context,
+                                  '${user.weight?.toString() ?? '--'} kg',
+                                  'Weight',
+                                ),
+                                _buildInfoCard(context, ageString, 'Age'),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: _buildAccountSection(context),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: _buildNotificationSection(context),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: _buildOtherSection(context),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await Supabase.instance.client.auth.signOut();
+                                  ref.invalidate(userProfileProvider);
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Logged out successfully'),
+                                      backgroundColor: Colors.green,
+                                    ),
+                                  );
+                                  context.go(AppRoutes.onboarding);
+                                } catch (e) {
+                                  if (!context.mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Error logging out: $e'),
+                                      backgroundColor: HeronFitTheme.error,
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(
+                                SolarIconsOutline.logout,
+                                size: 24.0,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                'Logout',
+                                style: textTheme.labelLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: colorScheme.secondary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                minimumSize: const Size(double.infinity, 48),
+                                elevation: 2,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -341,7 +435,9 @@ class ProfileScreen extends StatelessWidget {
         SolarIconsOutline.bell,
         'Pop-up Notification',
         () {
-          // Removed print statement
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Notification settings (TODO)')),
+          );
         },
       ),
     ]);

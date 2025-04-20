@@ -188,7 +188,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.profileEdit,
-        builder: (context, state) => const EditProfileWidget(),
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
         path: AppRoutes.profileHistory,
