@@ -55,6 +55,7 @@ dependencies:
   riverpod: ^2.6.1
   flutter_riverpod: ^2.6.1 # Ensure flutter_riverpod is also present
   go_router: ^14.2.1 # Add GoRouter
+  fl_chart: ^0.68.0 # Add fl_chart dependency
   flutter_launcher_icons: ^0.14.3
   vibration: ^3.1.3
 
@@ -106,7 +107,7 @@ flutter:
   #       - asset: fonts/Schyler-Italic.ttf
   #         style: italic
   #   - family: Trajan Pro
-  #     fonts:
+  #       fonts:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700

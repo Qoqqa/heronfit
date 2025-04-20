@@ -1,79 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'progress_photo_list.dart'; // Import the ProgressPhotosListWidget
-import 'view_progress_photo.dart'; // Import the ViewProgressPhotosWidget
-import 'update_weight.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
+import 'package:heronfit/features/progress/controllers/progress_controller.dart'; // Import controller
+import 'package:heronfit/features/progress/models/progress_record.dart'; // Import model
 
-// Initialize Supabase Client
-final supabaseClient = Supabase.instance.client;
-
-class ProgressTrackerWidget extends StatefulWidget {
+class ProgressTrackerWidget extends ConsumerWidget {
   const ProgressTrackerWidget({super.key});
 
-  static String routeName = 'ProgressTracker';
-  static String routePath = '/progressTracker';
-
   @override
-  State<ProgressTrackerWidget> createState() => _ProgressTrackerWidgetState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
 
-class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  List<Map<String, dynamic>> _progressData = []; // Store fetched data
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchProgressData(); // Fetch data on initialization
-  }
-
- Future<void> _fetchProgressData() async {
-  try {
-    // Get the current user
-    final user = supabaseClient.auth.currentUser;
-
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be logged in to view progress data!')),
-      );
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    // Fetch data filtered by the user's email
-    final response = await supabaseClient
-        .from('update_weight')
-        .select('date, weight, pic') // Select required columns
-        .eq('email', user.email!) // Filter by the user's email
-        .order('id', ascending: false); // Order by date (most recent first)
-
-    setState(() {
-      _progressData = List<Map<String, dynamic>>.from(response as List<dynamic>);
-    
-      _isLoading = false;
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error fetching data: $e')),
-    );
-    setState(() {
-      _isLoading = false;
-    });
-  }
-}
-  @override
-  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        key: scaffoldKey,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -85,15 +29,17 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
               size: 30,
             ),
             onPressed: () {
-              Navigator.of(context).pop();
+              if (context.canPop()) {
+                context.pop();
+              }
             },
           ),
           title: Text(
-            'Progress',
+            'Progress Tracker',
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 20,
-                ),
+              color: Theme.of(context).primaryColor,
+              fontSize: 20,
+            ),
           ),
           centerTitle: true,
           elevation: 0,
@@ -101,10 +47,10 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
         body: SafeArea(
           top: true,
           child: Padding(
-            padding: EdgeInsets.all(24),
-            child: _isLoading
-                ? Center(child: CircularProgressIndicator()) // Show loading indicator
-                : SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: progressRecordsAsyncValue.when(
+              data:
+                  (records) => SingleChildScrollView(
                     child: Column(
                       mainAxisSize: MainAxisSize.max,
                       children: [
@@ -120,13 +66,15 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                                   color: Theme.of(context).primaryColor,
                                   size: 24,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   'Weight',
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                        color: Theme.of(context).primaryColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -138,13 +86,15 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                                   color: Theme.of(context).primaryColor,
                                   size: 24,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
-                                  '3 Months',
-                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                        color: Theme.of(context).primaryColor,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                  'All Time',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelMedium?.copyWith(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ],
                             ),
@@ -160,39 +110,50 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                             boxShadow: [
                               BoxShadow(
                                 blurRadius: 40,
-                                color: Colors.black26,
-                                offset: Offset(0, 10),
-                              )
+                                color: Colors.black.withOpacity(0.1),
+                                offset: const Offset(0, 10),
+                              ),
                             ],
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Padding(
-                            padding: EdgeInsets.all(24),
+                            padding: const EdgeInsets.all(24),
                             child: Column(
                               mainAxisSize: MainAxisSize.max,
                               children: [
                                 Row(
                                   mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     Column(
                                       mainAxisSize: MainAxisSize.max,
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Weight',
-                                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                                color: Theme.of(context).primaryColor,
-                                                fontWeight: FontWeight.w600,
-                                              ),
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelMedium?.copyWith(
+                                            color:
+                                                Theme.of(context).primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                         Align(
-                                          alignment: AlignmentDirectional(-1, 0),
+                                          alignment:
+                                              AlignmentDirectional.centerStart,
                                           child: Text(
-                                            'Last 90 Days',
-                                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                  color: Theme.of(context).primaryColor,
-                                                ),
+                                            'All Entries',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.labelSmall?.copyWith(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -204,11 +165,8 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                                         size: 24,
                                       ),
                                       onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => const UpdateWeightWidget(),
-                                          ),
+                                        context.push(
+                                          AppRoutes.progressUpdateWeight,
                                         );
                                       },
                                     ),
@@ -217,11 +175,16 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                                 Container(
                                   width: double.infinity,
                                   height: 200,
-                                  color: Colors.grey[200], // Placeholder for the graph
+                                  color: Colors.grey[200],
                                   child: Center(
                                     child: Text(
-                                      'Graph Placeholder',
-                                      style: Theme.of(context).textTheme.bodyMedium,
+                                      records.isEmpty
+                                          ? 'No weight data yet. Tap + to add.'
+                                          : 'Graph Placeholder',
+                                      style:
+                                          Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium,
                                     ),
                                   ),
                                 ),
@@ -229,35 +192,31 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         Row(
                           mainAxisSize: MainAxisSize.max,
                           children: [
                             Align(
-                              alignment: AlignmentDirectional(-1, 0),
+                              alignment: AlignmentDirectional.centerStart,
                               child: Text(
                                 'Progress Photos',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                             ),
-                            Spacer(),
+                            const Spacer(),
                             InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ProgressPhotosListWidget(),
-                                  ),
-                                );
+                                context.push(AppRoutes.progressPhotoList);
                               },
                               child: Text(
                                 'See All',
-                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.labelSmall?.copyWith(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ],
@@ -266,16 +225,22 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                           padding: EdgeInsets.zero,
                           primary: false,
                           shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
                           scrollDirection: Axis.vertical,
-                          itemCount: _progressData.length,
+                          itemCount: records.length,
                           itemBuilder: (context, index) {
-                            final progress = _progressData[index];
+                            final record = records[index];
+                            if (record.photoUrl == null ||
+                                record.photoUrl!.isEmpty) {
+                              return const SizedBox.shrink();
+                            }
                             return InkWell(
                               onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const ViewProgressPhotosWidget(),
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Navigate to View Photo (TODO)',
+                                    ),
                                   ),
                                 );
                               },
@@ -284,88 +249,119 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Container(
-                                      width: double.infinity,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white, // Set background color to white
-                                        boxShadow: [
-                                          BoxShadow(
-                                            blurRadius: 40,
-                                            color: Theme.of(context).shadowColor,
-                                            offset: Offset(
-                                              0,
-                                              10,
-                                            ),
-                                          )
-                                        ],
-                                        borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        blurRadius: 4,
+                                        color: Theme.of(
+                                          context,
+                                        ).shadowColor.withOpacity(0.1),
+                                        offset: const Offset(0, 2),
                                       ),
-                                      child: Padding(
-                                        padding: EdgeInsets.all(24),
-                                        child: Row(
+                                    ],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.max,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Column(
                                           mainAxisSize: MainAxisSize.max,
-                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
-                                            Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Date: ${progress['date'] ?? 'N/A'}',
-                                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                                        color: Theme.of(context).primaryColor,
-                                                        letterSpacing: 0.0,
-                                                      ),
-                                                ),
-                                                Align(
-                                                  alignment: AlignmentDirectional(-1, 1),
-                                                  child: Text(
-                                                    'Weight: ${progress['weight'] ?? 'N/A'} kg',
-                                                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                                          letterSpacing: 0.0,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
+                                            Text(
+                                              'Date: ${record.date.toLocal().toString().split(' ')[0]}',
+                                              style: Theme.of(
+                                                context,
+                                              ).textTheme.labelLarge?.copyWith(
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).primaryColor,
+                                                letterSpacing: 0.0,
+                                              ),
                                             ),
-                                            Expanded(
-                                              child: Align(
-                                                alignment: AlignmentDirectional(1, 0),
-                                                child: Container(
-                                                  width: 100,
-                                                  height: 100,
-                                                  decoration: BoxDecoration(
-                                                    color: Theme.of(context).colorScheme.secondaryContainer,
-                                                  ),
-                                                  child: ClipRRect(
-                                                    borderRadius: BorderRadius.circular(8),
-                                                    child: progress['pic'] != null
-                                                        ? Image.network(
-                                                            progress['pic'],
-                                                            width: 200,
-                                                            height: 200,
-                                                            fit: BoxFit.cover,
-                                                          )
-                                                        : Container(
-                                                            color: Colors.grey[300],
-                                                            child: Icon(
-                                                              Icons.image,
-                                                              size: 50,
-                                                              color: Colors.grey[600],
-                                                            ),
-                                                          ),
-                                                  ),
-                                                ),
+                                            Align(
+                                              alignment:
+                                                  AlignmentDirectional
+                                                      .centerStart,
+                                              child: Text(
+                                                'Weight: ${record.weight} kg',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .labelMedium
+                                                    ?.copyWith(
+                                                      letterSpacing: 0.0,
+                                                    ),
                                               ),
                                             ),
                                           ],
                                         ),
-                                      ),
+                                        const Spacer(),
+                                        Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Theme.of(context)
+                                                    .colorScheme
+                                                    .secondaryContainer,
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: ClipRRect(
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            child: Image.network(
+                                              record.photoUrl!,
+                                              width: 80,
+                                              height: 80,
+                                              fit: BoxFit.cover,
+                                              loadingBuilder: (
+                                                context,
+                                                child,
+                                                loadingProgress,
+                                              ) {
+                                                if (loadingProgress == null)
+                                                  return child;
+                                                return Center(
+                                                  child: CircularProgressIndicator(
+                                                    value:
+                                                        loadingProgress
+                                                                    .expectedTotalBytes !=
+                                                                null
+                                                            ? loadingProgress
+                                                                    .cumulativeBytesLoaded /
+                                                                loadingProgress
+                                                                    .expectedTotalBytes!
+                                                            : null,
+                                                  ),
+                                                );
+                                              },
+                                              errorBuilder:
+                                                  (
+                                                    context,
+                                                    error,
+                                                    stackTrace,
+                                                  ) => const Icon(
+                                                    Icons.error,
+                                                    color: Colors.red,
+                                                  ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
                               ),
                             );
@@ -374,6 +370,11 @@ class _ProgressTrackerWidgetState extends State<ProgressTrackerWidget> {
                       ],
                     ),
                   ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error:
+                  (error, stack) =>
+                      Center(child: Text('Error loading progress: $error')),
+            ),
           ),
         ),
       ),

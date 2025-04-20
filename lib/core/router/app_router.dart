@@ -25,7 +25,7 @@ import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
 import 'package:heronfit/features/workout/views/start_workout_from_template_screen.dart'; // Added import
 import 'package:heronfit/features/workout/views/my_workout_templates_screen.dart'; // Import the new screen
 import 'package:heronfit/features/workout/views/recommended_workouts_screen.dart'; // Import the new screen
-import 'package:heronfit/features/progress/views/progress_screen.dart';
+import 'package:heronfit/features/progress/views/progress_screen.dart'; // Corrected import
 import 'package:heronfit/features/progress/views/edit_goals.dart';
 import 'package:heronfit/features/progress/views/update_weight.dart';
 import 'package:heronfit/features/progress/views/progress_tracker.dart';
@@ -213,7 +213,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.progress,
-            builder: (context, state) => const ProgressDashboardWidget(),
+            builder:
+                (context, state) =>
+                    const ProgressScreen(), // Corrected widget name
           ),
           GoRoute(
             path: AppRoutes.profile,

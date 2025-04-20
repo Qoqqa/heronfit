@@ -1,85 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:heronfit/features/progress/views/compare_progress_photo.dart';
-import 'package:provider/provider.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'compare_progress_photo.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/features/progress/controllers/progress_controller.dart';
+import 'package:heronfit/features/progress/models/progress_record.dart';
+import 'package:intl/intl.dart';
 
-class ViewProgressPhotosWidget extends StatefulWidget {
+class ViewProgressPhotosWidget extends ConsumerStatefulWidget {
   const ViewProgressPhotosWidget({super.key});
 
-  static String routeName = 'ViewProgressPhotos';
-  static String routePath = '/viewProgressPhotos';
-
   @override
-  State<ViewProgressPhotosWidget> createState() =>
+  ConsumerState<ViewProgressPhotosWidget> createState() =>
       _ViewProgressPhotosWidgetState();
 }
 
-class _ViewProgressPhotosWidgetState extends State<ViewProgressPhotosWidget> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-  final supabaseClient = Supabase.instance.client;
-
-  List<Map<String, dynamic>> _progressData = []; // Store fetched data
-  bool _isLoading = true;
+class _ViewProgressPhotosWidgetState
+    extends ConsumerState<ViewProgressPhotosWidget> {
   int _selectedPhotoIndex = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchProgressData(); // Fetch data on initialization
-  }
-
-  Future<void> _fetchProgressData() async {
-    try {
-      // Get the current user
-      final user = supabaseClient.auth.currentUser;
-
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You must be logged in to view progress data!'),
-          ),
-        );
-        setState(() {
-          _isLoading = false;
-        });
-        return;
-      }
-
-      // Fetch data filtered by the user's email
-      final response = await supabaseClient
-          .from('update_weight')
-          .select('date, weight, pic') // Select required columns
-          .eq('email', user.email!) // Filter by the user's email
-          .order('id', ascending: false); // Order by date (most recent first)
-
-      setState(() {
-        _progressData = List<Map<String, dynamic>>.from(
-          response as List<dynamic>,
-        );
-        _isLoading = false;
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error fetching data: $e')));
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  String _formatDate(DateTime date) {
+    return DateFormat('MMM dd, yyyy').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
+    final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
+
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        key: scaffoldKey,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -90,9 +38,7 @@ class _ViewProgressPhotosWidgetState extends State<ViewProgressPhotosWidget> {
               color: Theme.of(context).primaryColor,
               size: 30,
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
             'Progress Photos',
@@ -107,282 +53,217 @@ class _ViewProgressPhotosWidgetState extends State<ViewProgressPhotosWidget> {
         ),
         body: SafeArea(
           top: true,
-          child:
-              _isLoading
-                  ? Center(child: CircularProgressIndicator())
-                  : _progressData.isEmpty
-                  ? Center(
+          child: progressRecordsAsyncValue.when(
+            data: (allRecords) {
+              final photoRecords =
+                  allRecords
+                      .where(
+                        (r) => r.photoUrl != null && r.photoUrl!.isNotEmpty,
+                      )
+                      .toList();
+
+              if (_selectedPhotoIndex >= photoRecords.length &&
+                  photoRecords.isNotEmpty) {
+                _selectedPhotoIndex = photoRecords.length - 1;
+              }
+              if (photoRecords.isEmpty) {
+                _selectedPhotoIndex = 0;
+              }
+
+              if (photoRecords.isEmpty) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      'No progress photos found',
+                      'No progress photos found. Add photos via the Update Weight screen.',
                       style: Theme.of(context).textTheme.labelLarge,
+                      textAlign: TextAlign.center,
                     ),
-                  )
-                  : Padding(
-                    padding: EdgeInsets.all(16),
-                    child: SingleChildScrollView(
+                  ),
+                );
+              }
+
+              final selectedRecord = photoRecords[_selectedPhotoIndex];
+
+              return Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              selectedRecord.photoUrl!,
+                              fit: BoxFit.contain,
+                              loadingBuilder: (
+                                context,
+                                child,
+                                loadingProgress,
+                              ) {
+                                if (loadingProgress == null) return child;
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              },
+                              errorBuilder:
+                                  (context, error, stackTrace) => const Center(
+                                    child: Icon(
+                                      Icons.error,
+                                      color: Colors.red,
+                                      size: 50,
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
                       child: Column(
-                        mainAxisSize: MainAxisSize.max,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Stack(
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  height: 400,
-                                  decoration: BoxDecoration(
-                                    color:
-                                        Theme.of(
-                                          context,
-                                        ).colorScheme.secondaryContainer,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child:
-                                      _progressData.isNotEmpty
-                                          ? ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            child: Image.network(
-                                              _progressData[_selectedPhotoIndex]['pic'] ??
-                                                  '',
-                                              width: double.infinity,
-                                              height: 400,
-                                              fit: BoxFit.cover,
-                                              errorBuilder:
-                                                  (
-                                                    context,
-                                                    error,
-                                                    stackTrace,
-                                                  ) => Image.asset(
-                                                    'assets/images/error_image.png',
-                                                    width: double.infinity,
-                                                    height: 400,
-                                                    fit: BoxFit.cover,
-                                                  ),
-                                            ),
-                                          )
-                                          : Center(
-                                            child: Text('No image available'),
-                                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.max,
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  Icons.photo_library,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 24,
                                 ),
-                              ],
+                                tooltip: 'View All Photos',
+                                onPressed: () {},
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.compare_arrows,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 24,
+                                ),
+                                tooltip: 'Compare Photos',
+                                onPressed: () {
+                                  context.push('/compareProgressPhotos');
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${selectedRecord.weight} kg',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.labelLarge?.copyWith(
+                              color: Theme.of(context).primaryColor,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.check_box_outline_blank,
-                                        color: Theme.of(context).primaryColor,
-                                        size: 24,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const ViewProgressPhotosWidget(),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: Icon(
-                                        Icons.menu_book,
-                                        color: Theme.of(context).primaryColor,
-                                        size: 24,
-                                      ),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder:
-                                                (context) =>
-                                                    const CompareProgressPhotosWidget(),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ],
-                                ),
-                                Align(
-                                  alignment: AlignmentDirectional(0, 0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.max,
-                                    children: [
-                                      Text(
-                                        _progressData.isNotEmpty
-                                            ? '${_progressData[_selectedPhotoIndex]['weight']}kg'
-                                            : 'No weight data',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelLarge?.copyWith(
-                                          color: Theme.of(context).primaryColor,
-                                          letterSpacing: 0.0,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      Text(
-                                        _progressData.isNotEmpty
-                                            ? _formatDate(
-                                              _progressData[_selectedPhotoIndex]['date'],
-                                            )
-                                            : 'No date data',
-                                        style: Theme.of(
-                                          context,
-                                        ).textTheme.labelSmall?.copyWith(
-                                          letterSpacing: 0.0,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(6),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                  ),
-                                  child: ListView.separated(
-                                    padding: EdgeInsets.zero,
-                                    primary: false,
-                                    shrinkWrap: true,
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: _progressData.length,
-                                    separatorBuilder:
-                                        (_, __) => SizedBox(width: 7),
-                                    itemBuilder: (context, index) {
-                                      return SingleChildScrollView(
-                                        scrollDirection: Axis.horizontal,
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          children: [
-                                            Container(
-                                              width: 100,
-                                              height: 100,
-                                              decoration: BoxDecoration(
-                                                color:
-                                                    Theme.of(context)
-                                                        .colorScheme
-                                                        .secondaryContainer,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                border:
-                                                    _selectedPhotoIndex == index
-                                                        ? Border.all(
-                                                          color:
-                                                              Theme.of(
-                                                                context,
-                                                              ).primaryColor,
-                                                          width: 3,
-                                                        )
-                                                        : null,
-                                              ),
-                                              child: InkWell(
-                                                splashColor: Colors.transparent,
-                                                focusColor: Colors.transparent,
-                                                hoverColor: Colors.transparent,
-                                                highlightColor:
-                                                    Colors.transparent,
-                                                onTap: () {
-                                                  setState(() {
-                                                    _selectedPhotoIndex = index;
-                                                  });
-                                                },
-                                                child: ClipRRect(
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  child: Image.network(
-                                                    _progressData[index]['pic'] ??
-                                                        '',
-                                                    width: 100,
-                                                    height: 100,
-                                                    fit: BoxFit.cover,
-                                                    errorBuilder:
-                                                        (
-                                                          context,
-                                                          error,
-                                                          stackTrace,
-                                                        ) => Container(
-                                                          color: Colors.grey,
-                                                          child: Icon(
-                                                            Icons.error,
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
+                          Text(
+                            _formatDate(selectedRecord.date),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(fontWeight: FontWeight.normal),
                           ),
                         ],
                       ),
                     ),
+                    SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        scrollDirection: Axis.horizontal,
+                        itemCount: photoRecords.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final record = photoRecords[index];
+                          final isSelected = _selectedPhotoIndex == index;
+
+                          return Container(
+                            width: 100,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              border:
+                                  isSelected
+                                      ? Border.all(
+                                        color: Theme.of(context).primaryColor,
+                                        width: 3,
+                                      )
+                                      : Border.all(
+                                        color: Colors.grey.shade400,
+                                        width: 1,
+                                      ),
+                            ),
+                            child: InkWell(
+                              splashColor: Colors.transparent,
+                              focusColor: Colors.transparent,
+                              hoverColor: Colors.transparent,
+                              highlightColor: Colors.transparent,
+                              onTap: () {
+                                setState(() {
+                                  _selectedPhotoIndex = index;
+                                });
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  record.photoUrl!,
+                                  fit: BoxFit.cover,
+                                  loadingBuilder: (
+                                    context,
+                                    child,
+                                    loadingProgress,
+                                  ) {
+                                    if (loadingProgress == null) return child;
+                                    return const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    );
+                                  },
+                                  errorBuilder:
+                                      (context, error, stackTrace) => Container(
+                                        color: Colors.grey[300],
+                                        child: const Icon(
+                                          Icons.error_outline,
+                                          color: Colors.grey,
+                                          size: 30,
+                                        ),
+                                      ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error:
+                (error, stack) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Error loading progress photos: $error',
+                      textAlign: TextAlign.center,
+                    ),
                   ),
+                ),
+          ),
         ),
       ),
     );
-  }
-
-  // Helper function to format date string from database
-  String _formatDate(dynamic date) {
-    if (date == null) return 'No date';
-
-    try {
-      if (date is String) {
-        final DateTime parsedDate = DateTime.parse(date);
-        return '${_getMonthAbbreviation(parsedDate.month)} ${parsedDate.day} ${parsedDate.year}';
-      } else if (date is DateTime) {
-        return '${_getMonthAbbreviation(date.month)} ${date.day} ${date.year}';
-      }
-      return date.toString();
-    } catch (e) {
-      return date.toString();
-    }
-  }
-
-  String _getMonthAbbreviation(int month) {
-    const months = [
-      'jan',
-      'feb',
-      'mar',
-      'apr',
-      'may',
-      'jun',
-      'jul',
-      'aug',
-      'sep',
-      'oct',
-      'nov',
-      'dec',
-    ];
-    return months[month - 1];
   }
 }
