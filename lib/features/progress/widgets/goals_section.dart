@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/widgets/loading_indicator.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+import 'package:heronfit/core/theme.dart';
 
 class GoalsSection extends ConsumerWidget {
   final AsyncValue<String?> goalAsyncValue;
@@ -37,6 +38,11 @@ class GoalsSection extends ConsumerWidget {
         const SizedBox(height: 0),
         Card(
           elevation: 2,
+          shadowColor:
+              HeronFitTheme
+                  .cardShadow
+                  .first
+                  .color, // Use cardShadow from theme.dart
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -85,7 +91,8 @@ class GoalsSection extends ConsumerWidget {
                     onPressed: () => context.push('/progress/edit-goals'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.colorScheme.secondary,
-                      foregroundColor: theme.colorScheme.onSecondary,
+                      foregroundColor:
+                          Colors.white, // Use white for button text
                     ),
                     child: const Text('Edit Goals'),
                   ),

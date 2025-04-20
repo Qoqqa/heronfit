@@ -44,7 +44,7 @@ class WeightChartSection extends ConsumerWidget {
                       Text(
                         'Weight',
                         style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w600,
                           color: theme.colorScheme.primary,
                         ),
                       ),
