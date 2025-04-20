@@ -8,6 +8,7 @@ import 'package:heronfit/features/progress/widgets/weight_chart_section.dart'; /
 import 'package:heronfit/widgets/loading_indicator.dart';
 import 'package:intl/intl.dart';
 import 'dart:math'; // For min
+import 'package:heronfit/features/progress/widgets/progress_photo_list_item.dart'; // Import the new widget
 
 // State provider for the selected time filter
 enum TimeFilter { week, month, allTime }
@@ -25,7 +26,16 @@ class ProgressDetailsScreen extends ConsumerWidget {
     final selectedFilter = ref.watch(timeFilterProvider);
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
 
-    // Filter records based on the selected time filter
+    // Get the full list of photo records separately for index calculation
+    final allPhotoRecords =
+        progressRecordsAsyncValue.whenData((records) {
+          return records
+              .where((r) => r.photoUrl != null && r.photoUrl!.isNotEmpty)
+              .toList();
+        }).value ??
+        [];
+
+    // Filter records based on the selected time filter (for chart)
     final filteredProgressAsyncValue = progressRecordsAsyncValue.whenData((
       records,
     ) {
@@ -36,32 +46,33 @@ class ProgressDetailsScreen extends ConsumerWidget {
           startDate = now.subtract(const Duration(days: 7));
           break;
         case TimeFilter.month:
-          startDate = DateTime(
-            now.year,
-            now.month - 1,
-            now.day,
-          ); // Approx last 30 days
+          startDate = DateTime(now.year, now.month - 1, now.day);
           break;
         case TimeFilter.allTime:
         default:
-          // No filtering needed for all time
-          return records;
+          return records; // No filtering needed for all time
       }
       return records.where((record) => record.date.isAfter(startDate)).toList();
     });
 
-    final photoRecords =
-        progressRecordsAsyncValue
-            .whenData(
-              (records) =>
-                  records
-                      .where(
-                        (r) => r.photoUrl != null && r.photoUrl!.isNotEmpty,
-                      )
-                      .toList(),
-            )
-            .value ??
-        []; // Get photo records, default to empty list
+    // Filter photo records based on the selected time filter (for list display)
+    final filteredPhotoRecords =
+        allPhotoRecords.where((record) {
+          DateTime now = DateTime.now();
+          DateTime startDate;
+          switch (selectedFilter) {
+            case TimeFilter.week:
+              startDate = now.subtract(const Duration(days: 7));
+              break;
+            case TimeFilter.month:
+              startDate = DateTime(now.year, now.month - 1, now.day);
+              break;
+            case TimeFilter.allTime:
+            default:
+              return true; // No date filtering for all time
+          }
+          return record.date.isAfter(startDate);
+        }).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -108,8 +119,8 @@ class ProgressDetailsScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('Progress Photos', style: theme.textTheme.headlineSmall),
-                if (photoRecords
-                    .isNotEmpty) // Show "See All" only if photos exist
+                if (allPhotoRecords
+                    .isNotEmpty) // Show "See All" based on all photos
                   TextButton(
                     onPressed: () => context.push(AppRoutes.progressPhotoList),
                     child: const Text('See All'),
@@ -118,86 +129,32 @@ class ProgressDetailsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             progressRecordsAsyncValue.when(
-              data: (allRecords) {
-                // Use the pre-filtered photoRecords list
-                if (photoRecords.isEmpty) {
+              // Still use original async value for loading/error states
+              data: (allRecordsOriginal) {
+                // Use the time-filtered photo list for display
+                if (filteredPhotoRecords.isEmpty) {
                   return const Center(
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: 20.0),
-                      child: Text('No progress photos added yet.'),
+                      child: Text('No progress photos found for this period.'),
                     ),
                   );
                 }
                 return ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: photoRecords.length,
+                  itemCount: filteredPhotoRecords.length,
                   itemBuilder: (context, index) {
-                    final record = photoRecords[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: Image.network(
-                                record.photoUrl!,
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                loadingBuilder:
-                                    (context, child, progress) =>
-                                        progress == null
-                                            ? child
-                                            : const Center(
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            ),
-                                errorBuilder:
-                                    (context, error, stack) =>
-                                        const Icon(Icons.error, size: 40),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    DateFormat(
-                                      'MMMM d, yyyy',
-                                    ).format(record.date.toLocal()),
-                                    style: theme.textTheme.bodySmall,
-                                  ),
-                                  Text(
-                                    '${record.weight.toStringAsFixed(1)} kg',
-                                    style: theme.textTheme.titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.chevron_right),
-                              onPressed: () {
-                                // Navigate to single photo view, passing index or ID
-                                // Example: context.push('${AppRoutes.progressPhotoView}?index=$index');
-                                // Need to implement the single photo view route and logic
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Navigate to single photo view (TODO)',
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
+                    final record = filteredPhotoRecords[index];
+                    // Find the original index in the unfiltered list for navigation
+                    final originalIndex = allPhotoRecords.indexWhere(
+                      (r) => r.id == record.id,
+                    );
+
+                    // Use the reusable ProgressPhotoListItem widget
+                    return ProgressPhotoListItem(
+                      record: record,
+                      index: originalIndex, // Pass the original index
                     );
                   },
                 );

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
 import 'package:heronfit/features/progress/controllers/progress_controller.dart'; // Import controller
 import 'package:heronfit/features/progress/models/progress_record.dart'; // Import model
+import 'package:heronfit/features/progress/widgets/progress_photo_list_item.dart'; // Import the reusable item widget
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class ProgressPhotosListWidget extends ConsumerWidget {
@@ -91,111 +92,11 @@ class ProgressPhotosListWidget extends ConsumerWidget {
                   itemCount: photoRecords.length,
                   itemBuilder: (context, index) {
                     final record = photoRecords[index];
-                    return Card(
-                      clipBehavior: Clip.antiAliasWithSaveLayer,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: InkWell(
-                        // Wrap with InkWell for tap effect
-                        onTap: () {
-                          // Navigate to the single photo view, passing the index
-                          context.push(
-                            AppRoutes.progressViewPhoto,
-                            extra: index,
-                          );
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            boxShadow: [
-                              BoxShadow(
-                                blurRadius: 4,
-                                color: theme.shadowColor.withOpacity(0.1),
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12), // Adjust padding
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    record.photoUrl!,
-                                    width: 80, // Adjust size
-                                    height: 80,
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (
-                                      context,
-                                      child,
-                                      loadingProgress,
-                                    ) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        width: 80,
-                                        height: 80,
-                                        color: Colors.grey[200],
-                                        child: const Center(
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    errorBuilder:
-                                        (context, error, stackTrace) =>
-                                            Container(
-                                              width: 80,
-                                              height: 80,
-                                              color: Colors.grey[200],
-                                              child: const Icon(
-                                                Icons.error,
-                                                color: Colors.red,
-                                              ),
-                                            ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Date: ${record.date.toLocal().toString().split(' ')[0]}',
-                                        style: theme.textTheme.labelLarge
-                                            ?.copyWith(
-                                              fontWeight:
-                                                  FontWeight
-                                                      .w600, // Make date bold
-                                            ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Weight: ${record.weight} kg',
-                                        style: theme.textTheme.bodyMedium,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Icon(
-                                  SolarIconsOutline
-                                      .altArrowRight, // Use SolarIcons
-                                  color: theme.hintColor,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                    // Use the reusable ProgressPhotoListItem widget
+                    return ProgressPhotoListItem(
+                      record: record,
+                      index:
+                          index, // Pass the index directly as this list is not filtered
                     );
                   },
                 );
