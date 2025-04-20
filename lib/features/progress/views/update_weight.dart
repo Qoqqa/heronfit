@@ -64,7 +64,7 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
       final imageMimeType = imageXFile.mimeType;
 
       await _supabase.storage
-          .from('progress_pics')
+          .from('progress-photos') // Corrected bucket name
           .uploadBinary(
             filePath,
             imageBytes,
@@ -76,7 +76,7 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
           );
 
       final imageUrlResponse = _supabase.storage
-          .from('progress_pics')
+          .from('progress-photos') // Corrected bucket name
           .getPublicUrl(filePath);
 
       return imageUrlResponse;

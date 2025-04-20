@@ -112,7 +112,7 @@ Future<String?> userGoal(UserGoalRef ref) async {
         await supabase
             .from('users')
             .select('goal')
-            .eq('user_id', userId)
+            .eq('id', userId)
             .maybeSingle();
 
     if (response == null || response['goal'] == null) {
@@ -152,7 +152,7 @@ class ProgressController extends StateNotifier<AsyncValue<void>> {
       await _supabaseClient
           .from('users')
           .update({'goal': goalType})
-          .eq('user_id', user.id);
+          .eq('id', user.id);
 
       state = const AsyncValue.data(null);
       _ref.invalidate(userGoalProvider);
