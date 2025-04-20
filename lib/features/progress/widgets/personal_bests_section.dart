@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/core/theme.dart'; // Import theme
 import 'package:solar_icons/solar_icons.dart';
 
 // Placeholder for Personal Bests Section
@@ -25,40 +26,49 @@ class PersonalBestsSection extends ConsumerWidget {
           ), // Add padding below title
           child: Text(
             'Personal Bests', // Title for the section
-            style: theme.textTheme.titleLarge,
+            style: theme.textTheme.titleLarge, // Use titleLarge
           ),
         ),
-        Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(
+        Container(
+          // Wrap Card with Container to apply custom shadow
+          decoration: BoxDecoration(
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(12),
+            boxShadow: HeronFitTheme.cardShadow, // Apply custom shadow
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                _buildBestRow(
-                  context,
-                  'Longest Workout',
-                  longestWorkout,
-                  SolarIconsOutline.clockCircle, // Example Icon
-                ),
-                const Divider(height: 24),
-                _buildBestRow(
-                  context,
-                  'Most Workouts in a Week',
-                  mostWorkoutsWeek,
-                  SolarIconsOutline.calendarMinimalistic, // Example Icon
-                ),
-                const Divider(height: 24),
-                _buildBestRow(
-                  context,
-                  'Heaviest Lift (Example)',
-                  heaviestLift,
-                  SolarIconsOutline.dumbbellLarge, // Example Icon
-                ),
-                // Add more personal bests as needed
-              ],
+          child: Card(
+            elevation: 0, // Set elevation to 0
+            color: Colors.transparent, // Make card transparent
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildBestRow(
+                    context,
+                    'Longest Workout',
+                    longestWorkout,
+                    SolarIconsOutline.clockCircle, // Use SolarIcons
+                  ),
+                  const Divider(height: 24),
+                  _buildBestRow(
+                    context,
+                    'Most Workouts in a Week',
+                    mostWorkoutsWeek,
+                    SolarIconsOutline.calendarMinimalistic, // Use SolarIcons
+                  ),
+                  const Divider(height: 24),
+                  _buildBestRow(
+                    context,
+                    'Heaviest Lift (Example)',
+                    heaviestLift,
+                    SolarIconsOutline.dumbbellLarge, // Use SolarIcons
+                  ),
+                  // Add more personal bests as needed
+                ],
+              ),
             ),
           ),
         ),
@@ -87,7 +97,7 @@ class PersonalBestsSection extends ConsumerWidget {
               Flexible(
                 child: Text(
                   label,
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium, // Use bodyMedium
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

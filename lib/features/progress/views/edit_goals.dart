@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/features/progress/controllers/progress_controller.dart';
+import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class EditGoalsWidget extends ConsumerStatefulWidget {
   const EditGoalsWidget({super.key});
@@ -85,25 +86,25 @@ class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: theme.scaffoldBackgroundColor,
+          backgroundColor: Colors.transparent, // Set background to transparent
+          elevation: 0, // Remove elevation
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: theme.primaryColor,
-              size: 30,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.primaryColor, // Use primary color
+              size: 28, // Adjust size as needed
             ),
             onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
             'Edit Goal',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              color: theme.primaryColor,
-              fontSize: 20,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.primaryColor, // Use primary color
+              fontWeight: FontWeight.bold, // Set font weight to bold
             ),
           ),
           centerTitle: true,
-          elevation: 0,
         ),
         body: SafeArea(top: true, child: _buildForm(context)),
       ),

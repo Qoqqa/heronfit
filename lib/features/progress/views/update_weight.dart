@@ -7,6 +7,7 @@ import 'package:heronfit/features/progress/controllers/progress_controller.dart'
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart'; // For date formatting if needed
+import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class UpdateWeightWidget extends ConsumerStatefulWidget {
   const UpdateWeightWidget({super.key});
@@ -150,11 +151,29 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
+        backgroundColor:
+            theme
+                .scaffoldBackgroundColor, // Ensure background color is set here
         appBar: AppBar(
-          title: const Text('Log New Weight'),
+          backgroundColor: Colors.transparent, // Set background to transparent
+          elevation: 0, // Remove elevation
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            icon: Icon(
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.primaryColor, // Use primary color
+              size: 28, // Adjust size as needed
+            ),
+            onPressed: () => context.canPop() ? context.pop() : null,
+          ),
+          title: Text(
+            'Log New Weight',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.primaryColor, // Use primary color
+              fontWeight: FontWeight.bold, // Set font weight to bold
+            ),
+          ),
           centerTitle: true,
-          elevation: 0,
-          backgroundColor: theme.scaffoldBackgroundColor,
         ),
         body: SafeArea(
           child: SingleChildScrollView(

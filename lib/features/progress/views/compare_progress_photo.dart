@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/features/progress/controllers/progress_controller.dart';
 import 'package:heronfit/features/progress/models/progress_record.dart';
 import 'package:intl/intl.dart';
+import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class CompareProgressPhotosWidget extends ConsumerStatefulWidget {
   const CompareProgressPhotosWidget({super.key});
@@ -25,32 +26,32 @@ class _CompareProgressPhotosWidgetState
   @override
   Widget build(BuildContext context) {
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
+    final theme = Theme.of(context); // Get theme
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Colors.transparent, // Set background to transparent
+          elevation: 0, // Remove elevation
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: Theme.of(context).primaryColor,
-              size: 30,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.primaryColor, // Use primary color
+              size: 28, // Adjust size as needed
             ),
             onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
             'Compare Photos',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Theme.of(context).primaryColor,
-              fontSize: 20,
-              letterSpacing: 0.0,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.primaryColor, // Use primary color
+              fontWeight: FontWeight.bold, // Set font weight to bold
             ),
           ),
           centerTitle: true,
-          elevation: 0,
         ),
         body: SafeArea(
           top: true,

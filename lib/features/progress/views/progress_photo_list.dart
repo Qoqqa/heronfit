@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
 import 'package:heronfit/features/progress/controllers/progress_controller.dart'; // Import controller
 import 'package:heronfit/features/progress/models/progress_record.dart'; // Import model
+import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class ProgressPhotosListWidget extends ConsumerWidget {
   const ProgressPhotosListWidget({super.key});
@@ -11,6 +12,7 @@ class ProgressPhotosListWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
+    final theme = Theme.of(context); // Get theme
 
     return GestureDetector(
       onTap: () {
@@ -18,15 +20,16 @@ class ProgressPhotosListWidget extends ConsumerWidget {
         FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Colors.transparent, // Set background to transparent
+          elevation: 0, // Remove elevation
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: Theme.of(context).primaryColor,
-              size: 30,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.primaryColor, // Use primary color
+              size: 28, // Adjust size as needed
             ),
             onPressed: () {
               if (context.canPop()) {
@@ -36,35 +39,30 @@ class ProgressPhotosListWidget extends ConsumerWidget {
           ),
           title: Text(
             'Progress Photos',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Theme.of(context).primaryColor,
-              fontSize: 20,
-              letterSpacing: 0.0,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.primaryColor, // Use primary color
+              fontWeight: FontWeight.bold, // Set font weight to bold
             ),
           ),
           actions: [
             IconButton(
               icon: Icon(
-                Icons.compare_arrows,
-                color: Theme.of(context).primaryColor,
+                SolarIconsOutline.squareTransferHorizontal, // Use SolarIcons
+                color: theme.primaryColor, // Use primary color
               ),
               tooltip: 'Compare Photos',
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Navigate to Compare Photos (TODO)'),
-                  ),
-                );
+                // Navigate to compare photos screen
+                // context.push(AppRoutes.compareProgressPhotos);
               },
             ),
           ],
           centerTitle: true,
-          elevation: 0,
         ),
         body: SafeArea(
           top: true,
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16), // Consistent padding
             child: progressRecordsAsyncValue.when(
               data: (records) {
                 final photoRecords =
@@ -75,9 +73,14 @@ class ProgressPhotosListWidget extends ConsumerWidget {
                         .toList();
 
                 if (photoRecords.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No progress photos found. Add some via Update Weight screen.',
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        'No progress photos found. Add some via Update Weight screen.',
+                        style: theme.textTheme.bodyMedium,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   );
                 }
@@ -93,69 +96,42 @@ class ProgressPhotosListWidget extends ConsumerWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 4,
-                              color: Theme.of(
-                                context,
-                              ).shadowColor.withOpacity(0.1),
-                              offset: const Offset(0, 2),
+                      child: InkWell(
+                        // Wrap with InkWell for tap effect
+                        onTap: () {
+                          // Navigate to view single photo (if needed)
+                          // context.push('${AppRoutes.viewProgressPhoto}/${record.id}');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Navigate to View Photo (TODO)'),
                             ),
-                          ],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Column(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Date: ${record.date.toLocal().toString().split(' ')[0]}',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge?.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                      letterSpacing: 0.0,
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: AlignmentDirectional.centerStart,
-                                    child: Text(
-                                      'Weight: ${record.weight} kg',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(letterSpacing: 0.0),
-                                    ),
-                                  ),
-                                ],
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: theme.cardColor,
+                            boxShadow: [
+                              BoxShadow(
+                                blurRadius: 4,
+                                color: theme.shadowColor.withOpacity(0.1),
+                                offset: const Offset(0, 2),
                               ),
-                              const Spacer(),
-                              Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color:
-                                      Theme.of(
-                                        context,
-                                      ).colorScheme.secondaryContainer,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: ClipRRect(
+                            ],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12), // Adjust padding
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                ClipRRect(
                                   borderRadius: BorderRadius.circular(8),
                                   child: Image.network(
                                     record.photoUrl!,
-                                    width: 100,
-                                    height: 100,
+                                    width: 80, // Adjust size
+                                    height: 80,
                                     fit: BoxFit.cover,
                                     loadingBuilder: (
                                       context,
@@ -163,30 +139,62 @@ class ProgressPhotosListWidget extends ConsumerWidget {
                                       loadingProgress,
                                     ) {
                                       if (loadingProgress == null) return child;
-                                      return Center(
-                                        child: CircularProgressIndicator(
-                                          value:
-                                              loadingProgress
-                                                          .expectedTotalBytes !=
-                                                      null
-                                                  ? loadingProgress
-                                                          .cumulativeBytesLoaded /
-                                                      loadingProgress
-                                                          .expectedTotalBytes!
-                                                  : null,
+                                      return Container(
+                                        width: 80,
+                                        height: 80,
+                                        color: Colors.grey[200],
+                                        child: const Center(
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         ),
                                       );
                                     },
                                     errorBuilder:
                                         (context, error, stackTrace) =>
-                                            const Icon(
-                                              Icons.error,
-                                              color: Colors.red,
+                                            Container(
+                                              width: 80,
+                                              height: 80,
+                                              color: Colors.grey[200],
+                                              child: const Icon(
+                                                Icons.error,
+                                                color: Colors.red,
+                                              ),
                                             ),
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Date: ${record.date.toLocal().toString().split(' ')[0]}',
+                                        style: theme.textTheme.labelLarge
+                                            ?.copyWith(
+                                              fontWeight:
+                                                  FontWeight
+                                                      .w600, // Make date bold
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Weight: ${record.weight} kg',
+                                        style: theme.textTheme.bodyMedium,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  SolarIconsOutline
+                                      .altArrowRight, // Use SolarIcons
+                                  color: theme.hintColor,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
