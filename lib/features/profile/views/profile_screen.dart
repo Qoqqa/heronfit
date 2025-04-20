@@ -311,17 +311,49 @@ class ProfileScreen extends ConsumerWidget {
     bool isSingle = false,
   }) {
     return _buildSection(context, 'Notification', [
-      _buildSectionItem(
-        context,
-        SolarIconsOutline.bell,
-        'Pop-up Notification',
-        () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Notification settings (TODO)')),
-          );
-        },
-      ),
+      _buildNotificationToggle(context),
     ], isSingle: isSingle);
+  }
+
+  Widget _buildNotificationToggle(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    // For demo: use a local StateProvider. In production, use a Riverpod provider and persist to Supabase.
+    return Consumer(
+      builder: (context, ref, _) {
+        final notificationEnabled = ref.watch(_notificationToggleProvider);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  SolarIconsOutline.bell,
+                  color: HeronFitTheme.primary,
+                  size: 22,
+                ),
+                const SizedBox(width: 16),
+                Text('Pop-up Notification', style: textTheme.bodyMedium),
+              ],
+            ),
+            Switch(
+              value: notificationEnabled,
+              activeColor: Colors.white, // Thumb color when active
+              activeTrackColor:
+                  HeronFitTheme.primary, // Track color when active
+              inactiveThumbColor: Colors.white, // Thumb color when inactive
+              inactiveTrackColor: HeronFitTheme.primary.withOpacity(
+                0.50,
+              ), // Lighter primary, no black/grey
+              onChanged: (val) {
+                ref.read(_notificationToggleProvider.notifier).state = val;
+                // TODO: Persist to Supabase/profile if needed
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildOtherSection(BuildContext context) {
@@ -439,3 +471,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 }
+
+// Local provider for demo. Move to controllers/ and persist in production.
+final _notificationToggleProvider = StateProvider<bool>((ref) => true);
