@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
 import 'package:heronfit/features/progress/controllers/progress_controller.dart'; // Import controller
 import 'package:heronfit/features/progress/models/progress_record.dart'; // Import model
+import 'package:fl_chart/fl_chart.dart'; // Import fl_chart
 
 class ProgressTrackerWidget extends ConsumerWidget {
   const ProgressTrackerWidget({super.key});
@@ -172,21 +173,88 @@ class ProgressTrackerWidget extends ConsumerWidget {
                                     ),
                                   ],
                                 ),
-                                Container(
-                                  width: double.infinity,
-                                  height: 200,
-                                  color: Colors.grey[200],
-                                  child: Center(
-                                    child: Text(
-                                      records.isEmpty
-                                          ? 'No weight data yet. Tap + to add.'
-                                          : 'Graph Placeholder',
-                                      style:
-                                          Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium,
-                                    ),
-                                  ),
+                                Builder(
+                                  builder: (context) {
+                                    final spots = _createSpots(records);
+                                    if (spots.isEmpty) {
+                                      return SizedBox(
+                                        width: double.infinity,
+                                        height: 200,
+                                        child: Center(
+                                          child: Text(
+                                            'No weight data yet. Tap + to add.',
+                                            style:
+                                                Theme.of(
+                                                  context,
+                                                ).textTheme.bodyMedium,
+                                          ),
+                                        ),
+                                      );
+                                    }
+
+                                    final bool isDummyData = records.isEmpty;
+                                    final double minX = 0;
+                                    final double maxX =
+                                        isDummyData
+                                            ? 4
+                                            : (spots.length - 1).toDouble();
+                                    final double minY =
+                                        isDummyData
+                                            ? 0
+                                            : spots
+                                                    .map((s) => s.y)
+                                                    .reduce(
+                                                      (a, b) => a < b ? a : b,
+                                                    ) -
+                                                5;
+                                    final double maxY =
+                                        isDummyData
+                                            ? 6
+                                            : spots
+                                                    .map((s) => s.y)
+                                                    .reduce(
+                                                      (a, b) => a > b ? a : b,
+                                                    ) +
+                                                5;
+
+                                    return SizedBox(
+                                      width: double.infinity,
+                                      height: 200,
+                                      child: LineChart(
+                                        LineChartData(
+                                          minX: minX,
+                                          maxX: maxX,
+                                          minY: minY < 0 ? 0 : minY,
+                                          maxY: maxY,
+                                          gridData: const FlGridData(
+                                            show: false,
+                                          ),
+                                          titlesData: const FlTitlesData(
+                                            show: false,
+                                          ),
+                                          borderData: FlBorderData(show: false),
+                                          lineBarsData: [
+                                            LineChartBarData(
+                                              spots: spots,
+                                              isCurved: true,
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).primaryColor,
+                                              barWidth: 3,
+                                              isStrokeCapRound: true,
+                                              dotData: const FlDotData(
+                                                show: false,
+                                              ),
+                                              belowBarData: BarAreaData(
+                                                show: false,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -379,5 +447,27 @@ class ProgressTrackerWidget extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  List<FlSpot> _createSpots(List<ProgressRecord> records) {
+    if (records.isEmpty) {
+      return [
+        const FlSpot(0, 3),
+        const FlSpot(1, 1),
+        const FlSpot(2, 4),
+        const FlSpot(3, 2),
+        const FlSpot(4, 5),
+      ];
+    }
+    final sortedRecords = List<ProgressRecord>.from(records)
+      ..sort((a, b) => a.date.compareTo(b.date));
+
+    if (sortedRecords.length < 2) {
+      return [];
+    }
+
+    return sortedRecords.asMap().entries.map((entry) {
+      return FlSpot(entry.key.toDouble(), entry.value.weight);
+    }).toList();
   }
 }

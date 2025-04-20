@@ -4,20 +4,22 @@ import 'package:heronfit/features/progress/models/progress_record.dart'; // Use 
 import 'package:image_picker/image_picker.dart'; // Import image_picker for XFile
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'progress_controller.g.dart';
 
 // Provider to fetch progress records (weight history, photos)
 final progressRecordsProvider =
     StateNotifierProvider<ProgressNotifier, AsyncValue<List<ProgressRecord>>>((
       ref,
     ) {
-      return ProgressNotifier(ref);
+      return ProgressNotifier();
     });
 
 class ProgressNotifier extends StateNotifier<AsyncValue<List<ProgressRecord>>> {
-  final Ref _ref;
   final SupabaseClient _supabaseClient = Supabase.instance.client;
 
-  ProgressNotifier(this._ref) : super(const AsyncValue.loading()) {
+  ProgressNotifier() : super(const AsyncValue.loading()) {
     fetchProgressRecords();
   }
 
@@ -42,7 +44,6 @@ class ProgressNotifier extends StateNotifier<AsyncValue<List<ProgressRecord>>> {
       );
     } catch (e, st) {
       state = AsyncValue.error(e, st);
-      print('Error fetching progress records: $e');
     }
   }
 
@@ -51,88 +52,33 @@ class ProgressNotifier extends StateNotifier<AsyncValue<List<ProgressRecord>>> {
   }
 }
 
-// Provider for user goals
-final userGoalsProvider =
-    StateNotifierProvider<UserGoalsNotifier, AsyncValue<UserGoal?>>((ref) {
-      return UserGoalsNotifier(ref);
-    });
+@riverpod
+Future<UserGoal?> userGoals(UserGoalsRef ref) async {
+  final supabase = Supabase.instance.client;
+  final userId = supabase.auth.currentUser?.id;
 
-class UserGoalsNotifier extends StateNotifier<AsyncValue<UserGoal?>> {
-  final Ref _ref;
-  final SupabaseClient _supabaseClient = Supabase.instance.client;
-
-  UserGoalsNotifier(this._ref) : super(const AsyncValue.loading()) {
-    fetchUserGoals();
+  if (userId == null) {
+    // Not logged in, return null or throw an error
+    return null;
   }
 
-  Future<void> fetchUserGoals() async {
-    try {
-      final userId = _supabaseClient.auth.currentUser?.id;
-      if (userId == null) {
-        throw Exception('User not logged in');
-      }
-      final response =
-          await _supabaseClient
-              .from('user_goals') // Verified 'user_goals' table name
-              .select()
-              .eq('user_id', userId)
-              .maybeSingle(); // Use maybeSingle if a user has at most one goal entry
+  try {
+    final response =
+        await supabase
+            .from(
+              'goals',
+            ) // Correct the table name from 'user_goals' to 'goals'
+            .select()
+            .eq('user_id', userId)
+            .maybeSingle(); // Use maybeSingle() in case no goal is set yet
 
-      if (response != null) {
-        // Use UserGoal.fromJson from the model
-        state = AsyncValue.data(
-          UserGoal.fromJson(response as Map<String, dynamic>),
-        );
-      } else {
-        state = const AsyncValue.data(null); // No goals found
-      }
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      // Consider logging the error
-      print('Error fetching user goals: $e');
-    }
-  }
-
-  Future<void> updateGoals(
-    String goalType,
-    double targetWeight,
-    DateTime targetDate,
-  ) async {
-    final currentState = state; // Read current state safely
-    if (currentState is! AsyncData<UserGoal?>) {
-      // Avoid updating if not in data state (or handle loading/error appropriately)
-      return;
+    if (response == null) {
+      return null; // No goal found for the user
     }
 
-    try {
-      final userId = _supabaseClient.auth.currentUser?.id;
-      if (userId == null) {
-        throw Exception('User not logged in');
-      }
-
-      // Use the UserGoal constructor from the model
-      final goalDataMap = {
-        'user_id': userId,
-        'goal_type': goalType,
-        'target_weight': targetWeight,
-        'target_date': targetDate.toIso8601String(),
-      };
-
-      // Use upsert to either insert a new goal or update an existing one
-      final response =
-          await _supabaseClient
-              .from('user_goals') // Verified 'user_goals' table name
-              .upsert(goalDataMap, onConflict: 'user_id')
-              .select() // Select the upserted/updated row
-              .single(); // Expect a single row back
-
-      // Update local state with the data returned from the DB
-      state = AsyncValue.data(UserGoal.fromJson(response));
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      print('Error updating user goals: $e');
-      rethrow; // Rethrow to allow UI to handle error
-    }
+    return UserGoal.fromJson(response);
+  } catch (e) {
+    return null; // Return null on error for now
   }
 }
 
@@ -198,11 +144,11 @@ class ProgressController extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  // Method to update user goals
+  // Method to update user goals - Corrected signature and logic
   Future<void> updateGoals({
+    required String goalType, // Changed from fitnessGoal
     required double targetWeight,
-    required double targetBodyFatPercentage,
-    required String fitnessGoal, // e.g., 'Lose Weight', 'Gain Muscle'
+    required DateTime targetDate, // Added targetDate
   }) async {
     state = const AsyncValue.loading();
     final user = _supabaseClient.auth.currentUser;
@@ -213,12 +159,12 @@ class ProgressController extends StateNotifier<AsyncValue<void>> {
     }
 
     try {
-      // Use upsert to insert or update based on user_id
-      await _supabaseClient.from('user_goals').upsert({
+      // Use upsert to insert or update based on user_id in the 'goals' table
+      await _supabaseClient.from('goals').upsert({
         'user_id': user.id,
+        'goal_type': goalType, // Use goalType
         'target_weight': targetWeight,
-        'target_body_fat_percentage': targetBodyFatPercentage,
-        'fitness_goal': fitnessGoal,
+        'target_date': targetDate.toIso8601String(), // Use targetDate
         'updated_at': DateTime.now().toIso8601String(), // Track last update
       }, onConflict: 'user_id'); // Specify the column for conflict resolution
 

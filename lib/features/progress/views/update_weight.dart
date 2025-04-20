@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,7 +18,7 @@ class UpdateWeightWidget extends ConsumerStatefulWidget {
 class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _weightController = TextEditingController();
-  File? _selectedImage;
+  XFile? _selectedImageXFile;
   bool _isLoading = false;
   String? _errorMessage;
   final ImagePicker _picker = ImagePicker();
@@ -34,15 +35,14 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
       final pickedFile = await _picker.pickImage(
         source: source,
         imageQuality: 50,
-      ); // Compress image slightly
+      );
 
       if (pickedFile != null) {
         setState(() {
-          _selectedImage = File(pickedFile.path);
+          _selectedImageXFile = pickedFile;
         });
       }
     } catch (e) {
-      // Check mounted before showing SnackBar
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -50,33 +50,41 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
     }
   }
 
-  Future<String?> _uploadImage(File image) async {
+  Future<String?> _uploadImage(XFile imageXFile) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('User not logged in.');
 
-      final fileExt = image.path.split('.').last;
-      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
-      final filePath =
-          '$userId/$fileName'; // Store images in user-specific folders
+      final fileExt = imageXFile.path.split('.').last;
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}.${imageXFile.name.isNotEmpty ? imageXFile.name.split('.').last : fileExt}';
+      final filePath = '$userId/$fileName';
+
+      final imageBytes = await imageXFile.readAsBytes();
+      final imageMimeType = imageXFile.mimeType;
 
       await _supabase.storage
           .from('progress_pics')
-          .upload(
-            // TODO: Verify 'progress_pics' bucket name
+          .uploadBinary(
             filePath,
-            image,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+            imageBytes,
+            fileOptions: FileOptions(
+              cacheControl: '3600',
+              upsert: false,
+              contentType: imageMimeType,
+            ),
           );
 
-      // Get the public URL (adjust if using signed URLs)
       final imageUrlResponse = _supabase.storage
           .from('progress_pics')
           .getPublicUrl(filePath);
 
       return imageUrlResponse;
     } catch (e) {
-      print('Error uploading image: $e');
+      print('Error uploading image to Supabase: $e');
+      if (e is StorageException) {
+        print('Supabase Storage Error Details: ${e.message}');
+      }
       return null;
     }
   }
@@ -89,10 +97,9 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
       });
 
       String? imageUrl;
-      if (_selectedImage != null) {
-        imageUrl = await _uploadImage(_selectedImage!);
+      if (_selectedImageXFile != null) {
+        imageUrl = await _uploadImage(_selectedImageXFile!);
         if (imageUrl == null) {
-          // Check mounted before interacting with context/state
           if (!mounted) return;
           setState(() {
             _errorMessage = 'Failed to upload image. Please try again.';
@@ -101,29 +108,25 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(_errorMessage!)));
-          return; // Stop submission if image upload failed
+          return;
         }
       }
 
       try {
         final weight = double.parse(_weightController.text);
 
-        // Access the notifier to call the method
         await ref
             .read(progressRecordsProvider.notifier)
             .addWeightEntry(weight, imageUrl);
 
-        // Check mounted before using context after await
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Weight logged successfully!')),
         );
-        // Check mounted again before popping
         if (mounted) {
           context.pop();
         }
       } catch (e) {
-        // Check mounted before using context
         if (!mounted) return;
         setState(() {
           _errorMessage = 'Failed to log weight: $e';
@@ -132,7 +135,6 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $_errorMessage')));
       } finally {
-        // Check mounted before modifying state
         if (mounted) {
           setState(() {
             _isLoading = false;
@@ -146,7 +148,7 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(), // Dismiss keyboard
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Log New Weight'),
@@ -156,7 +158,6 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
         ),
         body: SafeArea(
           child: SingleChildScrollView(
-            // Allow scrolling if content overflows
             padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
@@ -166,7 +167,7 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                   TextFormField(
                     controller: _weightController,
                     decoration: InputDecoration(
-                      labelText: 'Current Weight (kg)', // Assuming kg
+                      labelText: 'Current Weight (kg)',
                       hintText: 'Enter your current weight',
                       prefixIcon: Icon(
                         Icons.monitor_weight_outlined,
@@ -206,15 +207,21 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child:
-                        _selectedImage != null
+                        _selectedImageXFile != null
                             ? ClipRRect(
-                              // Clip the image to the rounded corners
                               borderRadius: BorderRadius.circular(8),
-                              child: Image.file(
-                                _selectedImage!,
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                              ),
+                              child:
+                                  kIsWeb
+                                      ? Image.network(
+                                        _selectedImageXFile!.path,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      )
+                                      : Image.file(
+                                        File(_selectedImageXFile!.path),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
                             )
                             : Center(
                               child: Icon(
@@ -248,9 +255,10 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                       ),
                     ],
                   ),
-                  if (_selectedImage != null)
+                  if (_selectedImageXFile != null)
                     TextButton.icon(
-                      onPressed: () => setState(() => _selectedImage = null),
+                      onPressed:
+                          () => setState(() => _selectedImageXFile = null),
                       icon: Icon(Icons.clear, color: theme.colorScheme.error),
                       label: Text(
                         'Remove Image',
@@ -281,9 +289,8 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      // Replace deprecated withOpacity
                       disabledBackgroundColor: theme.colorScheme.primary
-                          .withAlpha(128), // Adjust alpha
+                          .withAlpha(128),
                     ),
                     child:
                         _isLoading

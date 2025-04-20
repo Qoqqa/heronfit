@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-// Hide UserGoal from controller import to resolve ambiguity
-import 'package:heronfit/features/progress/controllers/progress_controller.dart'
-    hide UserGoal;
+// Remove hide UserGoal clause as it's defined elsewhere
+import 'package:heronfit/features/progress/controllers/progress_controller.dart';
 // Import the new widget files
 import 'package:heronfit/features/progress/widgets/goals_section.dart';
 import 'package:heronfit/features/progress/widgets/monthly_stats_section.dart';
@@ -17,6 +15,7 @@ class ProgressScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsyncValue = ref.watch(progressRecordsProvider);
+    // Watch userGoals provider (assuming generated name is userGoalsProvider)
     final goalsAsyncValue = ref.watch(userGoalsProvider);
     final theme = Theme.of(context);
 
@@ -31,6 +30,7 @@ class ProgressScreen extends ConsumerWidget {
         onRefresh: () async {
           // Invalidate providers to trigger a refresh
           ref.invalidate(progressRecordsProvider);
+          // Invalidate userGoals provider (assuming generated name is userGoalsProvider)
           ref.invalidate(userGoalsProvider);
         },
         child: ListView(

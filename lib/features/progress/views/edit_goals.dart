@@ -88,8 +88,14 @@ class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
         ).parse(_targetDateController.text);
 
         await ref
-            .read(userGoalsProvider.notifier)
-            .updateGoals(_selectedGoalType!, targetWeight, targetDate);
+            .read(progressControllerProvider.notifier)
+            .updateGoals(
+              goalType: _selectedGoalType!,
+              targetWeight: targetWeight,
+              targetDate: targetDate,
+            );
+
+        ref.invalidate(userGoalsProvider);
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
