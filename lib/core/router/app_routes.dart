@@ -42,13 +42,16 @@ class AppRoutes {
   static const progressTracker = '/progress/tracker';
   static const progressEditGoals = '/progress/edit-goals'; // Added route
   static const progressUpdateWeight = '/progress/update-weight'; // Added route
-  static const progressPhotoList = '/progress/photo-list'; // Added route
+  static const progressPhotoList = '/progress/photos';
+  static const progressPhotoCompare = '/progress/photos/compare';
+  // static const progressPhotoList = '/progress/photo-list'; // Added route
   static const progressAddPhoto = '/progress/add-photo'; // Example if needed
   static const progressViewPhoto =
       '/progress/view-photo'; // Needs parameter for photo ID/details
   static const progressCompare = '/progress/compare'; // Needs parameters
   static const progressSelectPhoto =
       '/progress/select-photo'; // Example if needed
+  static const progressDetails = '/progress/details'; // Add new route
 
   // Add other routes as needed
 }

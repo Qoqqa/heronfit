@@ -30,6 +30,7 @@ import 'package:heronfit/features/progress/views/edit_goals.dart';
 import 'package:heronfit/features/progress/views/update_weight.dart';
 import 'package:heronfit/features/progress/views/progress_tracker.dart';
 import 'package:heronfit/features/progress/views/progress_photo_list.dart';
+import 'package:heronfit/features/progress/views/progress_details_screen.dart'; // Import Progress Details Screen
 import 'package:heronfit/features/onboarding/views/onboarding_hero.dart';
 import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
@@ -163,6 +164,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.progressPhotoList,
         builder: (context, state) => const ProgressPhotosListWidget(),
+      ),
+      // Add the new route for Progress Details
+      GoRoute(
+        path: AppRoutes.progressDetails,
+        builder: (context, state) => const ProgressDetailsScreen(),
       ),
       GoRoute(
         path: AppRoutes.profileEdit,

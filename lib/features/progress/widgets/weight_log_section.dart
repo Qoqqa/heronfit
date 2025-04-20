@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
 import 'package:heronfit/features/progress/models/progress_record.dart';
 import 'package:heronfit/widgets/loading_indicator.dart';
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+import 'dart:math'; // Import math for min function
 
 class WeightLogSection extends ConsumerWidget {
   final AsyncValue<List<ProgressRecord>> progressAsyncValue;
@@ -22,7 +25,10 @@ class WeightLogSection extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Weight Log', style: theme.textTheme.titleLarge),
+            Text(
+              'Recent Weight Log',
+              style: theme.textTheme.titleLarge,
+            ), // Updated title
             const SizedBox(height: 16),
             progressAsyncValue.when(
               data: (records) {
@@ -34,48 +40,70 @@ class WeightLogSection extends ConsumerWidget {
                     ),
                   );
                 }
-                // Records are already sorted descending by date from the provider
-                return ListView.separated(
-                  shrinkWrap: true, // Important in a Column/ListView
-                  physics:
-                      const NeverScrollableScrollPhysics(), // Disable scrolling within the list itself
-                  itemCount: records.length,
-                  itemBuilder: (context, index) {
-                    final record = records[index];
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.secondary.withAlpha(
-                          50,
-                        ),
-                        // Use SolarIconsOutline.scale instead of .weight
-                        child: Icon(
-                          SolarIconsOutline.scale,
-                          color: theme.colorScheme.secondary,
+                // Limit to max 3 records
+                final limitedRecords = records.sublist(
+                  0,
+                  min(records.length, 3),
+                );
+
+                return Column(
+                  // Wrap ListView and Button in Column
+                  children: [
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: limitedRecords.length, // Use limited count
+                      itemBuilder: (context, index) {
+                        final record = limitedRecords[index];
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: theme.colorScheme.secondary
+                                .withAlpha(50),
+                            child: Icon(
+                              SolarIconsOutline.scale,
+                              color: theme.colorScheme.secondary,
+                            ),
+                          ),
+                          title: Text('${record.weight.toStringAsFixed(1)} kg'),
+                          subtitle: Text(
+                            DateFormat(
+                              'MMMM d, yyyy \'at\' hh:mm a',
+                            ).format(record.date.toLocal()),
+                          ),
+                          trailing:
+                              record.photoUrl != null
+                                  ? Icon(
+                                    SolarIconsOutline.gallery,
+                                    color: theme.hintColor,
+                                  )
+                                  : null,
+                        );
+                      },
+                      separatorBuilder:
+                          (context, index) => const Divider(height: 1),
+                    ),
+                    // Add "View More" button if there are more than 3 records
+                    if (records.length > 3)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 12.0),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
+                              // Navigate to the new details screen
+                              context.push(AppRoutes.progressDetails);
+                            },
+                            child: Text(
+                              'View More',
+                              style: TextStyle(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      title: Text('${record.weight.toStringAsFixed(1)} kg'),
-                      subtitle: Text(
-                        // Correct DateFormat string by escaping 'at'
-                        DateFormat(
-                          'MMMM d, yyyy \'at\' hh:mm a',
-                        ).format(record.date.toLocal()), // Show time as well
-                      ),
-                      trailing:
-                          record.photoUrl != null
-                              // Use SolarIcons.gallery
-                              ? Icon(
-                                SolarIconsOutline.gallery,
-                                color: theme.hintColor,
-                              )
-                              : null,
-                      // Add onTap to view details or photo if needed
-                      // onTap: () {
-                      //   // Handle tap, e.g., show photo
-                      // },
-                    );
-                  },
-                  separatorBuilder:
-                      (context, index) => const Divider(height: 1),
+                  ],
                 );
               },
               loading: () => const Center(child: LoadingIndicator()),
