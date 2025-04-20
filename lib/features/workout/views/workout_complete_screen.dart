@@ -59,36 +59,30 @@ class WorkoutCompleteScreen extends ConsumerWidget {
     final String durationString =
         '${workout.duration.inMinutes} min ${workout.duration.inSeconds.remainder(60)} sec';
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(
-            SolarIconsOutline.altArrowLeft,
-            color: HeronFitTheme.primary,
-            size: 30.0,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
-          onPressed: () {
-            // Navigate home when back is pressed on this screen
-            context.go(AppRoutes.home);
-          },
-        ),
-        title: Text(
-          'Workout Complete',
-          style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
+          title: Text(
+            'Workout Complete',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        centerTitle: true,
-        elevation: 0.0,
-      ),
-      backgroundColor: HeronFitTheme.bgLight,
-      body: SafeArea(
-        top: true,
-        child: Padding(
+        backgroundColor: HeronFitTheme.bgLight,
+        body: Padding(
           padding: const EdgeInsets.all(24.0),
           child: Column(
             children: [
