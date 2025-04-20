@@ -11,31 +11,29 @@ class ContactUsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
-        automaticallyImplyLeading: true,
-        leading: IconButton(
-          icon: Icon(
-            Icons.chevron_left_rounded,
-            color: HeronFitTheme.primary,
-            size: 30,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
-          onPressed: () => context.pop(), // Use context.pop()
-        ),
-        title: Text(
-          'Contact Us',
-          style: HeronFitTheme.textTheme.headlineMedium?.copyWith(
-            color: HeronFitTheme.primary,
-            fontSize: 20,
-            letterSpacing: 0.0,
+          title: Text(
+            'Contact Us',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        centerTitle: true,
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: Padding(
+        body: Padding(
           padding: const EdgeInsets.all(24),
           child: SingleChildScrollView(
             child: Column(

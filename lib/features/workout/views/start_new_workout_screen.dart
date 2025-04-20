@@ -20,36 +20,30 @@ class StartNewWorkoutScreen extends ConsumerWidget {
       activeWorkoutProvider(initialWorkout).notifier,
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(
-            SolarIconsOutline.altArrowLeft,
-            color: HeronFitTheme.primary,
-            size: 30.0,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
-          onPressed: () {
-            workoutNotifier.cancelWorkout();
-            context.pop();
-          },
-        ),
-        title: Text(
-          workoutState.name.isEmpty ? 'New Workout' : workoutState.name,
-          style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
+          title: Text(
+            'Start Workout',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        centerTitle: true,
-        elevation: 0.0,
-      ),
-      backgroundColor: HeronFitTheme.bgLight,
-      body: SafeArea(
-        top: true,
-        child: SingleChildScrollView(
+        backgroundColor: HeronFitTheme.bgLight,
+        body: SingleChildScrollView(
           primary: false,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -69,33 +63,20 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
-                        // labelText: 'Workout Name',
-                        // labelStyle: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                        //   color:
-                        //       HeronFitTheme
-                        //           .textMuted, // Use muted color for label when not focused
-                        // ),
                         hintText: 'Enter workout name (e.g., Leg Day)',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted.withAlpha(
-                            179,
-                          ), // Use withAlpha (0.7 * 255)
+                          color: HeronFitTheme.textMuted.withAlpha(179),
                         ),
-                        // Use UnderlineInputBorder
                         enabledBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color: HeronFitTheme.textMuted.withAlpha(
-                              128,
-                            ), // Use withAlpha (0.5 * 255)
+                            color: HeronFitTheme.textMuted.withAlpha(128),
                             width: 1.0,
                           ),
                         ),
                         focusedBorder: UnderlineInputBorder(
                           borderSide: BorderSide(
-                            color:
-                                HeronFitTheme
-                                    .primary, // Primary color underline when focused
-                            width: 2.0, // Thicker underline when focused
+                            color: HeronFitTheme.primary,
+                            width: 2.0,
                           ),
                         ),
                         errorBorder: UnderlineInputBorder(
@@ -111,10 +92,8 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                           ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
-                          vertical:
-                              12.0, // Adjust vertical padding for underline
-                          horizontal:
-                              0.0, // Minimal horizontal padding for underline
+                          vertical: 12.0,
+                          horizontal: 0.0,
                         ),
                       ),
                       onChanged:
@@ -204,13 +183,9 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                     const SizedBox(height: 16.0),
                     ElevatedButton(
                       onPressed: () async {
-                        // Call finishWorkout and get the completed workout object
                         final completedWorkout =
                             await workoutNotifier.finishWorkout();
 
-                        // Get the detailed exercises *with updated set data* from the state
-                        // We need the state *after* finishWorkout potentially modifies it or just before saving
-                        // Reading the state again ensures we have the latest set data including 'completed' status
                         final finalWorkoutState = ref.read(
                           activeWorkoutProvider(initialWorkout),
                         );
@@ -218,19 +193,15 @@ class StartNewWorkoutScreen extends ConsumerWidget {
 
                         if (!context.mounted) return;
 
-                        // Check if the workout was finished successfully
                         if (completedWorkout != null) {
-                          // Navigate to the workout complete screen, passing both workout and detailed exercises
                           context.pushReplacement(
                             AppRoutes.workoutComplete,
                             extra: {
                               'workout': completedWorkout,
-                              // Pass the exercises list which contains the detailed set data
                               'detailedExercises': detailedExercises,
                             },
                           );
                         } else {
-                          // Handle error case (e.g., show a SnackBar)
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(

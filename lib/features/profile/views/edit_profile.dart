@@ -1,593 +1,582 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:go_router/go_router.dart'; // Import GoRouter
-import '../../../core/theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/features/profile/controllers/profile_controller.dart';
+import 'package:heronfit/features/profile/models/user_model.dart';
+import 'package:heronfit/widgets/loading_indicator.dart'; // Assuming you have a loading widget
+import 'package:intl/intl.dart'; // For date formatting
+import 'package:image_picker/image_picker.dart';
+import 'dart:io'; // Import dart:io for File
+import 'package:solar_icons/solar_icons.dart';
+import 'package:heronfit/core/theme.dart'; // Assuming you have a theme file
 
-class EditProfileWidget extends StatefulWidget {
-  const EditProfileWidget({super.key});
-
-  static String routeName = 'EditProfile';
-  static String routePath = '/editProfile';
+class EditProfileScreen extends ConsumerStatefulWidget {
+  const EditProfileScreen({super.key});
 
   @override
-  State<EditProfileWidget> createState() => _EditProfileWidgetState();
+  ConsumerState<EditProfileScreen> createState() => _EditProfileScreenState();
 }
 
-class _EditProfileWidgetState extends State<EditProfileWidget> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
+class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController firstNameTextController = TextEditingController();
-  final TextEditingController lastNameTextController = TextEditingController();
-  final TextEditingController heightTextController = TextEditingController();
-  final TextEditingController weightTextController = TextEditingController();
-  final FocusNode firstNameFocusNode = FocusNode();
-  final FocusNode lastNameFocusNode = FocusNode();
-  final FocusNode heightFocusNode = FocusNode();
-  final FocusNode weightFocusNode = FocusNode();
+  // Text editing controllers for form fields
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _heightController;
+  late TextEditingController _weightController;
+  late TextEditingController _birthdayController;
+  late TextEditingController _contactController;
+
+  UserModel? _initialUserData;
+  XFile? _pickedImage; // State variable to hold the picked image file
+
+  @override
+  void initState() {
+    super.initState();
+    _firstNameController = TextEditingController();
+    _lastNameController = TextEditingController();
+    _heightController = TextEditingController();
+    _weightController = TextEditingController();
+    _birthdayController = TextEditingController();
+    _contactController = TextEditingController();
+
+    // Initialize controllers when initial data is available
+    // We use listen to handle the async nature of the provider
+    ref.listenManual(userProfileProvider, (previous, next) {
+      if (next is AsyncData<UserModel?> && next.value != null) {
+        _initializeControllers(next.value!);
+      }
+    }, fireImmediately: true);
+  }
+
+  void _initializeControllers(UserModel userData) {
+    _initialUserData = userData;
+    _firstNameController.text =
+        userData.first_name ?? ''; // Changed from firstName
+    _lastNameController.text =
+        userData.last_name ?? ''; // Changed from lastName
+    _heightController.text = userData.height?.toString() ?? '';
+    _weightController.text = userData.weight?.toString() ?? '';
+    _birthdayController.text = userData.birthday ?? '';
+    _contactController.text = userData.contact ?? '';
+  }
 
   @override
   void dispose() {
-    firstNameTextController.dispose();
-    lastNameTextController.dispose();
-    heightTextController.dispose();
-    weightTextController.dispose();
-    firstNameFocusNode.dispose();
-    lastNameFocusNode.dispose();
-    heightFocusNode.dispose();
-    weightFocusNode.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
+    _birthdayController.dispose();
+    _contactController.dispose();
     super.dispose();
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    DateTime initialDate;
+    try {
+      initialDate =
+          _birthdayController.text.isNotEmpty
+              ? DateFormat('yyyy-MM-dd').parse(_birthdayController.text)
+              : DateTime.now();
+    } catch (e) {
+      initialDate = DateTime.now(); // Fallback if parsing fails
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900), // Adjust range as needed
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != initialDate) {
+      setState(() {
+        _birthdayController.text = DateFormat('yyyy-MM-dd').format(picked);
+      });
+    }
+  }
+
+  void _saveProfile() {
+    if (_formKey.currentState!.validate()) {
+      // Prepare the data map, only include fields that have changed
+      final Map<String, dynamic> updatedData = {};
+
+      if (_firstNameController.text != (_initialUserData?.first_name ?? '')) {
+        // Changed from firstName
+        updatedData['first_name'] = _firstNameController.text;
+      }
+      if (_lastNameController.text != (_initialUserData?.last_name ?? '')) {
+        // Changed from lastName
+        updatedData['last_name'] = _lastNameController.text;
+      }
+      if (_heightController.text !=
+          (_initialUserData?.height?.toString() ?? '')) {
+        updatedData['height'] = int.tryParse(_heightController.text);
+      }
+      if (_weightController.text !=
+          (_initialUserData?.weight?.toString() ?? '')) {
+        updatedData['weight'] = double.tryParse(_weightController.text);
+      }
+      if (_birthdayController.text != (_initialUserData?.birthday ?? '')) {
+        updatedData['birthday'] = _birthdayController.text;
+      }
+      if (_contactController.text != (_initialUserData?.contact ?? '')) {
+        updatedData['contact'] = _contactController.text;
+      }
+
+      // Check if a new image was picked
+      final imageToUpload = _pickedImage; // Capture the value
+
+      // Call update for text fields if there are changes
+      if (updatedData.isNotEmpty) {
+        ref
+            .read(profileControllerProvider.notifier)
+            .updateUserProfile(updatedData)
+            .then((_) {
+              // Check if the widget is still mounted before using context
+              if (!mounted) return;
+              // Check the state after the future completes
+              final state = ref.read(profileControllerProvider);
+              if (state is AsyncData) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Profile updated successfully!'),
+                    backgroundColor: Colors.green, // Added for clarity
+                  ),
+                );
+                // Optionally navigate back
+                // Navigator.of(context).pop();
+              } else if (state is AsyncError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating profile: ${state.error}'),
+                    backgroundColor:
+                        Theme.of(
+                          context,
+                        ).colorScheme.error, // Use theme error color
+                  ),
+                );
+              }
+            })
+            .catchError((error) {
+              // Check if the widget is still mounted before using context
+              if (!mounted) return;
+              // This catchError might be redundant if the controller handles it,
+              // but can be useful for unexpected errors.
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('An unexpected error occurred: $error'),
+                  backgroundColor:
+                      Theme.of(
+                        context,
+                      ).colorScheme.error, // Use theme error color
+                ),
+              );
+            });
+      }
+
+      // Call upload avatar if a new image was picked
+      if (imageToUpload != null) {
+        ref
+            .read(profileControllerProvider.notifier)
+            .uploadAndUpdateAvatar(imageToUpload)
+            .then((_) {
+              if (!mounted) return;
+              final state = ref.read(profileControllerProvider);
+              if (state is AsyncData) {
+                // Optionally show a separate success message for avatar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Avatar updated successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                // Clear the picked image after successful upload
+                setState(() {
+                  _pickedImage = null;
+                });
+              } else if (state is AsyncError) {
+                // Error handled by the general profile update state watcher?
+                // Or show specific error here if needed.
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating avatar: ${state.error}'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+            })
+            .catchError((error) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'An unexpected error occurred uploading avatar: $error',
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            });
+      } else if (updatedData.isEmpty) {
+        // Only show "No changes" if neither text fields nor image changed
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('No changes detected.')));
+      }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    XFile? image;
+
+    // Show a dialog or bottom sheet to choose the source
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      isScrollControlled: true, // Make the modal larger
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (BuildContext context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.35,
+          minChildSize: 0.2,
+          maxChildSize: 0.6,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(Icons.photo_library),
+                      title: const Text('Gallery'),
+                      onTap: () {
+                        Navigator.of(context).pop(ImageSource.gallery);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.camera_alt),
+                      title: const Text('Camera'),
+                      onTap: () {
+                        Navigator.of(context).pop(ImageSource.camera);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (source != null) {
+      try {
+        image = await picker.pickImage(source: source);
+
+        if (image != null) {
+          setState(() {
+            _pickedImage = image;
+          });
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('No image selected.')));
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+        }
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+    final userProfileAsync = ref.watch(userProfileProvider);
+    final profileUpdateState = ref.watch(profileControllerProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SafeArea(
       child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: HeronFitTheme.bgLight,
         appBar: AppBar(
-          backgroundColor: HeronFitTheme.bgLight,
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.chevron_left_rounded,
               color: HeronFitTheme.primary,
               size: 30,
             ),
-            onPressed: () => context.pop(), // Use context.pop()
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Edit Profile',
-            style: HeronFitTheme.textTheme.headlineMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: HeronFitTheme.primary,
-              fontSize: 20,
-              letterSpacing: 0.0,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
-          elevation: 0,
         ),
-        body: SafeArea(
-          top: true,
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(0, 0, 0, 16),
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: HeronFitTheme.bgSecondary,
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: HeronFitTheme.primary,
-                            width: 4,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(2),
-                          child: InkWell(
-                            splashColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () {
-                              // Handle profile image tap
-                            },
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(50),
-                              child: Image.network(
-                                'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60',
-                                width: 60,
-                                height: 60,
-                                fit: BoxFit.cover,
+        resizeToAvoidBottomInset: true,
+        body: userProfileAsync.when(
+          data: (userData) {
+            if (userData == null) {
+              return const Center(child: Text('User data not available.'));
+            }
+            if (_initialUserData == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _initializeControllers(userData);
+                  setState(() {});
+                }
+              });
+              return const LoadingIndicator();
+            }
+            return GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 16,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // --- Profile Picture ---
+                              Center(
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 50 + 4 + 4,
+                                      backgroundColor: colorScheme.primary,
+                                      child: CircleAvatar(
+                                        radius: 50 + 4,
+                                        backgroundColor: Colors.white,
+                                        child: CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage:
+                                              _pickedImage != null
+                                                  ? FileImage(
+                                                    File(_pickedImage!.path),
+                                                  )
+                                                  : _initialUserData?.avatar !=
+                                                      null
+                                                  ? NetworkImage(
+                                                    _initialUserData!.avatar!,
+                                                  )
+                                                  : const AssetImage(
+                                                        'assets/images/heronfit_icon.png',
+                                                      )
+                                                      as ImageProvider,
+                                          child:
+                                              _pickedImage == null &&
+                                                      (_initialUserData
+                                                                  ?.avatar ==
+                                                              null ||
+                                                          _initialUserData
+                                                                  ?.avatar ==
+                                                              '')
+                                                  ? const Icon(
+                                                    Icons.person,
+                                                    size: 50,
+                                                  )
+                                                  : null,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          SolarIconsOutline.camera,
+                                        ),
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: colorScheme.primary,
+                                          foregroundColor:
+                                              colorScheme.onPrimary,
+                                        ),
+                                        onPressed: _pickImage,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 24),
+                              // --- Form Fields ---
+                              ..._buildProfileFields(context),
+                              const Spacer(),
+                              // --- Save Changes Button ---
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 24,
+                                  bottom: 16,
+                                ),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(
+                                      SolarIconsOutline.folderCheck,
+                                      size: 22,
+                                    ),
+                                    label: Text(
+                                      profileUpdateState is AsyncLoading
+                                          ? 'Saving...'
+                                          : 'Save Changes',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: HeronFitTheme.primary,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    onPressed:
+                                        profileUpdateState is AsyncLoading
+                                            ? null
+                                            : _saveProfile,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: HeronFitTheme.bgLight,
-                        boxShadow: [
-                          BoxShadow(
-                            blurRadius: 50,
-                            color: Color(0x1A2C2B3B),
-                            offset: Offset(0, 10),
-                          ),
-                        ],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                0,
-                                0,
-                                0,
-                                16,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                      0,
-                                      0,
-                                      0,
-                                      16,
-                                    ),
-                                    child: Text(
-                                      'FIRST NAME',
-                                      textAlign: TextAlign.start,
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: HeronFitTheme.textPrimary,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    child: TextFormField(
-                                      controller: firstNameTextController,
-                                      focusNode: firstNameFocusNode,
-                                      autofocus: true,
-                                      autofillHints: [AutofillHints.name],
-                                      textCapitalization:
-                                          TextCapitalization.sentences,
-                                      obscureText: false,
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        labelStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        alignLabelWithHint: false,
-                                        hintText: 'Enter your first name',
-                                        hintStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        enabledBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primary,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primaryDark,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        errorBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.error,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedErrorBorder:
-                                            UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                color: HeronFitTheme.error,
-                                                width: 2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                            ),
-                                        contentPadding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                              0,
-                                              0,
-                                              0,
-                                              16,
-                                            ),
-                                      ),
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(letterSpacing: 0.0),
-                                      keyboardType: TextInputType.name,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                0,
-                                0,
-                                0,
-                                16,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                      0,
-                                      0,
-                                      0,
-                                      16,
-                                    ),
-                                    child: Text(
-                                      'LAST NAME',
-                                      textAlign: TextAlign.start,
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: HeronFitTheme.textPrimary,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    child: TextFormField(
-                                      controller: lastNameTextController,
-                                      focusNode: lastNameFocusNode,
-                                      autofocus: true,
-                                      autofillHints: [AutofillHints.name],
-                                      textCapitalization:
-                                          TextCapitalization.sentences,
-                                      obscureText: false,
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        labelStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        alignLabelWithHint: false,
-                                        hintText: 'Enter your last name',
-                                        hintStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        enabledBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primary,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primaryDark,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        errorBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.error,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedErrorBorder:
-                                            UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                color: HeronFitTheme.error,
-                                                width: 2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                            ),
-                                        contentPadding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                              0,
-                                              0,
-                                              0,
-                                              16,
-                                            ),
-                                      ),
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(letterSpacing: 0.0),
-                                      keyboardType: TextInputType.name,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                0,
-                                0,
-                                0,
-                                16,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                      0,
-                                      0,
-                                      0,
-                                      16,
-                                    ),
-                                    child: Text(
-                                      'HEIGHT (cm)',
-                                      textAlign: TextAlign.start,
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: HeronFitTheme.textPrimary,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    child: TextFormField(
-                                      controller: heightTextController,
-                                      focusNode: heightFocusNode,
-                                      autofocus: true,
-                                      autofillHints: [AutofillHints.name],
-                                      obscureText: false,
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        labelStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        alignLabelWithHint: false,
-                                        hintText: 'Enter your height',
-                                        hintStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        enabledBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primary,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primaryDark,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        errorBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.error,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedErrorBorder:
-                                            UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                color: HeronFitTheme.error,
-                                                width: 2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                            ),
-                                        contentPadding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                              0,
-                                              0,
-                                              0,
-                                              16,
-                                            ),
-                                      ),
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(letterSpacing: 0.0),
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                          RegExp(r'[0-9]'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Padding(
-                              padding: EdgeInsetsDirectional.fromSTEB(
-                                0,
-                                0,
-                                0,
-                                16,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.max,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsetsDirectional.fromSTEB(
-                                      0,
-                                      0,
-                                      0,
-                                      16,
-                                    ),
-                                    child: Text(
-                                      'WEIGHT (kg)',
-                                      textAlign: TextAlign.start,
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(
-                                            color: HeronFitTheme.textPrimary,
-                                            letterSpacing: 0.0,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                  Container(
-                                    width: double.infinity,
-                                    child: TextFormField(
-                                      controller: weightTextController,
-                                      focusNode: weightFocusNode,
-                                      autofocus: true,
-                                      autofillHints: [AutofillHints.name],
-                                      obscureText: false,
-                                      decoration: InputDecoration(
-                                        isDense: true,
-                                        labelStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        alignLabelWithHint: false,
-                                        hintText: 'Enter your weight',
-                                        hintStyle: HeronFitTheme
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(letterSpacing: 0.0),
-                                        enabledBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primary,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.primaryDark,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        errorBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(
-                                            color: HeronFitTheme.error,
-                                            width: 2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            0,
-                                          ),
-                                        ),
-                                        focusedErrorBorder:
-                                            UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                color: HeronFitTheme.error,
-                                                width: 2,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(0),
-                                            ),
-                                        contentPadding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                              0,
-                                              0,
-                                              0,
-                                              16,
-                                            ),
-                                      ),
-                                      style: HeronFitTheme.textTheme.labelSmall
-                                          ?.copyWith(letterSpacing: 0.0),
-                                      keyboardType: TextInputType.number,
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                          RegExp(r'[0-9]'),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Save Changes
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: HeronFitTheme.primaryDark,
-                    foregroundColor: HeronFitTheme.bgLight,
-                    minimumSize: Size(double.infinity, 40),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    'Save Changes',
-                    style: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                      color: HeronFitTheme.bgLight,
-                      letterSpacing: 0.0,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                  );
+                },
+              ),
+            );
+          },
+          loading: () => const LoadingIndicator(),
+          error:
+              (error, stackTrace) =>
+                  Center(child: Text('Error loading profile: $error')),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildProfileFields(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return [
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _firstNameController,
+        decoration: const InputDecoration(labelText: 'First Name'),
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter your first name'
+                    : null,
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _lastNameController,
+        decoration: const InputDecoration(labelText: 'Last Name'),
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter your last name'
+                    : null,
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _heightController,
+        decoration: const InputDecoration(labelText: 'Height (cm)'),
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value != null &&
+              value.isNotEmpty &&
+              int.tryParse(value) == null) {
+            return 'Please enter a valid number';
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _weightController,
+        decoration: const InputDecoration(labelText: 'Weight (kg)'),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        validator: (value) {
+          if (value != null &&
+              value.isNotEmpty &&
+              double.tryParse(value) == null) {
+            return 'Please enter a valid number';
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _birthdayController,
+        decoration: const InputDecoration(
+          labelText: 'Birthday',
+          hintText: 'yyyy-MM-dd',
+          suffixIcon: Icon(Icons.calendar_today),
+        ),
+        readOnly: true,
+        onTap: () => _selectDate(context),
+        validator: (value) {
+          if (value != null && value.isNotEmpty) {
+            try {
+              DateFormat('yyyy-MM-dd').parseStrict(value);
+            } catch (e) {
+              return 'Invalid date format (yyyy-MM-dd)';
+            }
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _contactController,
+        decoration: const InputDecoration(labelText: 'Contact Number'),
+        keyboardType: TextInputType.phone,
+        validator: (value) {
+          if (value != null &&
+              value.isNotEmpty &&
+              !RegExp(r'^[0-9\+\-\s()]+$').hasMatch(value)) {
+            return 'Please enter a valid phone number';
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.done,
+      ),
+    ];
   }
 }

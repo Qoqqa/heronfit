@@ -38,7 +38,7 @@ dependencies:
   flutter_animate: ^4.5.2
   supabase_flutter: ^2.8.4
   flutter_dotenv: ^5.0.2
-  image_picker: ^0.8.4+4
+  image_picker: ^1.1.1 # Updated image_picker version
   solar_icons: ^0.0.5 # Add solar_icons dependency
   shared_preferences: ^2.0.8
   pin_code_fields: ^8.0.1 # Add this line to include the package

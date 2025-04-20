@@ -1,273 +1,245 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:page_transition/page_transition.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/features/profile/controllers/profile_controller.dart';
+import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
+  String _calculateAge(String? birthdayString) {
+    if (birthdayString == null || birthdayString.isEmpty) {
+      return '-- yo';
+    }
+    try {
+      final birthDate = DateFormat('yyyy-MM-dd').parse(birthdayString);
+      final today = DateTime.now();
+      int age = today.year - birthDate.year;
+      if (today.month < birthDate.month ||
+          (today.month == birthDate.month && today.day < birthDate.day)) {
+        age--;
+      }
+      return '$age yo';
+    } catch (e) {
+      return '-- yo';
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
+    final userProfileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: HeronFitTheme.primary,
-      ),
-      body: SafeArea(
-        top: true,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.max,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 24.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              mainAxisSize: MainAxisSize.max,
+    return SafeArea(
+      child: Scaffold(
+        body: userProfileAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(child: Text('Error: $error')),
+          data: (user) {
+            if (user == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Could not load profile data.'),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(userProfileProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final ageString = _calculateAge(user.birthday);
+
+            ImageProvider? avatarProvider;
+            if (user.avatar != null && user.avatar!.isNotEmpty) {
+              avatarProvider = CachedNetworkImageProvider(user.avatar!);
+            } else {
+              avatarProvider = const AssetImage(
+                'assets/images/heronfit_icon.png',
+              );
+            }
+
+            return ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40 + 2 + 2,
+                      backgroundColor: colorScheme.primary,
+                      child: CircleAvatar(
+                        radius: 40 + 2,
+                        backgroundColor: Colors.white,
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundImage: avatarProvider,
+                          backgroundColor: colorScheme.surfaceVariant,
+                          child:
+                              avatarProvider == null
+                                  ? Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: colorScheme.onSurfaceVariant,
+                                  )
+                                  : null,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${user.first_name ?? ''} ${user.last_name ?? ''}'
+                                    .trim()
+                                    .isEmpty
+                                ? 'User Name'
+                                : '${user.first_name ?? ''} ${user.last_name ?? ''}',
+                            style: textTheme.titleLarge?.copyWith(
+                              color: HeronFitTheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          const SizedBox(height: 0),
+                          RichText(
+                            text: TextSpan(
                               children: [
-                                Container(
-                                  width: 72,
-                                  height: 72,
-                                  decoration: BoxDecoration(
-                                    color: colorScheme.secondary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: HeronFitTheme.primary,
-                                      width: 3,
-                                    ),
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: InkWell(
-                                      splashColor: Colors.transparent,
-                                      focusColor: Colors.transparent,
-                                      hoverColor: Colors.transparent,
-                                      highlightColor: Colors.transparent,
-                                      onTap: () async {
-                                        await Navigator.push(
-                                          context,
-                                          PageTransition(
-                                            type: PageTransitionType.fade,
-                                            child: Scaffold(
-                                              appBar: AppBar(),
-                                              body: Center(
-                                                child: CachedNetworkImage(
-                                                  imageUrl:
-                                                      'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60',
-                                                  fit: BoxFit.contain,
-                                                  placeholder:
-                                                      (context, url) => Center(
-                                                        child:
-                                                            CircularProgressIndicator(
-                                                              color:
-                                                                  HeronFitTheme
-                                                                      .primary,
-                                                            ),
-                                                      ),
-                                                  errorWidget:
-                                                      (context, url, error) =>
-                                                          Icon(
-                                                            SolarIconsBold.user,
-                                                            color:
-                                                                HeronFitTheme
-                                                                    .primary,
-                                                          ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(50),
-                                        child: CachedNetworkImage(
-                                          imageUrl:
-                                              'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60',
-                                          width: 60,
-                                          height: 60,
-                                          fit: BoxFit.cover,
-                                          placeholder:
-                                              (context, url) => Center(
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      color:
-                                                          HeronFitTheme.primary,
-                                                    ),
-                                              ),
-                                          errorWidget:
-                                              (context, url, error) => Icon(
-                                                SolarIconsBold.user,
-                                                color: HeronFitTheme.primary,
-                                              ),
-                                        ),
-                                      ),
-                                    ),
+                                TextSpan(
+                                  text: 'Goal | ',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 16.0),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'John Doe',
-                                        style: textTheme.titleLarge?.copyWith(
-                                          color: HeronFitTheme.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      RichText(
-                                        text: TextSpan(
-                                          children: [
-                                            TextSpan(
-                                              text: 'Goal | ',
-                                              style: textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    color: colorScheme.onSurface
-                                                        .withAlpha(
-                                                          ((0.7 * 255).round()),
-                                                        ),
-                                                  ),
-                                            ),
-                                            TextSpan(
-                                              text: 'Lose Weight',
-                                              style: textTheme.bodyMedium
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            ),
-                                          ],
-                                          style: textTheme.bodyMedium,
-                                        ),
-                                      ),
-                                    ],
+                                TextSpan(
+                                  text: user.goal ?? 'Not Set',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: colorScheme.onSurface,
                                   ),
                                 ),
                               ],
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.push(AppRoutes.profileEdit);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                ),
-                                backgroundColor: colorScheme.secondary,
-                                foregroundColor: Colors.white,
-                                textStyle: textTheme.labelMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                elevation: 2,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface,
                               ),
-                              child: const Text('Edit'),
                             ),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16.0),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildInfoCard(context, '180 cm', 'Height'),
-                            _buildInfoCard(context, '70 kg', 'Weight'),
-                            _buildInfoCard(context, '25 yo', 'Age'),
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: _buildAccountSection(context),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: _buildNotificationSection(context),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: _buildOtherSection(context),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: ElevatedButton.icon(
-                          onPressed: () async {
-                            try {
-                              await Supabase.instance.client.auth.signOut();
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Logged out successfully'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                              context.go(AppRoutes.onboarding);
-                            } catch (e) {
-                              if (!context.mounted) return;
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error logging out: $e'),
-                                  backgroundColor: HeronFitTheme.error,
-                                ),
-                              );
-                            }
-                          },
-                          icon: Icon(
-                            SolarIconsOutline.logout,
-                            size: 24.0,
-                            color: Colors.white,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
-                          label: Text(
-                            'Logout',
-                            style: textTheme.labelLarge?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.secondary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            minimumSize: const Size(double.infinity, 48),
-                            elevation: 2,
-                          ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 8.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.push(AppRoutes.profileEdit);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        backgroundColor: colorScheme.secondary,
+                        foregroundColor: Colors.white,
+                        textStyle: textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Edit'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildInfoCard(
+                      context,
+                      '${user.height?.toString() ?? '--'} cm',
+                      'Height',
+                    ),
+                    _buildInfoCard(
+                      context,
+                      '${user.weight?.toString() ?? '--'} kg',
+                      'Weight',
+                    ),
+                    _buildInfoCard(context, ageString, 'Age'),
+                  ],
+                ),
+                const SizedBox(height: 24.0),
+                _buildAccountSection(context),
+                const SizedBox(height: 16.0),
+                _buildNotificationSection(context, isSingle: true),
+                const SizedBox(height: 16.0),
+                _buildOtherSection(context),
+                const SizedBox(height: 16.0),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      await Supabase.instance.client.auth.signOut();
+                      ref.invalidate(userProfileProvider);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logged out successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      context.go(AppRoutes.onboarding);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error logging out: $e'),
+                          backgroundColor: HeronFitTheme.error,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(
+                    SolarIconsOutline.logout,
+                    size: 24.0,
+                    color: Colors.white,
+                  ),
+                  label: Text(
+                    'Logout',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.secondary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: const Size(double.infinity, 48),
+                    elevation: 0,
                   ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(height: 16.0),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -278,15 +250,13 @@ class ProfileScreen extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Expanded(
-      child: Card(
-        clipBehavior: Clip.antiAliasWithSaveLayer,
-        color: colorScheme.surface,
-        elevation: 4,
-        shadowColor: Theme.of(
-          context,
-        ).shadowColor.withAlpha(((0.5 * 255).round())),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 6.0),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: HeronFitTheme.cardShadow,
+        ),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
           child: Column(
@@ -334,17 +304,54 @@ class ProfileScreen extends StatelessWidget {
     ]);
   }
 
-  Widget _buildNotificationSection(BuildContext context) {
+  Widget _buildNotificationSection(
+    BuildContext context, {
+    bool isSingle = false,
+  }) {
     return _buildSection(context, 'Notification', [
-      _buildSectionItem(
-        context,
-        SolarIconsOutline.bell,
-        'Pop-up Notification',
-        () {
-          // Removed print statement
-        },
-      ),
-    ]);
+      _buildNotificationToggle(context),
+    ], isSingle: isSingle);
+  }
+
+  Widget _buildNotificationToggle(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+    // For demo: use a local StateProvider. In production, use a Riverpod provider and persist to Supabase.
+    return Consumer(
+      builder: (context, ref, _) {
+        final notificationEnabled = ref.watch(_notificationToggleProvider);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  SolarIconsOutline.bell,
+                  color: HeronFitTheme.primary,
+                  size: 22,
+                ),
+                const SizedBox(width: 16),
+                Text('Pop-up Notification', style: textTheme.bodyMedium),
+              ],
+            ),
+            Switch(
+              value: notificationEnabled,
+              activeColor: Colors.white, // Thumb color when active
+              activeTrackColor:
+                  HeronFitTheme.primary, // Track color when active
+              inactiveThumbColor: Colors.white, // Thumb color when inactive
+              inactiveTrackColor: HeronFitTheme.primary.withOpacity(
+                0.50,
+              ), // Lighter primary, no black/grey
+              onChanged: (val) {
+                ref.read(_notificationToggleProvider.notifier).state = val;
+                // TODO: Persist to Supabase/profile if needed
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildOtherSection(BuildContext context) {
@@ -371,27 +378,26 @@ class ProfileScreen extends StatelessWidget {
     ]);
   }
 
-  Widget _buildSection(BuildContext context, String title, List<Widget> items) {
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    List<Widget> items, {
+    bool isSingle = false,
+  }) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            color: Theme.of(
-              context,
-            ).shadowColor.withAlpha(((0.15 * 255).round())),
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: HeronFitTheme.cardShadow,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(
+          vertical: isSingle ? 16 : 16, // Less vertical padding for single item
+          horizontal: 16,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -405,19 +411,24 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
             ),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-              itemBuilder: (context, index) => items[index],
-              separatorBuilder:
-                  (context, index) => Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: colorScheme.outline.withAlpha(((0.3 * 255).round())),
-                    indent: 40,
-                  ),
-            ),
+            if (items.length == 1)
+              items.first
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                itemBuilder: (context, index) => items[index],
+                separatorBuilder:
+                    (context, index) => Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: colorScheme.outline.withAlpha(
+                        ((0.3 * 255).round()),
+                      ),
+                      indent: 40,
+                    ),
+              ),
           ],
         ),
       ),
@@ -458,3 +469,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 }
+
+// Local provider for demo. Move to controllers/ and persist in production.
+final _notificationToggleProvider = StateProvider<bool>((ref) => true);

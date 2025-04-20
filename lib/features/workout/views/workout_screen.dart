@@ -19,11 +19,10 @@ class WorkoutScreen extends ConsumerWidget {
     final recentSavedWorkoutsAsync = ref.watch(recentSavedWorkoutsProvider(3));
     final recommendedWorkoutsAsync = ref.watch(recommendedWorkoutsProvider);
 
-    return Scaffold(
-      backgroundColor: HeronFitTheme.bgLight,
-      body: SafeArea(
-        top: true,
-        child: ListView(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: HeronFitTheme.bgLight,
+        body: ListView(
           padding: const EdgeInsets.symmetric(vertical: 16.0),
           children: [
             const QuickStartSection(), // Header style is inside this widget

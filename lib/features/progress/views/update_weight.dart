@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
 import 'package:heronfit/features/progress/controllers/progress_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart'; // For date formatting if needed
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class UpdateWeightWidget extends ConsumerStatefulWidget {
@@ -147,190 +147,248 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+    final theme = Theme.of(context); // Get theme for other parts
+
+    return SafeArea(
       child: Scaffold(
-        backgroundColor:
-            theme
-                .scaffoldBackgroundColor, // Ensure background color is set here
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () => context.canPop() ? context.pop() : null,
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
-            'Log New Weight',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+            'Update Weight',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
         ),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _weightController,
-                    decoration: InputDecoration(
-                      labelText: 'Current Weight (kg)',
-                      hintText: 'Enter your current weight',
-                      prefixIcon: Icon(
-                        Icons.monitor_weight_outlined,
-                        color: theme.primaryColor,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.primaryColor),
-                      ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextFormField(
+                  controller: _weightController,
+                  decoration: InputDecoration(
+                    labelText: 'Current Weight (kg)',
+                    hintText: 'Enter your current weight',
+                    prefixIcon: Icon(
+                      Icons.monitor_weight_outlined,
+                      color: theme.primaryColor,
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your weight';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Add Progress Photo (Optional)',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child:
-                        _selectedImageXFile != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child:
-                                  kIsWeb
-                                      ? Image.network(
-                                        _selectedImageXFile!.path,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      )
-                                      : Image.file(
-                                        File(_selectedImageXFile!.path),
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      ),
-                            )
-                            : Center(
-                              child: Icon(
-                                Icons.image_search,
-                                size: 50,
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: theme.primaryColor),
+                    ),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your weight';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Add Progress Photo (Optional)',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 400,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.dividerColor),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow:
+                        HeronFitTheme.cardShadow, // Subtle shadow for depth
+                  ),
+                  child:
+                      _selectedImageXFile != null
+                          ? ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child:
+                                kIsWeb
+                                    ? Image.network(
+                                      _selectedImageXFile!.path,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      loadingBuilder: (
+                                        context,
+                                        child,
+                                        loadingProgress,
+                                      ) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Center(
+                                          child: SizedBox(
+                                            width: 40,
+                                            height: 40,
+                                            child: CircularProgressIndicator(
+                                              color: theme.primaryColor,
+                                              strokeWidth: 3,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    )
+                                    : Image.file(
+                                      File(_selectedImageXFile!.path),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                          )
+                          : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                SolarIconsOutline.gallery,
+                                size: 60,
                                 color: theme.hintColor,
+                                semanticLabel: 'No image selected',
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No image selected',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.hintColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Recommended: clear, well-lit photo. Max 5MB.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(
+                        SolarIconsOutline.camera,
+                        color: Colors.white,
+                        semanticLabel: 'Take photo with camera',
+                      ),
+                      label: const Text(
+                        'Camera',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(120, 44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(
+                        SolarIconsOutline.gallery,
+                        color: Colors.white,
+                        semanticLabel: 'Pick photo from gallery',
+                      ),
+                      label: const Text(
+                        'Gallery',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(120, 44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_selectedImageXFile != null)
+                  TextButton.icon(
+                    onPressed: () => setState(() => _selectedImageXFile = null),
+                    icon: Icon(
+                      SolarIconsOutline.closeCircle,
+                      color: theme.colorScheme.error,
+                      semanticLabel: 'Remove selected image',
+                    ),
+                    label: Text(
+                      'Remove Image',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 14,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _submitWeight,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    minimumSize: const Size(double.infinity, 50),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    disabledBackgroundColor: theme.colorScheme.primary
+                        .withAlpha(128),
+                  ),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
                             ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Camera'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                        ),
-                      ),
-                      ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Gallery'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_selectedImageXFile != null)
-                    TextButton.icon(
-                      onPressed:
-                          () => setState(() => _selectedImageXFile = null),
-                      icon: Icon(Icons.clear, color: theme.colorScheme.error),
-                      label: Text(
-                        'Remove Image',
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
-                    ),
-                  const SizedBox(height: 10),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          color: theme.colorScheme.error,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _submitWeight,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      minimumSize: const Size(double.infinity, 50),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: theme.colorScheme.primary
-                          .withAlpha(128),
-                    ),
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                            )
-                            : const Text(
-                              'Save Weight Log',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          )
+                          : const Text(
+                            'Save Weight Log',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
                             ),
-                  ),
-                ],
-              ),
+                          ),
+                ),
+              ],
             ),
           ),
         ),

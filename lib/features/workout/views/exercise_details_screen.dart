@@ -21,304 +21,296 @@ class ExerciseDetailsScreen extends StatefulWidget {
 class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final TextTheme textTheme =
-        HeronFitTheme.textTheme; // Use theme's textTheme
-    final Color primaryColor = theme.colorScheme.primary;
-    final Color surfaceColor = theme.colorScheme.surface;
-
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.colorScheme.background,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
-          automaticallyImplyLeading: false,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft,
-              color: theme.colorScheme.primary,
-              size: 30.0,
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Exercise Details',
-            style: textTheme.titleLarge?.copyWith(
-              color: theme.colorScheme.primary,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
-          elevation: 0,
         ),
-        body: SafeArea(
-          top: true,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Wrap image container with Hero
-                Hero(
-                  tag: widget.heroTag,
-                  // Use nested Containers for double border effect
+        backgroundColor: Theme.of(context).colorScheme.background,
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Wrap image container with Hero
+              Hero(
+                tag: widget.heroTag,
+                // Use nested Containers for double border effect
+                child: Container(
+                  padding: const EdgeInsets.all(3.0), // Outer border thickness
+                  decoration: BoxDecoration(
+                    color: HeronFitTheme.primary, // Outer border color
+                    borderRadius: BorderRadius.circular(15.0), // Outer radius
+                    boxShadow: HeronFitTheme.cardShadow, // Apply shadow here
+                  ),
                   child: Container(
                     padding: const EdgeInsets.all(
                       3.0,
-                    ), // Outer border thickness
+                    ), // Inner border thickness
                     decoration: BoxDecoration(
-                      color: primaryColor, // Outer border color
-                      borderRadius: BorderRadius.circular(15.0), // Outer radius
-                      boxShadow: HeronFitTheme.cardShadow, // Apply shadow here
+                      color:
+                          Theme.of(context)
+                              .colorScheme
+                              .surface, // Inner border color (white/surface)
+                      borderRadius: BorderRadius.circular(12.0), // Inner radius
                     ),
-                    child: Container(
-                      padding: const EdgeInsets.all(
-                        3.0,
-                      ), // Inner border thickness
-                      decoration: BoxDecoration(
-                        color:
-                            surfaceColor, // Inner border color (white/surface)
-                        borderRadius: BorderRadius.circular(
-                          12.0,
-                        ), // Inner radius
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(
-                          9.0,
-                        ), // Clip radius (Inner - padding)
-                        child:
-                            widget.exercise.imageUrl.isNotEmpty
-                                ? CachedNetworkImage(
-                                  imageUrl: widget.exercise.imageUrl,
-                                  width: double.infinity,
-                                  height: 250.0,
-                                  fit: BoxFit.cover,
-                                  placeholder:
-                                      (context, url) => Center(
-                                        child: CircularProgressIndicator(
-                                          color: primaryColor,
-                                          strokeWidth: 2.0,
-                                        ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(
+                        9.0,
+                      ), // Clip radius (Inner - padding)
+                      child:
+                          widget.exercise.imageUrl.isNotEmpty
+                              ? CachedNetworkImage(
+                                imageUrl: widget.exercise.imageUrl,
+                                width: double.infinity,
+                                height: 250.0,
+                                fit: BoxFit.cover,
+                                placeholder:
+                                    (context, url) => Center(
+                                      child: CircularProgressIndicator(
+                                        color: HeronFitTheme.primary,
+                                        strokeWidth: 2.0,
                                       ),
-                                  errorWidget:
-                                      (context, url, error) =>
-                                          _buildImagePlaceholder(
-                                            theme,
-                                            textTheme,
-                                          ),
-                                )
-                                : _buildImagePlaceholder(theme, textTheme),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24.0),
-
-                // Exercise name
-                Text(
-                  _capitalizeWords(widget.exercise.name),
-                  style: textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-
-                // Details Section - No Card, just the Container for layout/shadow
-                Container(
-                  decoration: BoxDecoration(
-                    // Keep the shadow if desired, or remove if not needed
-                    boxShadow: HeronFitTheme.cardShadow,
-                    // Make background transparent or use background color
-                    color:
-                        Colors.transparent, // Or theme.colorScheme.background
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  child: Row(
-                    // Changed Column back to Row
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // First Column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildDetailRow(
-                              theme,
-                              textTheme,
-                              SolarIconsOutline.target,
-                              'Target:', // Shorten label
-                              widget.exercise.primaryMuscle,
-                            ),
-                            const SizedBox(height: 8.0), // Spacing
-                            _buildDetailRow(
-                              theme,
-                              textTheme,
-                              SolarIconsOutline.dumbbellSmall,
-                              'Equipment:',
-                              widget.exercise.equipment,
-                            ),
-                            const SizedBox(height: 8.0),
-                            _buildDetailRow(
-                              theme,
-                              textTheme,
-                              SolarIconsOutline.layersMinimalistic,
-                              'Category:',
-                              widget.exercise.category,
-                            ),
-                            const SizedBox(height: 8.0),
-                            _buildDetailRow(
-                              theme,
-                              textTheme,
-                              SolarIconsOutline.ranking,
-                              'Level:',
-                              widget.exercise.level,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16.0), // Space between columns
-                      // Second Column
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildDetailRow(
-                              theme,
-                              textTheme,
-                              SolarIconsOutline.bolt,
-                              'Force:',
-                              widget.exercise.force.isNotEmpty
-                                  ? widget.exercise.force
-                                  : 'N/A',
-                            ),
-                            const SizedBox(height: 8.0),
-                            // Only show Mechanic if it exists
-                            if (widget.exercise.mechanic != null &&
-                                widget.exercise.mechanic!.isNotEmpty)
-                              Padding(
-                                // Add padding to align with others when present
-                                padding: const EdgeInsets.only(bottom: 8.0),
-                                child: _buildDetailRow(
-                                  theme,
-                                  textTheme,
-                                  SolarIconsOutline.tuning,
-                                  'Mechanic:',
-                                  widget.exercise.mechanic!,
-                                ),
+                                    ),
+                                errorWidget:
+                                    (context, url, error) =>
+                                        _buildImagePlaceholder(
+                                          Theme.of(context),
+                                          HeronFitTheme.textTheme,
+                                        ),
+                              )
+                              : _buildImagePlaceholder(
+                                Theme.of(context),
+                                HeronFitTheme.textTheme,
                               ),
-                            // Add SizedBox if Mechanic is not shown but Secondary is
-                            // This ensures consistent spacing below Force if Mechanic is absent
-                            if (widget.exercise.mechanic == null ||
-                                widget.exercise.mechanic!.isEmpty)
-                              const SizedBox(height: 8.0),
-                            _buildDetailRow(
-                              theme,
-                              textTheme,
-                              SolarIconsOutline.body,
-                              'Secondary:', // Shorten label
-                              widget.exercise.secondaryMuscles.isNotEmpty
-                                  ? widget.exercise.secondaryMuscles.join(', ')
-                                  : 'None',
-                              isList: true,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24.0),
+              ),
+              const SizedBox(height: 24.0),
 
-                // Instructions Section Title
-                Row(
+              // Exercise name
+              Text(
+                _capitalizeWords(widget.exercise.name),
+                style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+                  color: HeronFitTheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16.0),
+
+              // Details Section - No Card, just the Container for layout/shadow
+              Container(
+                decoration: BoxDecoration(
+                  // Keep the shadow if desired, or remove if not needed
+                  boxShadow: HeronFitTheme.cardShadow,
+                  // Make background transparent or use background color
+                  color: Colors.transparent, // Or theme.colorScheme.background
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Row(
+                  // Changed Column back to Row
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      SolarIconsOutline.listCheck,
-                      color: theme.colorScheme.primary,
-                      size: 26, // Adjust size as needed
+                    // First Column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow(
+                            Theme.of(context),
+                            HeronFitTheme.textTheme,
+                            SolarIconsOutline.target,
+                            'Target:', // Shorten label
+                            widget.exercise.primaryMuscle,
+                          ),
+                          const SizedBox(height: 8.0), // Spacing
+                          _buildDetailRow(
+                            Theme.of(context),
+                            HeronFitTheme.textTheme,
+                            SolarIconsOutline.dumbbellSmall,
+                            'Equipment:',
+                            widget.exercise.equipment,
+                          ),
+                          const SizedBox(height: 8.0),
+                          _buildDetailRow(
+                            Theme.of(context),
+                            HeronFitTheme.textTheme,
+                            SolarIconsOutline.layersMinimalistic,
+                            'Category:',
+                            widget.exercise.category,
+                          ),
+                          const SizedBox(height: 8.0),
+                          _buildDetailRow(
+                            Theme.of(context),
+                            HeronFitTheme.textTheme,
+                            SolarIconsOutline.ranking,
+                            'Level:',
+                            widget.exercise.level,
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(width: 8.0),
-                    Text(
-                      'Instructions',
-                      style: textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(width: 16.0), // Space between columns
+                    // Second Column
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildDetailRow(
+                            Theme.of(context),
+                            HeronFitTheme.textTheme,
+                            SolarIconsOutline.bolt,
+                            'Force:',
+                            widget.exercise.force.isNotEmpty
+                                ? widget.exercise.force
+                                : 'N/A',
+                          ),
+                          const SizedBox(height: 8.0),
+                          // Only show Mechanic if it exists
+                          if (widget.exercise.mechanic != null &&
+                              widget.exercise.mechanic!.isNotEmpty)
+                            Padding(
+                              // Add padding to align with others when present
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: _buildDetailRow(
+                                Theme.of(context),
+                                HeronFitTheme.textTheme,
+                                SolarIconsOutline.tuning,
+                                'Mechanic:',
+                                widget.exercise.mechanic!,
+                              ),
+                            ),
+                          // Add SizedBox if Mechanic is not shown but Secondary is
+                          // This ensures consistent spacing below Force if Mechanic is absent
+                          if (widget.exercise.mechanic == null ||
+                              widget.exercise.mechanic!.isEmpty)
+                            const SizedBox(height: 8.0),
+                          _buildDetailRow(
+                            Theme.of(context),
+                            HeronFitTheme.textTheme,
+                            SolarIconsOutline.body,
+                            'Secondary:', // Shorten label
+                            widget.exercise.secondaryMuscles.isNotEmpty
+                                ? widget.exercise.secondaryMuscles.join(', ')
+                                : 'None',
+                            isList: true,
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12.0),
+              ),
+              const SizedBox(height: 24.0),
 
-                // Instructions List (as Cards)
-                widget.exercise.instructions.isNotEmpty
-                    ? Column(
-                      children: List.generate(
-                        widget.exercise.instructions.length,
-                        (index) => Card(
-                          elevation: 0,
-                          margin: const EdgeInsets.only(bottom: 12.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          color: theme.colorScheme.surface,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12.0),
-                              boxShadow: HeronFitTheme.cardShadow,
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12.0,
-                                horizontal: 16.0,
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${index + 1}. ',
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      widget.exercise.instructions[index],
-                                      style: textTheme.bodyMedium,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+              // Instructions Section Title
+              Row(
+                children: [
+                  Icon(
+                    SolarIconsOutline.listCheck,
+                    color: HeronFitTheme.primary,
+                    size: 26, // Adjust size as needed
+                  ),
+                  const SizedBox(width: 8.0),
+                  Text(
+                    'Instructions',
+                    style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+                      color: HeronFitTheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12.0),
+
+              // Instructions List (as Cards)
+              widget.exercise.instructions.isNotEmpty
+                  ? Column(
+                    children: List.generate(
+                      widget.exercise.instructions.length,
+                      (index) => Card(
+                        elevation: 0,
+                        margin: const EdgeInsets.only(bottom: 12.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                      ),
-                    )
-                    : Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 16.0,
-                        horizontal: 8.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withAlpha(50),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'No instructions available for this exercise.',
-                          style: textTheme.bodyMedium?.copyWith(
-                            fontStyle: FontStyle.italic,
-                            color: theme.colorScheme.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.surface,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surface,
+                            borderRadius: BorderRadius.circular(12.0),
+                            boxShadow: HeronFitTheme.cardShadow,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 12.0,
+                              horizontal: 16.0,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${index + 1}. ',
+                                  style: HeronFitTheme.textTheme.bodyMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: HeronFitTheme.primary,
+                                      ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    widget.exercise.instructions[index],
+                                    style: HeronFitTheme.textTheme.bodyMedium,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
                     ),
-                const SizedBox(height: 24.0),
-              ],
-            ),
+                  )
+                  : Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16.0,
+                      horizontal: 8.0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceVariant.withAlpha(50),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'No instructions available for this exercise.',
+                        style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+              const SizedBox(height: 24.0),
+            ],
           ),
         ),
       ),

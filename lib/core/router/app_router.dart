@@ -11,9 +11,9 @@ import 'package:heronfit/features/home/views/home_screen.dart';
 import 'package:heronfit/features/profile/views/profile_screen.dart';
 import 'package:heronfit/features/profile/views/edit_profile.dart';
 import 'package:heronfit/features/workout/views/workout_history_screen.dart'; // Added import
-import 'package:heronfit/features/profile/views/contactUs_screen.dart';
-import 'package:heronfit/features/profile/views/privacyPolicy_screen.dart';
-import 'package:heronfit/features/profile/views/termsOfUse_screen.dart';
+import 'package:heronfit/features/profile/views/contact_us_screen.dart';
+import 'package:heronfit/features/profile/views/privacy_policy_screen.dart';
+import 'package:heronfit/features/profile/views/terms_of_use_screen.dart';
 import 'package:heronfit/features/booking/views/my_bookings.dart';
 import 'package:heronfit/features/booking/views/booking_screen.dart';
 import 'package:heronfit/features/workout/views/workout_screen.dart'; // Added import
@@ -188,7 +188,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.profileEdit,
-        builder: (context, state) => const EditProfileWidget(),
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
         path: AppRoutes.profileHistory,

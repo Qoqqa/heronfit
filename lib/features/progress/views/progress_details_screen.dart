@@ -9,6 +9,7 @@ import 'package:heronfit/widgets/loading_indicator.dart';
 import 'package:intl/intl.dart';
 import 'dart:math'; // For min
 import 'package:heronfit/features/progress/widgets/progress_photo_list_item.dart'; // Import the new widget
+import 'package:heronfit/core/theme.dart';
 
 // State provider for the selected time filter
 enum TimeFilter { week, month, allTime }
@@ -74,97 +75,116 @@ class ProgressDetailsScreen extends ConsumerWidget {
           return record.date.isAfter(startDate);
         }).toList();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Progress Details'),
-        leading: IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: () => context.pop(),
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          title: Text(
+            'Progress Details',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
-        elevation: 1,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // --- Weight Chart Section with Filtering ---
-            Text('Weight Trend', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: 8),
-            SegmentedButton<TimeFilter>(
-              segments: const [
-                ButtonSegment(value: TimeFilter.week, label: Text('Week')),
-                ButtonSegment(value: TimeFilter.month, label: Text('Month')),
-                ButtonSegment(value: TimeFilter.allTime, label: Text('All')),
-              ],
-              selected: {selectedFilter},
-              onSelectionChanged: (newSelection) {
-                ref.read(timeFilterProvider.notifier).state =
-                    newSelection.first;
-              },
-              style: SegmentedButton.styleFrom(
-                selectedBackgroundColor: theme.colorScheme.primary.withOpacity(
-                  0.2,
-                ),
-                selectedForegroundColor: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Pass the *filtered* data to the chart section
-            WeightChartSection(progressAsyncValue: filteredProgressAsyncValue),
-            const SizedBox(height: 24),
-
-            // --- Progress Photos Section ---
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Progress Photos', style: theme.textTheme.headlineSmall),
-                if (allPhotoRecords
-                    .isNotEmpty) // Show "See All" based on all photos
-                  TextButton(
-                    onPressed: () => context.push(AppRoutes.progressPhotoList),
-                    child: const Text('See All'),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // --- Weight Chart Section with Filtering ---
+              Text('Weight Trend', style: theme.textTheme.titleLarge),
+              const SizedBox(height: 8),
+              SegmentedButton<TimeFilter>(
+                segments: const [
+                  ButtonSegment(value: TimeFilter.week, label: Text('Week')),
+                  ButtonSegment(value: TimeFilter.month, label: Text('Month')),
+                  ButtonSegment(value: TimeFilter.allTime, label: Text('All')),
+                ],
+                selected: {selectedFilter},
+                onSelectionChanged: (newSelection) {
+                  ref.read(timeFilterProvider.notifier).state =
+                      newSelection.first;
+                },
+                style: SegmentedButton.styleFrom(
+                  selectedBackgroundColor: theme.colorScheme.primary.withAlpha(
+                    (255 * 0.2).round(),
                   ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            progressRecordsAsyncValue.when(
-              // Still use original async value for loading/error states
-              data: (allRecordsOriginal) {
-                // Use the time-filtered photo list for display
-                if (filteredPhotoRecords.isEmpty) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20.0),
-                      child: Text('No progress photos found for this period.'),
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: filteredPhotoRecords.length,
-                  itemBuilder: (context, index) {
-                    final record = filteredPhotoRecords[index];
-                    // Find the original index in the unfiltered list for navigation
-                    final originalIndex = allPhotoRecords.indexWhere(
-                      (r) => r.id == record.id,
-                    );
+                  selectedForegroundColor: theme.colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Pass the *filtered* data to the chart section
+              WeightChartSection(
+                progressAsyncValue: filteredProgressAsyncValue,
+              ),
+              const SizedBox(height: 24),
 
-                    // Use the reusable ProgressPhotoListItem widget
-                    return ProgressPhotoListItem(
-                      record: record,
-                      index: originalIndex, // Pass the original index
+              // --- Progress Photos Section ---
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Progress Photos', style: theme.textTheme.titleLarge),
+                  if (allPhotoRecords
+                      .isNotEmpty) // Show "See All" based on all photos
+                    TextButton(
+                      onPressed:
+                          () => context.push(AppRoutes.progressPhotoList),
+                      child: const Text('See All'),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              progressRecordsAsyncValue.when(
+                // Still use original async value for loading/error states
+                data: (allRecordsOriginal) {
+                  // Use the time-filtered photo list for display
+                  if (filteredPhotoRecords.isEmpty) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: Text(
+                          'No progress photos found for this period.',
+                        ),
+                      ),
                     );
-                  },
-                );
-              },
-              loading: () => const Center(child: LoadingIndicator()),
-              error:
-                  (error, stack) =>
-                      Center(child: Text('Error loading photos: $error')),
-            ),
-          ],
+                  }
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredPhotoRecords.length,
+                    itemBuilder: (context, index) {
+                      final record = filteredPhotoRecords[index];
+                      // Find the original index in the unfiltered list for navigation
+                      final originalIndex = allPhotoRecords.indexWhere(
+                        (r) => r.id == record.id,
+                      );
+
+                      // Use the reusable ProgressPhotoListItem widget
+                      return ProgressPhotoListItem(
+                        record: record,
+                        index: originalIndex, // Pass the original index
+                      );
+                    },
+                  );
+                },
+                loading: () => const Center(child: LoadingIndicator()),
+                error:
+                    (error, stack) =>
+                        Center(child: Text('Error loading photos: $error')),
+              ),
+            ],
+          ),
         ),
       ),
     );

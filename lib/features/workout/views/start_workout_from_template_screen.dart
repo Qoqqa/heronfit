@@ -19,35 +19,30 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
     final workoutState = ref.watch(activeWorkoutProvider(workout));
     final workoutNotifier = ref.read(activeWorkoutProvider(workout).notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(
-            SolarIconsOutline.altArrowLeft,
-            color: HeronFitTheme.primary,
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
+            ),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
-          onPressed: () {
-            workoutNotifier.cancelWorkout();
-            context.pop();
-          },
-        ),
-        title: Text(
-          workoutState.name,
-          style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-            color: HeronFitTheme.primary,
-            fontSize: 20.0,
-            fontWeight: FontWeight.bold,
+          title: Text(
+            'Start From Template',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
-        centerTitle: true,
-        elevation: 0.0,
-      ),
-      backgroundColor: HeronFitTheme.bgLight,
-      body: SafeArea(
-        top: true,
-        child: SingleChildScrollView(
+        backgroundColor: HeronFitTheme.bgLight,
+        body: SingleChildScrollView(
           primary: false,
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -67,9 +62,6 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                         fontWeight: FontWeight.w500,
                       ),
                       decoration: InputDecoration(
-                        // labelText: 'Workout Name',
-                        // labelStyle: HeronFitTheme.textTheme.labelLarge
-                        //     ?.copyWith(color: HeronFitTheme.textMuted),
                         hintText: 'Enter workout name',
                         hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted.withAlpha(179),

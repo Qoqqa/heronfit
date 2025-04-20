@@ -19,52 +19,54 @@ class WorkoutHistoryScreen extends ConsumerWidget {
     final workoutStatsAsync = ref.watch(workoutStatsProvider);
     final formatDuration = ref.watch(formatDurationProvider);
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
-      child: Scaffold(
-        backgroundColor: HeronFitTheme.bgLight,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          automaticallyImplyLeading: false,
-          leading: IconButton(
-            icon: const Icon(
-              SolarIconsOutline.altArrowLeft,
-              color: HeronFitTheme.primary,
-            ),
-            onPressed: () => context.pop(),
-          ),
-          title: Text(
-            'Workout History',
-            style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-              color: HeronFitTheme.primary,
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.0,
-            ),
-          ),
-          centerTitle: true,
-          elevation: 0,
-        ),
-        // Use AsyncValue.when to handle loading/error/data states
-        body: workoutHistoryAsync.when(
-          loading:
-              () => Center(
-                child: CircularProgressIndicator(color: HeronFitTheme.primary),
+    return SafeArea(
+      child: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Scaffold(
+          backgroundColor: HeronFitTheme.bgLight,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.chevron_left_rounded,
+                color: HeronFitTheme.primary,
+                size: 30,
               ),
-          error:
-              (error, stackTrace) =>
-                  Center(child: Text('Error loading history: $error')),
-          data:
-              (workouts) => _buildBody(
-                context,
-                ref,
-                workouts,
-                workoutStatsAsync,
-                formatDuration,
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            title: Text(
+              'Workout History',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: HeronFitTheme.primary,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+          ),
+          // Use AsyncValue.when to handle loading/error/data states
+          body: workoutHistoryAsync.when(
+            loading:
+                () => Center(
+                  child: CircularProgressIndicator(
+                    color: HeronFitTheme.primary,
+                  ),
+                ),
+            error:
+                (error, stackTrace) =>
+                    Center(child: Text('Error loading history: $error')),
+            data:
+                (workouts) => _buildBody(
+                  context,
+                  ref,
+                  workouts,
+                  workoutStatsAsync,
+                  formatDuration,
+                ),
+          ),
         ),
       ),
     );

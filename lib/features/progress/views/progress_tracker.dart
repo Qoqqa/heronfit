@@ -16,40 +16,34 @@ class ProgressTrackerWidget extends ConsumerWidget {
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
     final theme = Theme.of(context); // Get theme
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              }
-            },
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Progress Tracker',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
         ),
-        body: SafeArea(
-          top: true,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
           child: Padding(
             padding: const EdgeInsets.all(16), // Consistent padding
             child: progressRecordsAsyncValue.when(

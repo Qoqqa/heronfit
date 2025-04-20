@@ -5,6 +5,7 @@ import 'package:heronfit/features/progress/controllers/progress_controller.dart'
 import 'package:heronfit/features/progress/models/progress_record.dart';
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+import 'package:heronfit/core/theme.dart';
 
 class CompareProgressPhotosWidget extends ConsumerStatefulWidget {
   const CompareProgressPhotosWidget({super.key});
@@ -28,101 +29,79 @@ class _CompareProgressPhotosWidgetState
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          automaticallyImplyLeading: false,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft,
-              color: theme.primaryColor,
-              size: 28,
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () => context.canPop() ? context.pop() : null,
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Compare Photos',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                SolarIconsOutline.menuDots,
-                color: theme.primaryColor,
-                size: 28,
-              ),
-              tooltip: 'Options',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Options menu (TODO)')),
-                );
-              },
-            ),
-          ],
-          centerTitle: true,
         ),
-        body: SafeArea(
-          top: true,
-          child: progressRecordsAsyncValue.when(
-            data: (allRecords) {
-              final photoRecords =
-                  allRecords
-                      .where(
-                        (r) => r.photoUrl != null && r.photoUrl!.isNotEmpty,
-                      )
-                      .toList();
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: progressRecordsAsyncValue.when(
+          data: (allRecords) {
+            final photoRecords =
+                allRecords
+                    .where((r) => r.photoUrl != null && r.photoUrl!.isNotEmpty)
+                    .toList();
 
-              if (photoRecords.length < 2) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text(
-                      'You need at least two progress photos to compare. Add more photos via the Update Weight screen.',
-                      textAlign: TextAlign.center,
-                    ),
+            if (photoRecords.length < 2) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Text(
+                    'You need at least two progress photos to compare. Add more photos via the Update Weight screen.',
+                    textAlign: TextAlign.center,
                   ),
-                );
-              }
-
-              return Column(
-                children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildComparisonImage(context, _selectedPhoto1, 1),
-                          const SizedBox(width: 8),
-                          _buildComparisonImage(context, _selectedPhoto2, 2),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Divider(height: 1, thickness: 1),
-                  _buildPhotoSelector(context, photoRecords),
-                ],
+                ),
               );
-            },
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error:
-                (error, stack) => Center(
+            }
+
+            return Column(
+              children: [
+                Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Error loading photos: $error',
-                      textAlign: TextAlign.center,
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildComparisonImage(context, _selectedPhoto1, 1),
+                        const SizedBox(width: 8),
+                        _buildComparisonImage(context, _selectedPhoto2, 2),
+                      ],
                     ),
                   ),
                 ),
-          ),
+                const Divider(height: 1, thickness: 1),
+                _buildPhotoSelector(context, photoRecords),
+              ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (error, stack) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'Error loading photos: $error',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
         ),
       ),
     );
@@ -147,7 +126,7 @@ class _CompareProgressPhotosWidgetState
                 boxShadow: [
                   BoxShadow(
                     blurRadius: 6,
-                    color: theme.shadowColor.withOpacity(0.1),
+                    color: theme.shadowColor.withAlpha((255 * 0.1).round()),
                     offset: const Offset(0, 3),
                   ),
                 ],
@@ -308,14 +287,18 @@ class _CompareProgressPhotosWidgetState
                           ),
                     ),
                     if (!isSelected)
-                      Container(color: Colors.black.withOpacity(0.3)),
+                      Container(
+                        color: Colors.black.withAlpha((255 * 0.3).round()),
+                      ),
                     if (isSelected)
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(vertical: 2),
-                          color: theme.primaryColor.withOpacity(0.85),
+                          color: theme.primaryColor.withAlpha(
+                            (255 * 0.85).round(),
+                          ),
                           child: Text(
                             isSelected1 ? 'Photo 1' : 'Photo 2',
                             textAlign: TextAlign.center,

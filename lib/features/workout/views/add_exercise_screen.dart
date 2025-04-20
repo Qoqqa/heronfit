@@ -198,43 +198,38 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.colorScheme.surface,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          automaticallyImplyLeading: false,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft,
-              color: theme.colorScheme.primary,
-              size: 30.0,
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
-            'Add Exercises',
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              fontSize: 20.0,
+            'Add Exercise',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
           actions: [
             IconButton(
               icon: Icon(
-                Icons.filter_list,
+                SolarIconsOutline.filter,
                 color:
                     _selectedEquipment.isNotEmpty
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurface.withAlpha(153),
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withAlpha(153),
+                size: 24,
               ),
               onPressed: () {
                 setState(() {
@@ -244,287 +239,286 @@ class AddExerciseScreenState extends State<AddExerciseScreen> {
             ),
           ],
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
-                  child: TextFormField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search Exercises...',
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withAlpha(153),
-                      ),
-                      suffixIcon:
-                          _searchController.text.isNotEmpty
-                              ? IconButton(
-                                icon: Icon(Icons.clear, color: Colors.grey),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  _onSearchChanged('');
-                                },
-                              )
-                              : null,
-                      border: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.secondary,
-                        ),
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      filled: true,
-                      fillColor: HeronFitTheme.bgPrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                child: TextFormField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  onChanged: _onSearchChanged,
+                  decoration: InputDecoration(
+                    hintText: 'Search Exercises...',
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withAlpha(153),
                     ),
+                    suffixIcon:
+                        _searchController.text.isNotEmpty
+                            ? IconButton(
+                              icon: Icon(Icons.clear, color: Colors.grey),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            )
+                            : null,
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.transparent),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.transparent),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    filled: true,
+                    fillColor: HeronFitTheme.bgPrimary,
                   ),
                 ),
               ),
-              AnimatedContainer(
-                duration: Duration(milliseconds: 300),
-                height: _isFilterExpanded ? null : 0,
-                child:
-                    _isFilterExpanded
-                        ? Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Filter by Equipment',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
+            ),
+            AnimatedContainer(
+              duration: Duration(milliseconds: 300),
+              height: _isFilterExpanded ? null : 0,
+              child:
+                  _isFilterExpanded
+                      ? Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Filter by Equipment',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                                if (_selectedEquipment.isNotEmpty)
+                                  TextButton(
+                                    style: TextButton.styleFrom(
+                                      padding: EdgeInsets.zero,
+                                      minimumSize: Size(50, 30),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text('Clear All'),
+                                    onPressed: _clearFilters,
+                                  ),
+                              ],
+                            ),
+                            SizedBox(height: 8),
+                            _isLoadingEquipment
+                                ? Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 8.0,
+                                    ),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
                                     ),
                                   ),
-                                  if (_selectedEquipment.isNotEmpty)
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size(50, 30),
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text('Clear All'),
-                                      onPressed: _clearFilters,
-                                    ),
-                                ],
-                              ),
-                              SizedBox(height: 8),
-                              _isLoadingEquipment
-                                  ? Center(
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0,
-                                      ),
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    ),
-                                  )
-                                  : Wrap(
-                                    spacing: 8.0,
-                                    runSpacing: 8.0,
-                                    children:
-                                        _availableEquipment.map((equipment) {
-                                          final isSelected = _selectedEquipment
-                                              .contains(equipment);
-                                          return FilterChip(
-                                            label: Text(
-                                              _capitalizeWords(equipment),
+                                )
+                                : Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 8.0,
+                                  children:
+                                      _availableEquipment.map((equipment) {
+                                        final isSelected = _selectedEquipment
+                                            .contains(equipment);
+                                        return FilterChip(
+                                          label: Text(
+                                            _capitalizeWords(equipment),
+                                          ),
+                                          selected: isSelected,
+                                          onSelected:
+                                              (_) =>
+                                                  _toggleEquipment(equipment),
+                                          backgroundColor:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.surface,
+                                          selectedColor: Theme.of(
+                                            context,
+                                          ).colorScheme.primary.withAlpha(51),
+                                          checkmarkColor:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              16.0,
                                             ),
-                                            selected: isSelected,
-                                            onSelected:
-                                                (_) =>
-                                                    _toggleEquipment(equipment),
-                                            backgroundColor:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.surface,
-                                            selectedColor: Theme.of(
-                                              context,
-                                            ).colorScheme.primary.withAlpha(51),
-                                            checkmarkColor:
-                                                Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16.0),
-                                              side: BorderSide(
-                                                color:
-                                                    isSelected
-                                                        ? Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary
-                                                        : Colors.grey.withAlpha(
-                                                          128,
-                                                        ),
-                                              ),
+                                            side: BorderSide(
+                                              color:
+                                                  isSelected
+                                                      ? Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary
+                                                      : Colors.grey.withAlpha(
+                                                        128,
+                                                      ),
                                             ),
-                                            padding: EdgeInsets.zero,
-                                          );
-                                        }).toList(),
-                                  ),
-                              SizedBox(height: 8),
-                              Divider(),
-                            ],
-                          ),
-                        )
-                        : SizedBox.shrink(),
-              ),
-              if (_selectedEquipment.isNotEmpty && !_isFilterExpanded)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.filter_list,
-                        size: 16,
+                                          ),
+                                          padding: EdgeInsets.zero,
+                                        );
+                                      }).toList(),
+                                ),
+                            SizedBox(height: 8),
+                            Divider(),
+                          ],
+                        ),
+                      )
+                      : SizedBox.shrink(),
+            ),
+            if (_selectedEquipment.isNotEmpty && !_isFilterExpanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 8.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.filter_list,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    SizedBox(width: 4),
+                    Text(
+                      'Filtered by ${_selectedEquipment.length} equipment types',
+                      style: TextStyle(
+                        fontSize: 12,
                         color: Theme.of(context).colorScheme.primary,
                       ),
-                      SizedBox(width: 4),
-                      Text(
-                        'Filtered by ${_selectedEquipment.length} equipment types',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.primary,
+                    ),
+                    Spacer(),
+                    InkWell(
+                      onTap: _clearFilters,
+                      borderRadius: BorderRadius.circular(4),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4.0,
+                          vertical: 2.0,
+                        ),
+                        child: Text(
+                          'Clear',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      Spacer(),
-                      InkWell(
-                        onTap: _clearFilters,
-                        borderRadius: BorderRadius.circular(4),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4.0,
-                            vertical: 2.0,
-                          ),
-                          child: Text(
-                            'Clear',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
+                    ),
+                  ],
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                'Tap to add an exercise to your workout. Long press for details. Use filters to find equipment-specific exercises.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+            SizedBox(height: 8),
+            Expanded(
+              child:
+                  _isLoading
+                      ? _buildSkeletonList()
+                      : _exercises.isEmpty
+                      ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.fitness_center,
+                              size: 64,
+                              color: Colors.grey.withAlpha(128),
                             ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                child: Text(
-                  'Tap to add an exercise to your workout. Long press for details. Use filters to find equipment-specific exercises.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              SizedBox(height: 8),
-              Expanded(
-                child:
-                    _isLoading
-                        ? _buildSkeletonList()
-                        : _exercises.isEmpty
-                        ? Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.fitness_center,
-                                size: 64,
-                                color: Colors.grey.withAlpha(128),
+                            SizedBox(height: 16),
+                            Text(
+                              'No exercises found',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
                               ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No exercises found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
+                            ),
+                            if (_selectedEquipment.isNotEmpty) ...[
+                              SizedBox(height: 8),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor:
+                                      Theme.of(context).colorScheme.secondary,
+                                  foregroundColor: Colors.white,
                                 ),
+                                child: Text('Clear Filters'),
+                                onPressed: _clearFilters,
                               ),
-                              if (_selectedEquipment.isNotEmpty) ...[
-                                SizedBox(height: 8),
-                                ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.secondary,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: Text('Clear Filters'),
-                                  onPressed: _clearFilters,
-                                ),
-                              ],
                             ],
-                          ),
-                        )
-                        : ListView.builder(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(16),
-                          itemCount:
-                              _exercises.length +
-                              (_exerciseController.hasMorePages &&
-                                      _searchQuery.isEmpty &&
-                                      !_isSearching
-                                  ? 1
-                                  : 0),
-                          itemBuilder: (context, index) {
-                            if (index == _exercises.length &&
-                                _searchQuery.isEmpty &&
-                                !_isSearching) {
-                              return const Center(
-                                child: Padding(
-                                  padding: EdgeInsets.symmetric(vertical: 16.0),
-                                  child: CircularProgressIndicator(),
-                                ),
-                              );
-                            }
-                            if (index >= _exercises.length) {
-                              return const SizedBox.shrink();
-                            }
-
-                            final exercise = _exercises[index];
-
-                            return AddExerciseListItem(
-                              key: ValueKey(
-                                exercise.id,
-                              ), // Add key for potential list updates
-                              exercise: exercise,
-                              searchQuery: _searchQuery,
-                              buildHighlightedText: _buildHighlightedText,
-                              capitalizeWords: _capitalizeWords,
-                            );
-                          },
+                          ],
                         ),
-              ),
-            ],
-          ),
+                      )
+                      : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(16),
+                        itemCount:
+                            _exercises.length +
+                            (_exerciseController.hasMorePages &&
+                                    _searchQuery.isEmpty &&
+                                    !_isSearching
+                                ? 1
+                                : 0),
+                        itemBuilder: (context, index) {
+                          if (index == _exercises.length &&
+                              _searchQuery.isEmpty &&
+                              !_isSearching) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16.0),
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+                          if (index >= _exercises.length) {
+                            return const SizedBox.shrink();
+                          }
+
+                          final exercise = _exercises[index];
+
+                          return AddExerciseListItem(
+                            key: ValueKey(
+                              exercise.id,
+                            ), // Add key for potential list updates
+                            exercise: exercise,
+                            searchQuery: _searchQuery,
+                            buildHighlightedText: _buildHighlightedText,
+                            capitalizeWords: _capitalizeWords,
+                          );
+                        },
+                      ),
+            ),
+          ],
         ),
       ),
     );
