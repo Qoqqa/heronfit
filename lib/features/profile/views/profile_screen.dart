@@ -37,208 +37,212 @@ class ProfileScreen extends ConsumerWidget {
     final userProfileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
-      body: userProfileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(child: Text('Error: $error')),
-        data: (user) {
-          if (user == null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('Could not load profile data.'),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () => ref.refresh(userProfileProvider),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
-            );
-          }
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: userProfileAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(child: Text('Error: $error')),
+          data: (user) {
+            if (user == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Could not load profile data.'),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(userProfileProvider),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          final ageString = _calculateAge(user.birthday);
+            final ageString = _calculateAge(user.birthday);
 
-          ImageProvider? avatarProvider;
-          if (user.avatar != null && user.avatar!.isNotEmpty) {
-            avatarProvider = CachedNetworkImageProvider(user.avatar!);
-          } else {
-            avatarProvider = const AssetImage(
-              'assets/images/heronfit_icon.png',
-            );
-          }
+            ImageProvider? avatarProvider;
+            if (user.avatar != null && user.avatar!.isNotEmpty) {
+              avatarProvider = CachedNetworkImageProvider(user.avatar!);
+            } else {
+              avatarProvider = const AssetImage(
+                'assets/images/heronfit_icon.png',
+              );
+            }
 
-          return ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 40 + 2 + 2,
-                    backgroundColor: colorScheme.primary,
-                    child: CircleAvatar(
-                      radius: 40 + 2,
-                      backgroundColor: Colors.white,
+            return ListView(
+              padding: const EdgeInsets.all(16.0),
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 40 + 2 + 2,
+                      backgroundColor: colorScheme.primary,
                       child: CircleAvatar(
-                        radius: 40,
-                        backgroundImage: avatarProvider,
-                        backgroundColor: colorScheme.surfaceVariant,
-                        child:
-                            avatarProvider == null
-                                ? Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: colorScheme.onSurfaceVariant,
-                                )
-                                : null,
+                        radius: 40 + 2,
+                        backgroundColor: Colors.white,
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundImage: avatarProvider,
+                          backgroundColor: colorScheme.surfaceVariant,
+                          child:
+                              avatarProvider == null
+                                  ? Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: colorScheme.onSurfaceVariant,
+                                  )
+                                  : null,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16.0),
-                  Expanded(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${user.first_name ?? ''} ${user.last_name ?? ''}'
-                                  .trim()
-                                  .isEmpty
-                              ? 'User Name'
-                              : '${user.first_name ?? ''} ${user.last_name ?? ''}',
-                          style: textTheme.titleLarge?.copyWith(
-                            color: HeronFitTheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                        const SizedBox(height: 0),
-                        RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Goal | ',
-                                style: textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                              TextSpan(
-                                text: user.goal ?? 'Not Set',
-                                style: textTheme.bodyLarge?.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                            style: textTheme.bodyMedium?.copyWith(
-                              color: colorScheme.onSurface,
+                    const SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${user.first_name ?? ''} ${user.last_name ?? ''}'
+                                    .trim()
+                                    .isEmpty
+                                ? 'User Name'
+                                : '${user.first_name ?? ''} ${user.last_name ?? ''}',
+                            style: textTheme.titleLarge?.copyWith(
+                              color: HeronFitTheme.primary,
+                              fontWeight: FontWeight.bold,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
+                          const SizedBox(height: 0),
+                          RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: 'Goal | ',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: user.goal ?? 'Not Set',
+                                  style: textTheme.bodyLarge?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                    color: colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.push(AppRoutes.profileEdit);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        backgroundColor: colorScheme.secondary,
+                        foregroundColor: Colors.white,
+                        textStyle: textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Edit'),
                     ),
-                  ),
-                  const SizedBox(width: 8.0),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.push(AppRoutes.profileEdit);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      backgroundColor: colorScheme.secondary,
-                      foregroundColor: Colors.white,
-                      textStyle: textTheme.labelLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text('Edit'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildInfoCard(
-                    context,
-                    '${user.height?.toString() ?? '--'} cm',
-                    'Height',
-                  ),
-                  _buildInfoCard(
-                    context,
-                    '${user.weight?.toString() ?? '--'} kg',
-                    'Weight',
-                  ),
-                  _buildInfoCard(context, ageString, 'Age'),
-                ],
-              ),
-              const SizedBox(height: 24.0),
-              _buildAccountSection(context),
-              const SizedBox(height: 16.0),
-              _buildNotificationSection(context),
-              const SizedBox(height: 16.0),
-              _buildOtherSection(context),
-              const SizedBox(height: 16.0),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  try {
-                    await Supabase.instance.client.auth.signOut();
-                    ref.invalidate(userProfileProvider);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Logged out successfully'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                    context.go(AppRoutes.onboarding);
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error logging out: $e'),
-                        backgroundColor: HeronFitTheme.error,
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(
-                  SolarIconsOutline.logout,
-                  size: 24.0,
-                  color: Colors.white,
+                  ],
                 ),
-                label: Text(
-                  'Logout',
-                  style: textTheme.labelLarge?.copyWith(
+                const SizedBox(height: 24.0),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildInfoCard(
+                      context,
+                      '${user.height?.toString() ?? '--'} cm',
+                      'Height',
+                    ),
+                    _buildInfoCard(
+                      context,
+                      '${user.weight?.toString() ?? '--'} kg',
+                      'Weight',
+                    ),
+                    _buildInfoCard(context, ageString, 'Age'),
+                  ],
+                ),
+                const SizedBox(height: 24.0),
+                _buildAccountSection(context),
+                const SizedBox(height: 16.0),
+                _buildNotificationSection(context, isSingle: true),
+                const SizedBox(height: 16.0),
+                _buildOtherSection(context),
+                const SizedBox(height: 16.0),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    try {
+                      await Supabase.instance.client.auth.signOut();
+                      ref.invalidate(userProfileProvider);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Logged out successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      context.go(AppRoutes.onboarding);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error logging out: $e'),
+                          backgroundColor: HeronFitTheme.error,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(
+                    SolarIconsOutline.logout,
+                    size: 24.0,
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                  ),
+                  label: Text(
+                    'Logout',
+                    style: textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.secondary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    minimumSize: const Size(double.infinity, 48),
+                    elevation: 0,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.secondary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  minimumSize: const Size(double.infinity, 48),
-                  elevation: 0,
-                ),
-              ),
-              const SizedBox(height: 16.0),
-            ],
-          );
-        },
+                const SizedBox(height: 16.0),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -302,7 +306,10 @@ class ProfileScreen extends ConsumerWidget {
     ]);
   }
 
-  Widget _buildNotificationSection(BuildContext context) {
+  Widget _buildNotificationSection(
+    BuildContext context, {
+    bool isSingle = false,
+  }) {
     return _buildSection(context, 'Notification', [
       _buildSectionItem(
         context,
@@ -314,7 +321,7 @@ class ProfileScreen extends ConsumerWidget {
           );
         },
       ),
-    ]);
+    ], isSingle: isSingle);
   }
 
   Widget _buildOtherSection(BuildContext context) {
@@ -341,10 +348,14 @@ class ProfileScreen extends ConsumerWidget {
     ]);
   }
 
-  Widget _buildSection(BuildContext context, String title, List<Widget> items) {
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    List<Widget> items, {
+    bool isSingle = false,
+  }) {
     final textTheme = Theme.of(context).textTheme;
     final colorScheme = Theme.of(context).colorScheme;
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -353,7 +364,10 @@ class ProfileScreen extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.symmetric(
+          vertical: isSingle ? 16 : 16, // Less vertical padding for single item
+          horizontal: 16,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,19 +381,24 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-              itemBuilder: (context, index) => items[index],
-              separatorBuilder:
-                  (context, index) => Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: colorScheme.outline.withAlpha(((0.3 * 255).round())),
-                    indent: 40,
-                  ),
-            ),
+            if (items.length == 1)
+              items.first
+            else
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: items.length,
+                itemBuilder: (context, index) => items[index],
+                separatorBuilder:
+                    (context, index) => Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: colorScheme.outline.withAlpha(
+                        ((0.3 * 255).round()),
+                      ),
+                      indent: 40,
+                    ),
+              ),
           ],
         ),
       ),
