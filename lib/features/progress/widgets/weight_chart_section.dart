@@ -36,234 +36,255 @@ class WeightChartSection extends ConsumerWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Weight',
-                        style: theme.textTheme.titleLarge,
-                      ), // Use titleLarge
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
                       Text(
-                        'Last 90 Days', // Or dynamically calculate range
+                        'Last 90 Days',
                         style: theme.textTheme.labelMedium?.copyWith(
-                          // Use labelMedium
                           color: theme.hintColor,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                   IconButton(
+                    onPressed:
+                        () => context.push(AppRoutes.progressUpdateWeight),
                     icon: Icon(
-                      SolarIconsOutline.addCircle, // Use SolarIcons
+                      SolarIconsOutline.addSquare, // Use addSquare icon only
                       color: theme.colorScheme.primary,
                       size: 28,
                     ),
-                    tooltip: 'Log New Weight',
-                    onPressed:
-                        () => context.push(
-                          AppRoutes.progressUpdateWeight,
-                        ), // Use AppRoutes constant
+                    tooltip: 'Add Weight Entry',
                   ),
                 ],
               ),
               const SizedBox(height: 20),
-              progressAsyncValue.when(
-                data: (records) {
-                  if (records.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40.0),
-                        child: Text('Log your weight to see progress here.'),
-                      ),
-                    );
-                  }
-                  final sortedRecords = List<ProgressRecord>.from(records)
-                    ..sort((a, b) => a.date.compareTo(b.date));
-                  final recentRecords = sortedRecords;
+              // Chart container with subtle background and rounded corners
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Center(
+                  child: progressAsyncValue.when(
+                    data: (records) {
+                      if (records.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40.0),
+                            child: Text(
+                              'Log your weight to see progress here.',
+                            ),
+                          ),
+                        );
+                      }
+                      final sortedRecords = List<ProgressRecord>.from(records)
+                        ..sort((a, b) => a.date.compareTo(b.date));
+                      final recentRecords = sortedRecords;
 
-                  if (recentRecords.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 40.0),
-                        child: Text(
-                          'No weight logged recently.',
-                        ), // Adjusted text
-                      ),
-                    );
-                  }
+                      if (recentRecords.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 40.0),
+                            child: Text('No weight logged recently.'),
+                          ),
+                        );
+                      }
 
-                  final spots =
-                      recentRecords.asMap().entries.map((entry) {
-                        return FlSpot(entry.key.toDouble(), entry.value.weight);
-                      }).toList();
-
-                  double minY =
-                      recentRecords
-                          .map((r) => r.weight)
-                          .reduce((a, b) => a < b ? a : b) -
-                      5;
-                  double maxY =
-                      recentRecords
-                          .map((r) => r.weight)
-                          .reduce((a, b) => a > b ? a : b) +
-                      5;
-                  minY = minY < 0 ? 0 : minY;
-
-                  return SizedBox(
-                    height: 200,
-                    child: LineChart(
-                      LineChartData(
-                        minY: minY,
-                        maxY: maxY,
-                        gridData: FlGridData(
-                          show: true,
-                          drawHorizontalLine: false, // Only show vertical lines
-                          drawVerticalLine: true,
-                          verticalInterval:
-                              spots.length > 1
-                                  ? (spots.last.x - spots.first.x) / 4
-                                  : 1,
-                          getDrawingVerticalLine: (value) {
-                            return FlLine(
-                              color: theme.dividerColor.withAlpha(
-                                100,
-                              ), // Slightly fainter
-                              strokeWidth: 1,
+                      final spots =
+                          recentRecords.asMap().entries.map((entry) {
+                            return FlSpot(
+                              entry.key.toDouble(),
+                              entry.value.weight,
                             );
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 40,
-                              interval: (maxY - minY) / 4,
-                              getTitlesWidget: (value, meta) {
-                                if (value == meta.min ||
-                                    value == meta.max ||
-                                    (value > meta.min &&
-                                        value < meta.max &&
-                                        (value - meta.min) %
-                                                ((meta.max - meta.min) / 2) ==
-                                            0)) {
-                                  return SideTitleWidget(
-                                    axisSide: meta.axisSide,
-                                    space: 8.0,
-                                    child: Text(
-                                      value.toStringAsFixed(0),
-                                      style: theme.textTheme.labelSmall,
-                                    ),
-                                  );
-                                }
-                                return const SizedBox.shrink();
+                          }).toList();
+
+                      double minY =
+                          recentRecords
+                              .map((r) => r.weight)
+                              .reduce((a, b) => a < b ? a : b) -
+                          5;
+                      double maxY =
+                          recentRecords
+                              .map((r) => r.weight)
+                              .reduce((a, b) => a > b ? a : b) +
+                          5;
+                      minY = minY < 0 ? 0 : minY;
+
+                      return SizedBox(
+                        height: 200,
+                        width: double.infinity,
+                        child: LineChart(
+                          LineChartData(
+                            minY: minY,
+                            maxY: maxY,
+                            gridData: FlGridData(
+                              show: true,
+                              drawHorizontalLine:
+                                  true, // Only show horizontal lines
+                              drawVerticalLine: false,
+                              horizontalInterval: (maxY - minY) / 4,
+                              getDrawingHorizontalLine: (value) {
+                                return FlLine(
+                                  color: theme.dividerColor.withAlpha(
+                                    100,
+                                  ), // Slightly fainter
+                                  strokeWidth: 1,
+                                );
                               },
                             ),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 30,
-                              interval:
-                                  spots.length > 1
-                                      ? (spots.last.x - spots.first.x) / 3
-                                      : 1,
-                              getTitlesWidget: (value, meta) {
-                                final index = value.toInt();
-                                if (index == 0 ||
-                                    index ==
-                                        (recentRecords.length / 2).floor() ||
-                                    index == recentRecords.length - 1) {
-                                  if (index >= 0 &&
-                                      index < recentRecords.length) {
-                                    return SideTitleWidget(
-                                      axisSide: meta.axisSide,
-                                      space: 8.0,
-                                      child: Text(
-                                        DateFormat(
-                                          'MM/dd',
-                                        ).format(recentRecords[index].date),
-                                        style: theme.textTheme.labelSmall
-                                            ?.copyWith(fontSize: 10),
-                                      ),
-                                    );
-                                  }
-                                }
-                                return const SizedBox.shrink();
-                              },
-                            ),
-                          ),
-                          topTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: const AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                        ),
-                        borderData: FlBorderData(
-                          show: false,
-                        ), // Hide border to match Figma
-                        lineBarsData: [
-                          LineChartBarData(
-                            spots: spots,
-                            isCurved: true,
-                            color: theme.colorScheme.primary,
-                            barWidth: 3,
-                            isStrokeCapRound: true,
-                            dotData: FlDotData(show: true), // Keep dots
-                            belowBarData: BarAreaData(
-                              show: false,
-                            ), // Hide area below bar
-                          ),
-                        ],
-                        lineTouchData: LineTouchData(
-                          touchTooltipData: LineTouchTooltipData(
-                            getTooltipColor:
-                                (spot) => theme.colorScheme.primary,
-                            getTooltipItems: (touchedSpots) {
-                              return touchedSpots
-                                  .map((LineBarSpot touchedSpot) {
-                                    final index = touchedSpot.spotIndex;
-                                    if (index >= 0 &&
-                                        index < recentRecords.length) {
-                                      final record = recentRecords[index];
-                                      return LineTooltipItem(
-                                        '${record.weight.toStringAsFixed(1)} kg',
-                                        TextStyle(
-                                          color: theme.colorScheme.onPrimary,
-                                          fontWeight: FontWeight.bold,
+                            titlesData: FlTitlesData(
+                              leftTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 40,
+                                  interval: (maxY - minY) / 4,
+                                  getTitlesWidget: (value, meta) {
+                                    if (value == meta.min ||
+                                        value == meta.max ||
+                                        (value > meta.min &&
+                                            value < meta.max &&
+                                            (value - meta.min) %
+                                                    ((meta.max - meta.min) /
+                                                        2) ==
+                                                0)) {
+                                      return SideTitleWidget(
+                                        axisSide: meta.axisSide,
+                                        space: 8.0,
+                                        child: Text(
+                                          value.toStringAsFixed(0),
+                                          style: theme.textTheme.labelSmall,
                                         ),
-                                        children: [
-                                          TextSpan(
-                                            text: DateFormat(
-                                              'MMM d, yyyy',
-                                            ).format(record.date),
-                                            style: TextStyle(
-                                              color: theme.colorScheme.onPrimary
-                                                  .withAlpha(204),
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ],
-                                        textAlign: TextAlign.center,
                                       );
                                     }
-                                    return null;
-                                  })
-                                  .whereType<LineTooltipItem>()
-                                  .toList();
-                            },
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+                              bottomTitles: AxisTitles(
+                                sideTitles: SideTitles(
+                                  showTitles: true,
+                                  reservedSize: 30,
+                                  interval:
+                                      spots.length > 1
+                                          ? (spots.last.x - spots.first.x) / 3
+                                          : 1,
+                                  getTitlesWidget: (value, meta) {
+                                    final index = value.toInt();
+                                    if (index == 0 ||
+                                        index ==
+                                            (recentRecords.length / 2)
+                                                .floor() ||
+                                        index == recentRecords.length - 1) {
+                                      if (index >= 0 &&
+                                          index < recentRecords.length) {
+                                        return SideTitleWidget(
+                                          axisSide: meta.axisSide,
+                                          space: 8.0,
+                                          child: Text(
+                                            DateFormat(
+                                              'MM/dd',
+                                            ).format(recentRecords[index].date),
+                                            style: theme.textTheme.labelSmall
+                                                ?.copyWith(fontSize: 10),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+                              topTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                              rightTitles: const AxisTitles(
+                                sideTitles: SideTitles(showTitles: false),
+                              ),
+                            ),
+                            borderData: FlBorderData(
+                              show: false,
+                            ), // Hide border to match Figma
+                            lineBarsData: [
+                              LineChartBarData(
+                                spots: spots,
+                                isCurved: true,
+                                color: theme.colorScheme.primary,
+                                barWidth: 3,
+                                isStrokeCapRound: true,
+                                dotData: FlDotData(show: true), // Keep dots
+                                belowBarData: BarAreaData(
+                                  show: false,
+                                ), // Hide area below bar
+                              ),
+                            ],
+                            lineTouchData: LineTouchData(
+                              touchTooltipData: LineTouchTooltipData(
+                                getTooltipColor:
+                                    (spot) => theme.colorScheme.primary,
+                                getTooltipItems: (touchedSpots) {
+                                  return touchedSpots
+                                      .map((LineBarSpot touchedSpot) {
+                                        final index = touchedSpot.spotIndex;
+                                        if (index >= 0 &&
+                                            index < recentRecords.length) {
+                                          final record = recentRecords[index];
+                                          return LineTooltipItem(
+                                            '${record.weight.toStringAsFixed(1)} kg',
+                                            TextStyle(
+                                              color:
+                                                  theme.colorScheme.onPrimary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            children: [
+                                              TextSpan(
+                                                text: DateFormat(
+                                                  'MMM d, yyyy',
+                                                ).format(record.date),
+                                                style: TextStyle(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .onPrimary
+                                                      .withAlpha(204),
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                            textAlign: TextAlign.center,
+                                          );
+                                        }
+                                        return null;
+                                      })
+                                      .whereType<LineTooltipItem>()
+                                      .toList();
+                                },
+                              ),
+                              handleBuiltInTouches: true,
+                            ),
                           ),
-                          handleBuiltInTouches: true,
                         ),
-                      ),
-                    ),
-                  );
-                },
-                loading: () => const Center(child: LoadingIndicator()),
-                error:
-                    (error, stack) =>
-                        Center(child: Text('Error loading progress: $error')),
+                      );
+                    },
+                    loading: () => const Center(child: LoadingIndicator()),
+                    error:
+                        (error, stack) => Center(
+                          child: Text('Error loading progress: $error'),
+                        ),
+                  ),
+                ),
               ),
             ],
           ),
