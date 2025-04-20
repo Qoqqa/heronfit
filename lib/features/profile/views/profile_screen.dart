@@ -36,11 +36,9 @@ class ProfileScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final userProfileAsync = ref.watch(userProfileProvider);
 
-    return Scaffold(
-      body: SafeArea(
-        top: true,
-        bottom: false,
-        child: userProfileAsync.when(
+    return SafeArea(
+      child: Scaffold(
+        body: userProfileAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(child: Text('Error: $error')),
           data: (user) {

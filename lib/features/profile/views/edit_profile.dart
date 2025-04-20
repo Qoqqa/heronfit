@@ -6,6 +6,8 @@ import 'package:heronfit/widgets/loading_indicator.dart'; // Assuming you have a
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:image_picker/image_picker.dart';
 import 'dart:io'; // Import dart:io for File
+import 'package:solar_icons/solar_icons.dart';
+import 'package:heronfit/core/theme.dart'; // Assuming you have a theme file
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -232,46 +234,55 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     // Show a dialog or bottom sheet to choose the source
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
+      isScrollControlled: true, // Make the modal larger
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: <Widget>[
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Gallery'),
-                onTap: () {
-                  Navigator.of(context).pop(ImageSource.gallery);
-                },
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.35,
+          minChildSize: 0.2,
+          maxChildSize: 0.6,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    ListTile(
+                      leading: const Icon(Icons.photo_library),
+                      title: const Text('Gallery'),
+                      onTap: () {
+                        Navigator.of(context).pop(ImageSource.gallery);
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.camera_alt),
+                      title: const Text('Camera'),
+                      onTap: () {
+                        Navigator.of(context).pop(ImageSource.camera);
+                      },
+                    ),
+                  ],
+                ),
               ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Camera'),
-                onTap: () {
-                  Navigator.of(context).pop(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
 
-    // If a source was selected, proceed with picking
     if (source != null) {
       try {
-        image = await picker.pickImage(
-          source: source,
-          // Optionally add image quality constraints
-          // imageQuality: 50, // 0-100
-          // maxWidth: 800, // Optional max width
-        );
+        image = await picker.pickImage(source: source);
 
         if (image != null) {
           setState(() {
             _pickedImage = image;
           });
         } else {
-          // User canceled the picker from the chosen source
           if (mounted) {
             ScaffoldMessenger.of(
               context,
@@ -279,20 +290,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           }
         }
       } catch (e) {
-        // Handle potential errors during picking (e.g., permissions)
         if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
         }
-      }
-    } else {
-      // User dismissed the source selection sheet
-      if (mounted) {
-        // Optionally show a message, or just do nothing
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text('Image source selection cancelled.')),
-        // );
       }
     }
   }
@@ -301,227 +303,280 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final userProfileAsync = ref.watch(userProfileProvider);
     final profileUpdateState = ref.watch(profileControllerProvider);
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Profile'),
-        actions: [
-          if (profileUpdateState is AsyncLoading)
-            const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed:
-                  _initialUserData != null
-                      ? _saveProfile
-                      : null, // Disable save if initial data not loaded
+    return SafeArea(
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          leading: IconButton(
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-        ],
-      ),
-      body: userProfileAsync.when(
-        data: (userData) {
-          if (userData == null) {
-            // This case might happen if the user logs out while on this screen
-            // or if the initial fetch fails in a way that returns null.
-            return const Center(child: Text('User data not available.'));
-          }
-          // Initialize controllers if _initialUserData is still null (first load)
-          if (_initialUserData == null) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                // Ensure widget is still in the tree
-                _initializeControllers(userData);
-                // Force a rebuild after controllers are initialized
-                setState(() {});
-              }
-            });
-            // Show loading while controllers initialize post-frame
-            return const LoadingIndicator();
-          }
-
-          // Build the form once initial data is loaded and controllers are set
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // --- Profile Picture (Placeholder/Optional) ---
-                  Center(
-                    child: Stack(
-                      children: [
-                        // Apply nested CircleAvatars for borders
-                        CircleAvatar(
-                          // Outer border
-                          radius:
-                              50 +
-                              2 +
-                              2, // Base radius + inner width (2) + outer width (2)
-                          backgroundColor:
-                              Theme.of(
-                                context,
-                              ).colorScheme.primary, // Outer border color
-                          child: CircleAvatar(
-                            // Inner border
-                            radius: 50 + 2, // Base radius + inner width (2)
-                            backgroundColor: Colors.white, // Inner border color
-                            child: CircleAvatar(
-                              // Original Avatar with image
-                              radius: 50,
-                              // Show picked image preview if available, else network/placeholder
-                              backgroundImage:
-                                  _pickedImage != null
-                                      ? FileImage(File(_pickedImage!.path))
-                                      : _initialUserData?.avatar != null
-                                      ? NetworkImage(_initialUserData!.avatar!)
-                                      : null // Use NetworkImage if URL exists
-                                          as ImageProvider?, // Cast to ImageProvider
-                              child:
-                                  _pickedImage == null &&
-                                          _initialUserData?.avatar == null
-                                      ? const Icon(Icons.person, size: 50)
-                                      : null,
-                            ),
+            onPressed: () => Navigator.of(context).maybePop(),
+          ),
+          title: Text(
+            'Edit Profile',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        resizeToAvoidBottomInset: true,
+        body: userProfileAsync.when(
+          data: (userData) {
+            if (userData == null) {
+              return const Center(child: Text('User data not available.'));
+            }
+            if (_initialUserData == null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  _initializeControllers(userData);
+                  setState(() {});
+                }
+              });
+              return const LoadingIndicator();
+            }
+            return GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 16,
+                      ),
+                      child: IntrinsicHeight(
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // --- Profile Picture ---
+                              Center(
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 50 + 4 + 4,
+                                      backgroundColor: colorScheme.primary,
+                                      child: CircleAvatar(
+                                        radius: 50 + 4,
+                                        backgroundColor: Colors.white,
+                                        child: CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage:
+                                              _pickedImage != null
+                                                  ? FileImage(
+                                                    File(_pickedImage!.path),
+                                                  )
+                                                  : _initialUserData?.avatar !=
+                                                      null
+                                                  ? NetworkImage(
+                                                    _initialUserData!.avatar!,
+                                                  )
+                                                  : const AssetImage(
+                                                        'assets/images/heronfit_icon.png',
+                                                      )
+                                                      as ImageProvider,
+                                          child:
+                                              _pickedImage == null &&
+                                                      (_initialUserData
+                                                                  ?.avatar ==
+                                                              null ||
+                                                          _initialUserData
+                                                                  ?.avatar ==
+                                                              '')
+                                                  ? const Icon(
+                                                    Icons.person,
+                                                    size: 50,
+                                                  )
+                                                  : null,
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          SolarIconsOutline.camera,
+                                        ),
+                                        style: IconButton.styleFrom(
+                                          backgroundColor: colorScheme.primary,
+                                          foregroundColor:
+                                              colorScheme.onPrimary,
+                                        ),
+                                        onPressed: _pickImage,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              // --- Form Fields ---
+                              ..._buildProfileFields(context),
+                              const Spacer(),
+                              // --- Save Changes Button ---
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 24,
+                                  bottom: 16,
+                                ),
+                                child: SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(
+                                      SolarIconsOutline.folderCheck,
+                                      size: 22,
+                                    ),
+                                    label: Text(
+                                      profileUpdateState is AsyncLoading
+                                          ? 'Saving...'
+                                          : 'Save Changes',
+                                      style: textTheme.titleMedium?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: HeronFitTheme.primary,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    onPressed:
+                                        profileUpdateState is AsyncLoading
+                                            ? null
+                                            : _saveProfile,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: IconButton(
-                            icon: const Icon(Icons.camera_alt),
-                            style: IconButton.styleFrom(
-                              // Add background for visibility
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.primary,
-                              foregroundColor:
-                                  Theme.of(context).colorScheme.onPrimary,
-                            ),
-                            onPressed:
-                                _pickImage, // Call the image picking method
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // --- Form Fields ---
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: const InputDecoration(labelText: 'First Name'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your first name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _lastNameController,
-                    decoration: const InputDecoration(labelText: 'Last Name'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your last name';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _heightController,
-                    decoration: const InputDecoration(labelText: 'Height (cm)'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value != null &&
-                          value.isNotEmpty &&
-                          int.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null; // Allow empty
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _weightController,
-                    decoration: const InputDecoration(labelText: 'Weight (kg)'),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: (value) {
-                      if (value != null &&
-                          value.isNotEmpty &&
-                          double.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null; // Allow empty
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _birthdayController,
-                    decoration: const InputDecoration(
-                      labelText: 'Birthday',
-                      hintText: 'yyyy-MM-dd',
-                      suffixIcon: Icon(Icons.calendar_today),
-                    ),
-                    readOnly: true,
-                    onTap: () => _selectDate(context),
-                    validator: (value) {
-                      if (value != null && value.isNotEmpty) {
-                        try {
-                          DateFormat('yyyy-MM-dd').parseStrict(value);
-                        } catch (e) {
-                          return 'Invalid date format (yyyy-MM-dd)';
-                        }
-                      }
-                      return null; // Allow empty
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _contactController,
-                    decoration: const InputDecoration(
-                      labelText: 'Contact Number',
-                    ),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      // Basic validation - could be more complex
-                      if (value != null &&
-                          value.isNotEmpty &&
-                          !RegExp(r'^[0-9\+\-\s()]+$').hasMatch(value)) {
-                        return 'Please enter a valid phone number';
-                      }
-                      return null; // Allow empty
-                    },
-                  ),
-                  const SizedBox(height: 32),
-                  // Center(
-                  //   child: ElevatedButton(
-                  //     onPressed: profileUpdateState is AsyncLoading ? null : _saveProfile,
-                  //     child: profileUpdateState is AsyncLoading
-                  //         ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                  //         : const Text('Save Changes'),
-                  //   ),
-                  // ),
-                ],
+                  );
+                },
               ),
-            ),
-          );
-        },
-        loading: () => const LoadingIndicator(),
-        error:
-            (error, stackTrace) =>
-                Center(child: Text('Error loading profile: $error')),
+            );
+          },
+          loading: () => const LoadingIndicator(),
+          error:
+              (error, stackTrace) =>
+                  Center(child: Text('Error loading profile: $error')),
+        ),
       ),
     );
+  }
+
+  List<Widget> _buildProfileFields(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    return [
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _firstNameController,
+        decoration: const InputDecoration(labelText: 'First Name'),
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter your first name'
+                    : null,
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _lastNameController,
+        decoration: const InputDecoration(labelText: 'Last Name'),
+        validator:
+            (value) =>
+                value == null || value.isEmpty
+                    ? 'Please enter your last name'
+                    : null,
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _heightController,
+        decoration: const InputDecoration(labelText: 'Height (cm)'),
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value != null &&
+              value.isNotEmpty &&
+              int.tryParse(value) == null) {
+            return 'Please enter a valid number';
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _weightController,
+        decoration: const InputDecoration(labelText: 'Weight (kg)'),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        validator: (value) {
+          if (value != null &&
+              value.isNotEmpty &&
+              double.tryParse(value) == null) {
+            return 'Please enter a valid number';
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _birthdayController,
+        decoration: const InputDecoration(
+          labelText: 'Birthday',
+          hintText: 'yyyy-MM-dd',
+          suffixIcon: Icon(Icons.calendar_today),
+        ),
+        readOnly: true,
+        onTap: () => _selectDate(context),
+        validator: (value) {
+          if (value != null && value.isNotEmpty) {
+            try {
+              DateFormat('yyyy-MM-dd').parseStrict(value);
+            } catch (e) {
+              return 'Invalid date format (yyyy-MM-dd)';
+            }
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.next,
+      ),
+      const SizedBox(height: 16),
+      TextFormField(
+        controller: _contactController,
+        decoration: const InputDecoration(labelText: 'Contact Number'),
+        keyboardType: TextInputType.phone,
+        validator: (value) {
+          if (value != null &&
+              value.isNotEmpty &&
+              !RegExp(r'^[0-9\+\-\s()]+$').hasMatch(value)) {
+            return 'Please enter a valid phone number';
+          }
+          return null;
+        },
+        textInputAction: TextInputAction.done,
+      ),
+    ];
   }
 }
