@@ -215,21 +215,41 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                 ),
                 const SizedBox(height: 12),
                 Container(
-                  height: 150,
+                  height: 400,
                   decoration: BoxDecoration(
                     border: Border.all(color: theme.dividerColor),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow:
+                        HeronFitTheme.cardShadow, // Subtle shadow for depth
                   ),
                   child:
                       _selectedImageXFile != null
                           ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                             child:
                                 kIsWeb
                                     ? Image.network(
                                       _selectedImageXFile!.path,
                                       fit: BoxFit.cover,
                                       width: double.infinity,
+                                      loadingBuilder: (
+                                        context,
+                                        child,
+                                        loadingProgress,
+                                      ) {
+                                        if (loadingProgress == null)
+                                          return child;
+                                        return Center(
+                                          child: SizedBox(
+                                            width: 40,
+                                            height: 40,
+                                            child: CircularProgressIndicator(
+                                              color: theme.primaryColor,
+                                              strokeWidth: 3,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                     )
                                     : Image.file(
                                       File(_selectedImageXFile!.path),
@@ -237,13 +257,32 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                                       width: double.infinity,
                                     ),
                           )
-                          : Center(
-                            child: Icon(
-                              Icons.image_search,
-                              size: 50,
-                              color: theme.hintColor,
-                            ),
+                          : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                SolarIconsOutline.gallery,
+                                size: 60,
+                                color: theme.hintColor,
+                                semanticLabel: 'No image selected',
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No image selected',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.hintColor,
+                                ),
+                              ),
+                            ],
                           ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Recommended: clear, well-lit photo. Max 5MB.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -251,20 +290,42 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                   children: [
                     ElevatedButton.icon(
                       onPressed: () => _pickImage(ImageSource.camera),
-                      icon: const Icon(Icons.camera_alt),
-                      label: const Text('Camera'),
+                      icon: const Icon(
+                        SolarIconsOutline.camera,
+                        color: Colors.white,
+                        semanticLabel: 'Take photo with camera',
+                      ),
+                      label: const Text(
+                        'Camera',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.secondary,
-                        foregroundColor: theme.colorScheme.onSecondary,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(120, 44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                     ElevatedButton.icon(
                       onPressed: () => _pickImage(ImageSource.gallery),
-                      icon: const Icon(Icons.photo_library),
-                      label: const Text('Gallery'),
+                      icon: const Icon(
+                        SolarIconsOutline.gallery,
+                        color: Colors.white,
+                        semanticLabel: 'Pick photo from gallery',
+                      ),
+                      label: const Text(
+                        'Gallery',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.colorScheme.secondary,
-                        foregroundColor: theme.colorScheme.onSecondary,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(120, 44),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ],
@@ -272,7 +333,11 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
                 if (_selectedImageXFile != null)
                   TextButton.icon(
                     onPressed: () => setState(() => _selectedImageXFile = null),
-                    icon: Icon(Icons.clear, color: theme.colorScheme.error),
+                    icon: Icon(
+                      SolarIconsOutline.closeCircle,
+                      color: theme.colorScheme.error,
+                      semanticLabel: 'Remove selected image',
+                    ),
                     label: Text(
                       'Remove Image',
                       style: TextStyle(color: theme.colorScheme.error),

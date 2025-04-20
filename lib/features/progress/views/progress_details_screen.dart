@@ -103,7 +103,7 @@ class ProgressDetailsScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- Weight Chart Section with Filtering ---
-              Text('Weight Trend', style: theme.textTheme.headlineSmall),
+              Text('Weight Trend', style: theme.textTheme.titleLarge),
               const SizedBox(height: 8),
               SegmentedButton<TimeFilter>(
                 segments: const [
@@ -134,7 +134,7 @@ class ProgressDetailsScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Progress Photos', style: theme.textTheme.headlineSmall),
+                  Text('Progress Photos', style: theme.textTheme.titleLarge),
                   if (allPhotoRecords
                       .isNotEmpty) // Show "See All" based on all photos
                     TextButton(
