@@ -16,43 +16,34 @@ class ProgressTrackerWidget extends ConsumerWidget {
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
     final theme = Theme.of(context); // Get theme
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Keep transparent
-          elevation: 0, // Keep elevation 0
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: HeronFitTheme.primary, // Use primary color for icon
-              size: 30, // Adjust size
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              }
-            },
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Progress Tracker',
-            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-              // Use HeronFitTheme
-              color: HeronFitTheme.primary, // Use primary color for title
-              fontSize: 20, // Set font size
-              letterSpacing: 0.0,
-              fontWeight: FontWeight.bold, // Keep bold
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
         ),
-        body: SafeArea(
-          top: true,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
           child: Padding(
             padding: const EdgeInsets.all(16), // Consistent padding
             child: progressRecordsAsyncValue.when(

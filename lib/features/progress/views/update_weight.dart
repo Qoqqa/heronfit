@@ -149,189 +149,181 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context); // Get theme for other parts
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: HeronFitTheme.primary, // Use primary color
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: HeronFitTheme.textWhite, // Use white text color
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
               size: 30,
             ),
-            onPressed: () => context.pop(), // Use context.pop()
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
-            'Log Weight', // Updated title
-            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-              color: HeronFitTheme.textWhite, // Use white text color
-              fontSize: 20,
-              letterSpacing: 0.0,
+            'Update Weight',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
-          elevation: 0,
         ),
-        body: SafeArea(
-          top: true,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextFormField(
-                    controller: _weightController,
-                    decoration: InputDecoration(
-                      labelText: 'Current Weight (kg)',
-                      hintText: 'Enter your current weight',
-                      prefixIcon: Icon(
-                        Icons.monitor_weight_outlined,
-                        color: theme.primaryColor,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: theme.primaryColor),
-                      ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                TextFormField(
+                  controller: _weightController,
+                  decoration: InputDecoration(
+                    labelText: 'Current Weight (kg)',
+                    hintText: 'Enter your current weight',
+                    prefixIcon: Icon(
+                      Icons.monitor_weight_outlined,
+                      color: theme.primaryColor,
                     ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your weight';
-                      }
-                      if (double.tryParse(value) == null) {
-                        return 'Please enter a valid number';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Add Progress Photo (Optional)',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    height: 150,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child:
-                        _selectedImageXFile != null
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child:
-                                  kIsWeb
-                                      ? Image.network(
-                                        _selectedImageXFile!.path,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      )
-                                      : Image.file(
-                                        File(_selectedImageXFile!.path),
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      ),
-                            )
-                            : Center(
-                              child: Icon(
-                                Icons.image_search,
-                                size: 50,
-                                color: theme.hintColor,
-                              ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: theme.primaryColor),
+                    ),
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your weight';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Please enter a valid number';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'Add Progress Photo (Optional)',
+                  style: theme.textTheme.titleMedium,
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 150,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.dividerColor),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child:
+                      _selectedImageXFile != null
+                          ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child:
+                                kIsWeb
+                                    ? Image.network(
+                                      _selectedImageXFile!.path,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    )
+                                    : Image.file(
+                                      File(_selectedImageXFile!.path),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                          )
+                          : Center(
+                            child: Icon(
+                              Icons.image_search,
+                              size: 50,
+                              color: theme.hintColor,
                             ),
+                          ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.camera),
+                      icon: const Icon(Icons.camera_alt),
+                      label: const Text('Camera'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.secondary,
+                        foregroundColor: theme.colorScheme.onSecondary,
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => _pickImage(ImageSource.gallery),
+                      icon: const Icon(Icons.photo_library),
+                      label: const Text('Gallery'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.secondary,
+                        foregroundColor: theme.colorScheme.onSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                if (_selectedImageXFile != null)
+                  TextButton.icon(
+                    onPressed: () => setState(() => _selectedImageXFile = null),
+                    icon: Icon(Icons.clear, color: theme.colorScheme.error),
+                    label: Text(
+                      'Remove Image',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    ),
                   ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.camera),
-                        icon: const Icon(Icons.camera_alt),
-                        label: const Text('Camera'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                        ),
+                const SizedBox(height: 10),
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: TextStyle(
+                        color: theme.colorScheme.error,
+                        fontSize: 14,
                       ),
-                      ElevatedButton.icon(
-                        onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library),
-                        label: const Text('Gallery'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.secondary,
-                          foregroundColor: theme.colorScheme.onSecondary,
-                        ),
-                      ),
-                    ],
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  if (_selectedImageXFile != null)
-                    TextButton.icon(
-                      onPressed:
-                          () => setState(() => _selectedImageXFile = null),
-                      icon: Icon(Icons.clear, color: theme.colorScheme.error),
-                      label: Text(
-                        'Remove Image',
-                        style: TextStyle(color: theme.colorScheme.error),
-                      ),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _submitWeight,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    minimumSize: const Size(double.infinity, 50),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  const SizedBox(height: 10),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: TextStyle(
-                          color: theme.colorScheme.error,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _submitWeight,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      minimumSize: const Size(double.infinity, 50),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      disabledBackgroundColor: theme.colorScheme.primary
-                          .withAlpha(128),
-                    ),
-                    child:
-                        _isLoading
-                            ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 3,
-                              ),
-                            )
-                            : const Text(
-                              'Save Weight Log',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                    disabledBackgroundColor: theme.colorScheme.primary
+                        .withAlpha(128),
+                  ),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 3,
                             ),
-                  ),
-                ],
-              ),
+                          )
+                          : const Text(
+                            'Save Weight Log',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                ),
+              ],
             ),
           ),
         ),

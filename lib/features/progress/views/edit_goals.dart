@@ -79,38 +79,32 @@ class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // final goalAsyncValue = ref.watch(userGoalProvider); // Removed unused variable
     final theme = Theme.of(context);
 
-    return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+    return SafeArea(
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Keep transparent
-          elevation: 0, // Keep elevation 0
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: HeronFitTheme.primary, // Use primary color for icon
-              size: 30, // Adjust size
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () => context.canPop() ? context.pop() : null,
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
-            'Edit Goal',
-            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-              // Use HeronFitTheme
-              color: HeronFitTheme.primary, // Use primary color for title
-              fontSize: 20, // Set font size
-              letterSpacing: 0.0,
-              fontWeight: FontWeight.bold, // Keep bold
+            'Edit Goals',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
         ),
-        body: SafeArea(top: true, child: _buildForm(context)),
+        body: _buildForm(context),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:heronfit/features/progress/controllers/progress_controller.dart'
 import 'package:heronfit/features/progress/models/progress_record.dart'; // Import model
 import 'package:heronfit/features/progress/widgets/progress_photo_list_item.dart'; // Import the reusable item widget
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
 
 class ProgressPhotosListWidget extends ConsumerWidget {
   const ProgressPhotosListWidget({super.key});
@@ -15,53 +16,34 @@ class ProgressPhotosListWidget extends ConsumerWidget {
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
     final theme = Theme.of(context); // Get theme
 
-    return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+    return SafeArea(
       child: Scaffold(
-        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
-          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
           leading: IconButton(
-            icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+            icon: const Icon(
+              Icons.chevron_left_rounded,
+              color: HeronFitTheme.primary,
+              size: 30,
             ),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              }
-            },
+            onPressed: () => Navigator.of(context).maybePop(),
           ),
           title: Text(
             'Progress Photos',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                SolarIconsOutline.squareTransferHorizontal, // Use SolarIcons
-                color: theme.primaryColor, // Use primary color
-              ),
-              tooltip: 'Compare Photos',
-              onPressed: () {
-                // Navigate to compare photos screen
-                // context.push(AppRoutes.compareProgressPhotos);
-              },
-            ),
-          ],
-          centerTitle: true,
         ),
-        body: SafeArea(
-          top: true,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: GestureDetector(
+          onTap: () {
+            FocusScope.of(context).unfocus();
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
           child: Padding(
             padding: const EdgeInsets.all(16), // Consistent padding
             child: progressRecordsAsyncValue.when(

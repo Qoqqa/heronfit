@@ -21,11 +21,10 @@ class ProgressScreen extends ConsumerWidget {
     final goalAsyncValue = ref.watch(userGoalProvider);
     final theme = Theme.of(context);
 
-    return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        top: false,
-        child: RefreshIndicator(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(progressRecordsProvider);
             ref.invalidate(userGoalProvider);
