@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
 import 'package:heronfit/features/progress/controllers/progress_controller.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
@@ -78,7 +79,7 @@ class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final goalAsyncValue = ref.watch(userGoalProvider);
+    // final goalAsyncValue = ref.watch(userGoalProvider); // Removed unused variable
     final theme = Theme.of(context);
 
     return GestureDetector(
@@ -86,22 +87,25 @@ class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
+          backgroundColor: Colors.transparent, // Keep transparent
+          elevation: 0, // Keep elevation 0
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
               SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+              color: HeronFitTheme.primary, // Use primary color for icon
+              size: 30, // Adjust size
             ),
             onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
             'Edit Goal',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+              // Use HeronFitTheme
+              color: HeronFitTheme.primary, // Use primary color for title
+              fontSize: 20, // Set font size
+              letterSpacing: 0.0,
+              fontWeight: FontWeight.bold, // Keep bold
             ),
           ),
           centerTitle: true,

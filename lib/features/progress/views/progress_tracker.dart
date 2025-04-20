@@ -24,14 +24,14 @@ class ProgressTrackerWidget extends ConsumerWidget {
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
+          backgroundColor: Colors.transparent, // Keep transparent
+          elevation: 0, // Keep elevation 0
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
               SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+              color: HeronFitTheme.primary, // Use primary color for icon
+              size: 30, // Adjust size
             ),
             onPressed: () {
               if (context.canPop()) {
@@ -41,9 +41,12 @@ class ProgressTrackerWidget extends ConsumerWidget {
           ),
           title: Text(
             'Progress Tracker',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+              // Use HeronFitTheme
+              color: HeronFitTheme.primary, // Use primary color for title
+              fontSize: 20, // Set font size
+              letterSpacing: 0.0,
+              fontWeight: FontWeight.bold, // Keep bold
             ),
           ),
           centerTitle: true,

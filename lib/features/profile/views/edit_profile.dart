@@ -50,20 +50,20 @@ class _EditProfileWidgetState extends State<EditProfileWidget> {
         key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
         appBar: AppBar(
-          backgroundColor: HeronFitTheme.bgLight,
+          backgroundColor: HeronFitTheme.primary,
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
               Icons.chevron_left_rounded,
-              color: HeronFitTheme.primary,
+              color: HeronFitTheme.textWhite,
               size: 30,
             ),
             onPressed: () => context.pop(), // Use context.pop()
           ),
           title: Text(
             'Edit Profile',
-            style: HeronFitTheme.textTheme.headlineMedium?.copyWith(
-              color: HeronFitTheme.primary,
+            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.textWhite,
               fontSize: 20,
               letterSpacing: 0.0,
             ),

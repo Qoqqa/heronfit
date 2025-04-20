@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/theme.dart'; // Import HeronFitTheme
 import 'package:heronfit/features/progress/controllers/progress_controller.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:intl/intl.dart'; // For date formatting if needed
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class UpdateWeightWidget extends ConsumerStatefulWidget {
@@ -147,37 +147,38 @@ class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final theme = Theme.of(context); // Get theme for other parts
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor:
-            theme
-                .scaffoldBackgroundColor, // Ensure background color is set here
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
+          backgroundColor: HeronFitTheme.primary, // Use primary color
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
               SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+              color: HeronFitTheme.textWhite, // Use white text color
+              size: 30,
             ),
-            onPressed: () => context.canPop() ? context.pop() : null,
+            onPressed: () => context.pop(), // Use context.pop()
           ),
           title: Text(
-            'Log New Weight',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+            'Log Weight', // Updated title
+            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+              color: HeronFitTheme.textWhite, // Use white text color
+              fontSize: 20,
+              letterSpacing: 0.0,
             ),
           ),
           centerTitle: true,
+          elevation: 0,
         ),
         body: SafeArea(
+          top: true,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
+            padding: const EdgeInsets.all(24),
             child: Form(
               key: _formKey,
               child: Column(
