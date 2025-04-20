@@ -25,12 +25,16 @@ import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
 import 'package:heronfit/features/workout/views/start_workout_from_template_screen.dart'; // Added import
 import 'package:heronfit/features/workout/views/my_workout_templates_screen.dart'; // Import the new screen
 import 'package:heronfit/features/workout/views/recommended_workouts_screen.dart'; // Import the new screen
-import 'package:heronfit/features/progress/views/progress_screen.dart';
+import 'package:heronfit/features/progress/views/progress_screen.dart'; // Corrected import
 import 'package:heronfit/features/progress/views/edit_goals.dart';
 import 'package:heronfit/features/progress/views/update_weight.dart';
 import 'package:heronfit/features/progress/views/progress_tracker.dart';
 import 'package:heronfit/features/progress/views/progress_photo_list.dart';
+import 'package:heronfit/features/progress/views/progress_details_screen.dart'; // Import Progress Details Screen
+import 'package:heronfit/features/progress/views/view_progress_photo.dart'; // Import ViewProgressPhotosWidget
+import 'package:heronfit/features/progress/views/compare_progress_photo.dart'; // Import CompareProgressPhotosWidget
 import 'package:heronfit/features/onboarding/views/onboarding_hero.dart';
+import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
 
 import 'app_routes.dart';
@@ -101,6 +105,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.workoutAddExercise,
         builder: (context, state) => const AddExerciseScreen(),
       ),
+      // Add the new route for Exercise Details
+      GoRoute(
+        path: AppRoutes.exerciseDetails, // Use the constant from AppRoutes
+        builder: (context, state) {
+          final exercise = state.extra as Exercise?;
+          if (exercise == null) {
+            // Handle error case: navigate back or show an error screen
+            return Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: const Center(child: Text('Error: Exercise data missing.')),
+            );
+          }
+          // Provide the required heroTag
+          return ExerciseDetailsScreen(
+            exercise: exercise,
+            // Example heroTag, ensure it's unique if needed across screens
+            heroTag: 'exercise_image_${exercise.id}',
+          );
+        },
+      ),
       GoRoute(
         path: AppRoutes.workoutComplete,
         builder: (context, state) {
@@ -142,6 +166,25 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.progressPhotoList,
         builder: (context, state) => const ProgressPhotosListWidget(),
+      ),
+      // Add route for viewing a single photo
+      GoRoute(
+        path: AppRoutes.progressViewPhoto,
+        builder: (context, state) {
+          // Extract the index passed as an extra parameter
+          final initialIndex = state.extra as int?;
+          return ViewProgressPhotosWidget(initialIndex: initialIndex);
+        },
+      ),
+      // Add route for comparing photos
+      GoRoute(
+        path: AppRoutes.progressPhotoCompare,
+        builder: (context, state) => const CompareProgressPhotosWidget(),
+      ),
+      // Add the new route for Progress Details
+      GoRoute(
+        path: AppRoutes.progressDetails,
+        builder: (context, state) => const ProgressDetailsScreen(),
       ),
       GoRoute(
         path: AppRoutes.profileEdit,
@@ -192,7 +235,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: AppRoutes.progress,
-            builder: (context, state) => const ProgressDashboardWidget(),
+            builder:
+                (context, state) =>
+                    const ProgressScreen(), // Corrected widget name
           ),
           GoRoute(
             path: AppRoutes.profile,

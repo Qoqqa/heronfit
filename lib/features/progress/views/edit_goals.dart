@@ -1,316 +1,260 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/features/progress/controllers/progress_controller.dart';
+import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
-class EditGoalsWidget extends StatefulWidget {
+class EditGoalsWidget extends ConsumerStatefulWidget {
   const EditGoalsWidget({super.key});
 
-  static String routeName = 'EditGoals';
-  static String routePath = '/editGoals';
-
   @override
-  State<EditGoalsWidget> createState() => _EditGoalsWidgetState();
+  ConsumerState<EditGoalsWidget> createState() => _EditGoalsWidgetState();
 }
 
-class _EditGoalsWidgetState extends State<EditGoalsWidget> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
+class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
+  final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController textController1 = TextEditingController();
-  final TextEditingController textController2 = TextEditingController();
-  final TextEditingController textController3 = TextEditingController();
-  final TextEditingController textController4 = TextEditingController();
-  final TextEditingController textController5 = TextEditingController();
+  String? _selectedGoalType;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   @override
-  void dispose() {
-    textController1.dispose();
-    textController2.dispose();
-    textController3.dispose();
-    textController4.dispose();
-    textController5.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadExistingGoals();
+  }
+
+  void _loadExistingGoals() {
+    final goalAsyncValue = ref.read(userGoalProvider);
+    goalAsyncValue.whenData((goal) {
+      if (goal != null && mounted) {
+        setState(() {
+          _selectedGoalType = goal;
+        });
+      }
+    });
+  }
+
+  Future<void> _submitGoals() async {
+    if (_formKey.currentState?.validate() ?? false) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      try {
+        await ref
+            .read(progressControllerProvider.notifier)
+            .updateGoal(goalType: _selectedGoalType!);
+
+        ref.invalidate(userGoalProvider);
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Goal updated successfully!')),
+        );
+        context.pop();
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = 'Failed to update goal: $e';
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $_errorMessage')));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
+    } else {
+      setState(() {
+        _errorMessage = 'Please select a goal.';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final goalAsyncValue = ref.watch(userGoalProvider);
+    final theme = Theme.of(context);
+
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Colors.transparent, // Set background to transparent
+          elevation: 0, // Remove elevation
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: Theme.of(context).primaryColor,
-              size: 30,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.primaryColor, // Use primary color
+              size: 28, // Adjust size as needed
             ),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
-            'Edit Goals',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Theme.of(context).primaryColor,
-                  fontSize: 20,
-                ),
+            'Edit Goal',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.primaryColor, // Use primary color
+              fontWeight: FontWeight.bold, // Set font weight to bold
+            ),
           ),
           centerTitle: true,
-          elevation: 0,
         ),
-        body: SafeArea(
-          top: true,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 40,
-                          color: Colors.black.withOpacity(0.1),
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(8),
+        body: SafeArea(top: true, child: _buildForm(context)),
+      ),
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            children: [
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  boxShadow: [
+                    BoxShadow(
+                      blurRadius: 4,
+                      color: Colors.black.withAlpha(25),
+                      offset: const Offset(0, 2),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
+                  ],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              Icon(
-                                Icons.radar,
-                                color: Theme.of(context).primaryColor,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Current Goal',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                              ),
-                            ],
+                          Icon(
+                            Icons.radar,
+                            color: theme.primaryColor,
+                            size: 24,
                           ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<String>(
-                            value: 'Weight Loss',
-                            items: [
-                              DropdownMenuItem(
-                                value: 'Weight Loss',
-                                child: Text('Weight Loss'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'Gain Muscle',
-                                child: Text('Gain Muscle'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'Overall Fitness',
-                                child: Text('Overall Fitness'),
-                              ),
-                            ],
-                            onChanged: (val) {},
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Theme.of(context).scaffoldBackgroundColor,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Select Your Primary Goal',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.primaryColor,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 40,
-                          color: Colors.black.withOpacity(0.1),
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Starting Weight',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: textController1,
-                                  decoration: InputDecoration(
-                                    hintText: '50kg on 08 Oct 2024',
-                                    filled: true,
-                                    fillColor: Theme.of(context).scaffoldBackgroundColor,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                  ),
-                                  textAlign: TextAlign.end,
-                                ),
-                              ),
-                            ],
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: _selectedGoalType,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Weight Loss',
+                            child: Text('Weight Loss'),
                           ),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Current Weight',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: textController2,
-                                  decoration: InputDecoration(
-                                    hintText: '65 kg',
-                                    filled: true,
-                                    fillColor: Theme.of(context).scaffoldBackgroundColor,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                  ),
-                                  textAlign: TextAlign.end,
-                                ),
-                              ),
-                            ],
+                          DropdownMenuItem(
+                            value: 'Gain Muscle',
+                            child: Text('Gain Muscle'),
                           ),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Goal Weight',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: textController3,
-                                  decoration: InputDecoration(
-                                    hintText: '75 kg',
-                                    filled: true,
-                                    fillColor: Theme.of(context).scaffoldBackgroundColor,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                  ),
-                                  textAlign: TextAlign.end,
-                                ),
-                              ),
-                            ],
+                          DropdownMenuItem(
+                            value: 'Improve Endurance',
+                            child: Text('Improve Endurance'),
                           ),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Workouts / Week',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: textController4,
-                                  decoration: InputDecoration(
-                                    hintText: '5',
-                                    filled: true,
-                                    fillColor: Theme.of(context).scaffoldBackgroundColor,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                  ),
-                                  textAlign: TextAlign.end,
-                                ),
-                              ),
-                            ],
+                          DropdownMenuItem(
+                            value: 'Overall Fitness',
+                            child: Text('Overall Fitness'),
                           ),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Minutes / Workout',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: textController5,
-                                  decoration: InputDecoration(
-                                    hintText: '60',
-                                    filled: true,
-                                    fillColor: Theme.of(context).scaffoldBackgroundColor,
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                                  ),
-                                  textAlign: TextAlign.end,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
                         ],
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedGoalType = val;
+                            _errorMessage = null;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Select a goal',
+                          filled: true,
+                          fillColor:
+                              theme.inputDecorationTheme.fillColor ??
+                              theme.scaffoldBackgroundColor,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Please select a goal'
+                                    : null,
                       ),
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 32),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontSize: 14,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _submitGoals,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.secondary,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 50),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  disabledBackgroundColor: theme.colorScheme.secondary
+                      .withAlpha(128),
+                ),
+                child:
+                    _isLoading
+                        ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        )
+                        : Text(
+                          'Save Goal',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+              ),
+            ],
           ),
         ),
       ),

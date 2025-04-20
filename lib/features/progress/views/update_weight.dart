@@ -1,312 +1,333 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/features/progress/controllers/progress_controller.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart'; // For date formatting if needed
+import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
-// Use the proper Supabase instance
-final supabase = Supabase.instance.client;
-
-class UpdateWeightWidget extends StatefulWidget {
+class UpdateWeightWidget extends ConsumerStatefulWidget {
   const UpdateWeightWidget({super.key});
 
-  static String routeName = 'UpdateWeight';
-  static String routePath = '/updateWeight';
-
   @override
-  State<UpdateWeightWidget> createState() => _UpdateWeightWidgetState();
+  ConsumerState<UpdateWeightWidget> createState() => _UpdateWeightWidgetState();
 }
 
-class _UpdateWeightWidgetState extends State<UpdateWeightWidget> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
-
-  final TextEditingController textController1 = TextEditingController(); // Weight
-  final TextEditingController textController2 = TextEditingController(); // Date
-  XFile? _uploadedImage;
-  String? _uploadedImageUrl;
-
-  bool _isUploading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Set today's date as default
-    textController2.text = DateTime.now().toString().split(' ')[0];
-  }
+class _UpdateWeightWidgetState extends ConsumerState<UpdateWeightWidget> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _weightController = TextEditingController();
+  XFile? _selectedImageXFile;
+  bool _isLoading = false;
+  String? _errorMessage;
+  final ImagePicker _picker = ImagePicker();
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   @override
   void dispose() {
-    textController1.dispose();
-    textController2.dispose();
+    _weightController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage(String source) async {
-    final ImagePicker picker = ImagePicker();
-    XFile? pickedFile;
-
+  Future<void> _pickImage(ImageSource source) async {
     try {
-      if (source == 'Camera') {
-        pickedFile = await picker.pickImage(source: ImageSource.camera);
-      } else if (source == 'Gallery') {
-        pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      }
+      final pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 50,
+      );
 
       if (pickedFile != null) {
         setState(() {
-          _uploadedImage = pickedFile;
+          _selectedImageXFile = pickedFile;
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking image: $e')),
-      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
     }
   }
 
-  Widget _buildImagePreview() {
-    if (_uploadedImage == null) {
-      return Container(
-        color: Colors.grey[300],
-        child: Icon(Icons.image, size: 100, color: Colors.grey[600]),
-      );
-    }
-    
-    // Handle web platform specifically
-    if (kIsWeb) {
-      return Image.network(
-        _uploadedImage!.path,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[300],
-            child: const Icon(Icons.broken_image, size: 100, color: Colors.grey),
-          );
-        },
-      );
-    } else {
-      // For mobile platforms
-      return Image.file(
-        File(_uploadedImage!.path),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            color: Colors.grey[300],
-            child: const Icon(Icons.broken_image, size: 100, color: Colors.grey),
-          );
-        },
-      );
-    }
-  }
-
-  Future<void> _uploadData() async {
-    if (_uploadedImage == null || textController1.text.isEmpty || textController2.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all fields and select an image!')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isUploading = true;
-    });
-
+  Future<String?> _uploadImage(XFile imageXFile) async {
     try {
-      // Get current user
-      final user = supabase.auth.currentUser;
-      
-      if (user == null) {
-        throw Exception('You must be logged in to upload data');
-      }
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not logged in.');
 
-      String? publicUrl;
-      final fileName = _uploadedImage!.name;
-      final uniqueFileName = '${DateTime.now().millisecondsSinceEpoch}_$fileName';
+      final fileExt = imageXFile.path.split('.').last;
+      final fileName =
+          '${DateTime.now().millisecondsSinceEpoch}.${imageXFile.name.isNotEmpty ? imageXFile.name.split('.').last : fileExt}';
+      final filePath = '$userId/$fileName';
 
-      // Handle file upload for web and mobile
-      if (kIsWeb) {
-        // For web, we need to handle the file differently
-        final bytes = await _uploadedImage!.readAsBytes();
-        
-        // Upload image to Supabase Storage
-        await supabase
-            .storage
-            .from('image')
-            .uploadBinary('imagelist/$uniqueFileName', bytes);
-      } else {
-        // For mobile platforms
-        final imageFile = File(_uploadedImage!.path);
-        final bytes = await imageFile.readAsBytes();
-        
-        // Upload image to Supabase Storage
-        await supabase
-            .storage
-            .from('image')
-            .uploadBinary('imagelist/$uniqueFileName', bytes);
-      }
+      final imageBytes = await imageXFile.readAsBytes();
+      final imageMimeType = imageXFile.mimeType;
 
-      // Get public URL
-      publicUrl = supabase
-          .storage
-          .from('image')
-          .getPublicUrl('imagelist/$uniqueFileName');
+      await _supabase.storage
+          .from('progress-photos') // Corrected bucket name
+          .uploadBinary(
+            filePath,
+            imageBytes,
+            fileOptions: FileOptions(
+              cacheControl: '3600',
+              upsert: false,
+              contentType: imageMimeType,
+            ),
+          );
 
-      setState(() {
-        _uploadedImageUrl = publicUrl;
-      });
+      final imageUrlResponse = _supabase.storage
+          .from('progress-photos') // Corrected bucket name
+          .getPublicUrl(filePath);
 
-      // Insert into Supabase Table with proper error handling
-      final response = await supabase
-          .from('update_weight')
-          .insert({
-            'date': textController2.text,
-            'pic': publicUrl,
-            'email': user.email,
-            'weight': textController1.text,
-            'identifier_id': user.id,
-          });
-
-      if (response.error != null) {
-        throw Exception('Insert failed: ${response.error!.message}');
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Data inserted successfully!')),
-        );
-        
-        // Clear fields after successful upload
-        textController1.clear();
-        textController2.text = DateTime.now().toString().split(' ')[0];
-        setState(() {
-          _uploadedImage = null;
-        });
-      }
+      return imageUrlResponse;
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
+      print('Error uploading image to Supabase: $e');
+      if (e is StorageException) {
+        print('Supabase Storage Error Details: ${e.message}');
+      }
+      return null;
+    }
+  }
+
+  Future<void> _submitWeight() async {
+    if (_formKey.currentState?.validate() ?? false) {
       setState(() {
-        _isUploading = false;
+        _isLoading = true;
+        _errorMessage = null;
       });
+
+      String? imageUrl;
+      if (_selectedImageXFile != null) {
+        imageUrl = await _uploadImage(_selectedImageXFile!);
+        if (imageUrl == null) {
+          if (!mounted) return;
+          setState(() {
+            _errorMessage = 'Failed to upload image. Please try again.';
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(_errorMessage!)));
+          return;
+        }
+      }
+
+      try {
+        final weight = double.parse(_weightController.text);
+
+        await ref
+            .read(progressRecordsProvider.notifier)
+            .addWeightEntry(weight, imageUrl);
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Weight logged successfully!')),
+        );
+        if (mounted) {
+          context.pop();
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _errorMessage = 'Failed to log weight: $e';
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $_errorMessage')));
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        key: scaffoldKey,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        backgroundColor:
+            theme
+                .scaffoldBackgroundColor, // Ensure background color is set here
         appBar: AppBar(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          backgroundColor: Colors.transparent, // Set background to transparent
+          elevation: 0, // Remove elevation
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              Icons.chevron_left_rounded,
-              color: Theme.of(context).primaryColor,
-              size: 30,
+              SolarIconsOutline.altArrowLeft, // Use SolarIcons
+              color: theme.primaryColor, // Use primary color
+              size: 28, // Adjust size as needed
             ),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
-            'Update Weight',
-            style: GoogleFonts.poppins(
-              color: Theme.of(context).primaryColor,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+            'Log New Weight',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: theme.primaryColor, // Use primary color
+              fontWeight: FontWeight.bold, // Set font weight to bold
             ),
           ),
           centerTitle: true,
-          elevation: 0,
         ),
         body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      boxShadow: [
-                        BoxShadow(
-                          blurRadius: 40,
-                          color: Colors.black.withOpacity(0.1),
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          _buildTextFieldRow(context, 'Weight (kg)', textController1, '0', TextInputType.number),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          _buildTextFieldRow(context, 'Date', textController2, 'YYYY-MM-DD', TextInputType.datetime),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Progress Photo',
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                              PopupMenuButton<String>(
-                                icon: Icon(Icons.camera_alt, color: Theme.of(context).primaryColor),
-                                onSelected: _pickImage,
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(value: 'Camera', child: Text('Camera')),
-                                  const PopupMenuItem(value: 'Gallery', child: Text('Gallery')),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Divider(thickness: 2, color: Theme.of(context).primaryColor),
-                          const SizedBox(height: 16),
-                          Container(
-                            width: 225,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).scaffoldBackgroundColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: _buildImagePreview(),
-                            ),
-                          ),
-                        ],
+                  TextFormField(
+                    controller: _weightController,
+                    decoration: InputDecoration(
+                      labelText: 'Current Weight (kg)',
+                      hintText: 'Enter your current weight',
+                      prefixIcon: Icon(
+                        Icons.monitor_weight_outlined,
+                        color: theme.primaryColor,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: theme.primaryColor),
                       ),
                     ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your weight';
+                      }
+                      if (double.tryParse(value) == null) {
+                        return 'Please enter a valid number';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _isUploading ? null : _uploadData,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.secondary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  Text(
+                    'Add Progress Photo (Optional)',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    height: 150,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: theme.dividerColor),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: _isUploading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : Text(
-                            'Save Changes',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
+                    child:
+                        _selectedImageXFile != null
+                            ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child:
+                                  kIsWeb
+                                      ? Image.network(
+                                        _selectedImageXFile!.path,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      )
+                                      : Image.file(
+                                        File(_selectedImageXFile!.path),
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                      ),
+                            )
+                            : Center(
+                              child: Icon(
+                                Icons.image_search,
+                                size: 50,
+                                color: theme.hintColor,
+                              ),
+                            ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Camera'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.secondary,
+                          foregroundColor: theme.colorScheme.onSecondary,
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Gallery'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.secondary,
+                          foregroundColor: theme.colorScheme.onSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (_selectedImageXFile != null)
+                    TextButton.icon(
+                      onPressed:
+                          () => setState(() => _selectedImageXFile = null),
+                      icon: Icon(Icons.clear, color: theme.colorScheme.error),
+                      label: Text(
+                        'Remove Image',
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                    ),
+                  const SizedBox(height: 10),
+                  if (_errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: _isLoading ? null : _submitWeight,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      minimumSize: const Size(double.infinity, 50),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      disabledBackgroundColor: theme.colorScheme.primary
+                          .withAlpha(128),
+                    ),
+                    child:
+                        _isLoading
+                            ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 3,
+                              ),
+                            )
+                            : const Text(
+                              'Save Weight Log',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                   ),
                 ],
               ),
@@ -314,30 +335,6 @@ class _UpdateWeightWidgetState extends State<UpdateWeightWidget> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildTextFieldRow(BuildContext context, String label, TextEditingController controller, String hint, TextInputType keyboardType) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: Theme.of(context).textTheme.labelMedium),
-        const SizedBox(width: 8),
-        Expanded(
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            decoration: InputDecoration(
-              hintText: hint,
-              filled: true,
-              fillColor: Theme.of(context).scaffoldBackgroundColor,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            ),
-            textAlign: TextAlign.end,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -112,7 +112,7 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                     Align(
                       alignment: const AlignmentDirectional(-1.0, 0.0),
                       child: Text(
-                        '${_formatDuration(workoutState.duration)}',
+                        _formatDuration(workoutState.duration),
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
                         ),
@@ -148,6 +148,12 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                       },
                       onRemoveSet: (setIndex) {
                         workoutNotifier.removeSet(exercise, setIndex);
+                      },
+                      onShowDetails: () {
+                        context.push(
+                          AppRoutes.exerciseDetails,
+                          extra: exercise,
+                        );
                       },
                     );
                   },

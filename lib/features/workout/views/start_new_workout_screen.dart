@@ -126,7 +126,7 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                     Align(
                       alignment: const AlignmentDirectional(-1.0, 0.0),
                       child: Text(
-                        '${_formatDuration(workoutState.duration)}',
+                        _formatDuration(workoutState.duration),
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                           color: HeronFitTheme.textMuted,
                         ),
@@ -145,15 +145,12 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final exercise = workoutState.exercises[index];
                     return ExerciseCard(
-                      key: ValueKey(
-                        exercise.id,
-                      ), // Remove unnecessary interpolation
+                      key: ValueKey(exercise.id),
                       exercise: exercise,
                       workoutId: workoutState.id,
                       onAddSet: () {
                         workoutNotifier.addSet(exercise);
                       },
-                      // Pass callbacks to update set data via the notifier
                       onUpdateSetData: (setIndex, {kg, reps, completed}) {
                         workoutNotifier.updateSetData(
                           exercise,
@@ -165,6 +162,12 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                       },
                       onRemoveSet: (setIndex) {
                         workoutNotifier.removeSet(exercise, setIndex);
+                      },
+                      onShowDetails: () {
+                        context.push(
+                          AppRoutes.exerciseDetails,
+                          extra: exercise,
+                        );
                       },
                     );
                   },
