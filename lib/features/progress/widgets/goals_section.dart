@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heronfit/features/progress/models/progress_record.dart'; // Import UserGoal model
 import 'package:heronfit/widgets/loading_indicator.dart';
-import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 
 class GoalsSection extends ConsumerWidget {
-  final AsyncValue<UserGoal?> goalsAsyncValue;
+  final AsyncValue<String?> goalAsyncValue;
 
-  const GoalsSection({required this.goalsAsyncValue, super.key});
+  const GoalsSection({required this.goalAsyncValue, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,7 +26,6 @@ class GoalsSection extends ConsumerWidget {
               children: [
                 Text('Your Goals', style: theme.textTheme.titleLarge),
                 IconButton(
-                  // Use SolarIcons.penNewSquare
                   icon: Icon(
                     SolarIconsOutline.penNewSquare,
                     color: theme.colorScheme.primary,
@@ -39,43 +36,30 @@ class GoalsSection extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            goalsAsyncValue.when(
+            goalAsyncValue.when(
               data: (goal) {
-                if (goal == null ||
-                    goal.goalType == null ||
-                    goal.goalType!.isEmpty) {
+                if (goal == null || goal.isEmpty) {
                   return const Text(
-                    'No goals set yet. Tap the edit icon to add your goals!',
+                    'No goal set yet. Tap the edit icon to add your goal!',
                   );
                 }
-                final goalType = goal.goalType ?? 'N/A';
-                final targetWeight = goal.targetWeight?.toString() ?? 'N/A';
-                final targetDate =
-                    goal.targetDate != null
-                        ? DateFormat('MMMM d, yyyy').format(goal.targetDate!)
-                        : 'N/A';
-
-                // Consider adding icons like in the FlutterFlow example
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                return Row(
                   children: [
-                    _buildGoalRow(
-                      context,
-                      SolarIconsOutline.tagHorizontal,
-                      'Goal Type:',
-                      goalType,
+                    Icon(
+                      SolarIconsOutline.target,
+                      size: 20,
+                      color: theme.colorScheme.primary,
                     ),
-                    _buildGoalRow(
-                      context,
-                      SolarIconsOutline.scale,
-                      'Target Weight:',
-                      '$targetWeight kg',
+                    const SizedBox(width: 12),
+                    Text(
+                      'Primary Goal:',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    _buildGoalRow(
-                      context,
-                      SolarIconsOutline.calendar,
-                      'Target Date:',
-                      targetDate,
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(goal, style: theme.textTheme.bodyMedium),
                     ),
                   ],
                 );
@@ -83,9 +67,8 @@ class GoalsSection extends ConsumerWidget {
               loading: () => const Center(child: LoadingIndicator()),
               error:
                   (error, stack) =>
-                      Center(child: Text('Error loading goals: $error')),
+                      Center(child: Text('Error loading goal: $error')),
             ),
-            // Add Edit Goals Button like FlutterFlow example
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
@@ -100,33 +83,6 @@ class GoalsSection extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildGoalRow(
-    BuildContext context,
-    IconData icon,
-    String label,
-    String value,
-  ) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: theme.colorScheme.primary),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Replace Expanded with Flexible to avoid unbounded width error
-          Flexible(child: Text(value, style: theme.textTheme.bodyMedium)),
-        ],
       ),
     );
   }

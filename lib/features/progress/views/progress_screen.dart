@@ -15,8 +15,8 @@ class ProgressScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progressAsyncValue = ref.watch(progressRecordsProvider);
-    // Watch userGoals provider (assuming generated name is userGoalsProvider)
-    final goalsAsyncValue = ref.watch(userGoalsProvider);
+    // Watch userGoal provider (updated name)
+    final goalAsyncValue = ref.watch(userGoalProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -30,14 +30,16 @@ class ProgressScreen extends ConsumerWidget {
         onRefresh: () async {
           // Invalidate providers to trigger a refresh
           ref.invalidate(progressRecordsProvider);
-          // Invalidate userGoals provider (assuming generated name is userGoalsProvider)
-          ref.invalidate(userGoalsProvider);
+          // Invalidate userGoal provider (updated name)
+          ref.invalidate(userGoalProvider);
         },
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
             // Use the new widget sections
-            GoalsSection(goalsAsyncValue: goalsAsyncValue),
+            GoalsSection(
+              goalAsyncValue: goalAsyncValue,
+            ), // Corrected parameter name
             const SizedBox(height: 24),
             WeightChartSection(progressAsyncValue: progressAsyncValue),
             const SizedBox(height: 24),

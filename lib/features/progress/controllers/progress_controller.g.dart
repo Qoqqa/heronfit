@@ -6,21 +6,21 @@ part of 'progress_controller.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$userGoalsHash() => r'80c0f77407db8f981f26d49c9f108df9c9373180';
+String _$userGoalHash() => r'3d94194819dbae500fa45c290bf15f4c91c1bfc3';
 
-/// See also [userGoals].
-@ProviderFor(userGoals)
-final userGoalsProvider = AutoDisposeFutureProvider<UserGoal?>.internal(
-  userGoals,
-  name: r'userGoalsProvider',
+/// See also [userGoal].
+@ProviderFor(userGoal)
+final userGoalProvider = AutoDisposeFutureProvider<String?>.internal(
+  userGoal,
+  name: r'userGoalProvider',
   debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$userGoalsHash,
+      const bool.fromEnvironment('dart.vm.product') ? null : _$userGoalHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef UserGoalsRef = AutoDisposeFutureProviderRef<UserGoal?>;
+typedef UserGoalRef = AutoDisposeFutureProviderRef<String?>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

@@ -18,48 +18,65 @@ class ProgressRecord {
 
   // Updated fromJson factory
   factory ProgressRecord.fromJson(Map<String, dynamic> json) {
-    return ProgressRecord(
-      id: json['id'] as String,
-      date: DateTime.parse(
-        json['date'] as String,
-      ), // Use parse, handle errors upstream if needed
-      weight:
-          (json['weight'] as num)
-              .toDouble(), // Assume weight is always present and numeric
-      photoUrl: json['photo_url'] as String?, // Match DB column name
-      photoPath: json['photo_path'] as String?, // Match DB column name
-    );
+    // Add basic error handling for parsing
+    try {
+      return ProgressRecord(
+        id: json['id'] as String,
+        date: DateTime.parse(json['date'] as String),
+        weight: (json['weight'] as num).toDouble(),
+        photoUrl: json['photo_url'] as String?,
+        photoPath: json['photo_path'] as String?,
+      );
+    } catch (e) {
+      // Log error or rethrow with more context if needed in production
+      print('Error parsing ProgressRecord from JSON: $e, JSON: $json');
+      // Depending on requirements, you might return a default/error state
+      // or rethrow the exception.
+      // For now, rethrowing to make the error visible during development.
+      rethrow;
+    }
   }
 
   // Add toJson method if needed for updates (though controller handles inserts)
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      // 'id': id, // Usually not needed for inserts if DB generates it
       'date': date.toIso8601String(),
       'weight': weight,
       'photo_url': photoUrl,
       'photo_path': photoPath,
+      // 'user_id' will be added by the controller/service layer
     };
   }
 
-  // Add copyWith if needed
+  // Add copyWith if needed for state management updates
+  ProgressRecord copyWith({
+    String? id,
+    DateTime? date,
+    double? weight,
+    String? photoUrl,
+    String? photoPath,
+  }) {
+    return ProgressRecord(
+      id: id ?? this.id,
+      date: date ?? this.date,
+      weight: weight ?? this.weight,
+      photoUrl: photoUrl ?? this.photoUrl,
+      photoPath: photoPath ?? this.photoPath,
+    );
+  }
 }
 
 @immutable
 class UserGoal {
   final String id;
   final String userId;
-  final String? goalType; // Made nullable to match controller placeholder usage
-  final double? targetWeight;
-  final DateTime? targetDate;
-  // Add other goal-specific fields as necessary
+  final String? goalType; // Keep only goalType
 
   const UserGoal({
     required this.id,
     required this.userId,
-    this.goalType, // Made nullable
-    this.targetWeight,
-    this.targetDate,
+    this.goalType, // Keep only goalType
   });
 
   // Add fromJson factory based on controller's usage and potential DB structure
@@ -67,12 +84,7 @@ class UserGoal {
     return UserGoal(
       id: json['id'] as String, // Assuming 'id' is the primary key
       userId: json['user_id'] as String,
-      goalType: json['goal_type'] as String?,
-      targetWeight: (json['target_weight'] as num?)?.toDouble(),
-      targetDate:
-          json['target_date'] == null
-              ? null
-              : DateTime.tryParse(json['target_date'] as String),
+      goalType: json['goal_type'] as String?, // Keep only goalType
     );
   }
 
@@ -82,9 +94,7 @@ class UserGoal {
     return {
       'id': id,
       'user_id': userId,
-      'goal_type': goalType,
-      'target_weight': targetWeight,
-      'target_date': targetDate?.toIso8601String(),
+      'goal_type': goalType, // Keep only goalType
     };
   }
 

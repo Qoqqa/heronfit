@@ -1,25 +1,26 @@
-import 'dart:io';
+import 'dart:async'; // Import for FutureOr
+import 'dart:io'; // Keep for File usage if needed elsewhere, maybe remove later
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heronfit/features/progress/models/progress_record.dart'; // Use the model definition
-import 'package:image_picker/image_picker.dart'; // Import image_picker for XFile
+import 'package:heronfit/features/progress/models/progress_record.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'progress_controller.g.dart';
 
-// Provider to fetch progress records (weight history, photos)
+// --- Progress Records Notifier --- Provider to fetch and add progress records
+
 final progressRecordsProvider =
     StateNotifierProvider<ProgressNotifier, AsyncValue<List<ProgressRecord>>>((
       ref,
     ) {
-      return ProgressNotifier();
+      return ProgressNotifier(ref);
     });
 
 class ProgressNotifier extends StateNotifier<AsyncValue<List<ProgressRecord>>> {
   final SupabaseClient _supabaseClient = Supabase.instance.client;
+  final Ref _ref;
 
-  ProgressNotifier() : super(const AsyncValue.loading()) {
+  ProgressNotifier(this._ref) : super(const AsyncValue.loading()) {
     fetchProgressRecords();
   }
 
@@ -37,146 +38,128 @@ class ProgressNotifier extends StateNotifier<AsyncValue<List<ProgressRecord>>> {
           .order('date', ascending: false);
 
       final data = response as List<dynamic>;
-      state = AsyncValue.data(
-        data
-            .map((e) => ProgressRecord.fromJson(e as Map<String, dynamic>))
-            .toList(),
-      );
+      final records =
+          data
+              .map((e) => ProgressRecord.fromJson(e as Map<String, dynamic>))
+              .toList();
+      state = AsyncValue.data(records);
     } catch (e, st) {
+      print('Error fetching progress records: $e\n$st');
       state = AsyncValue.error(e, st);
     }
   }
 
   Future<void> addWeightEntry(double weight, String? picUrl) async {
-    // Implementation for adding weight entry
+    final user = _supabaseClient.auth.currentUser;
+    if (user == null) {
+      throw Exception('User not logged in');
+    }
+
+    final previousState = state.value ?? [];
+
+    final optimisticRecord = ProgressRecord(
+      id: 'temp_${DateTime.now().millisecondsSinceEpoch}',
+      date: DateTime.now(),
+      weight: weight,
+      photoUrl: picUrl,
+    );
+    state = AsyncValue.data([optimisticRecord, ...previousState]);
+
+    try {
+      final Map<String, dynamic> newRecordData = {
+        'user_id': user.id,
+        'date': optimisticRecord.date.toIso8601String(),
+        'weight': weight,
+        'photo_url': picUrl,
+      };
+
+      final response =
+          await _supabaseClient
+              .from('progress_records')
+              .insert(newRecordData)
+              .select()
+              .single();
+
+      final confirmedRecord = ProgressRecord.fromJson(response);
+
+      state = AsyncValue.data(
+        previousState
+            .map((r) => r.id == optimisticRecord.id ? confirmedRecord : r)
+            .toList(),
+      );
+      await fetchProgressRecords();
+    } catch (e, st) {
+      print('Error adding weight entry: $e\n$st');
+      state = AsyncValue.data(previousState);
+      throw Exception('Failed to save weight entry: ${e.toString()}');
+    }
   }
 }
 
+// --- User Goal Provider --- Fetches the user's goal string
+
 @riverpod
-Future<UserGoal?> userGoals(UserGoalsRef ref) async {
+Future<String?> userGoal(UserGoalRef ref) async {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id;
 
   if (userId == null) {
-    // Not logged in, return null or throw an error
     return null;
   }
 
   try {
     final response =
         await supabase
-            .from(
-              'goals',
-            ) // Correct the table name from 'user_goals' to 'goals'
-            .select()
+            .from('users')
+            .select('goal')
             .eq('user_id', userId)
-            .maybeSingle(); // Use maybeSingle() in case no goal is set yet
+            .maybeSingle();
 
-    if (response == null) {
-      return null; // No goal found for the user
+    if (response == null || response['goal'] == null) {
+      return null;
     }
 
-    return UserGoal.fromJson(response);
-  } catch (e) {
-    return null; // Return null on error for now
+    return response['goal'] as String?;
+  } catch (e, st) {
+    print('Error fetching user goal: $e\n$st');
+    return null;
   }
 }
 
-// Controller for handling progress-related actions (saving data)
-class ProgressController extends StateNotifier<AsyncValue<void>> {
-  ProgressController() : super(const AsyncValue.data(null));
+// --- Progress Controller (Actions) --- Provider for actions like updating goal
 
-  final _supabaseClient = Supabase.instance.client;
-  final _uuid = const Uuid();
-
-  // Method to save a new weight entry (with optional photo)
-  Future<void> saveWeightEntry({
-    required double weight,
-    required DateTime date,
-    XFile? photoFile, // Use XFile from image_picker
-  }) async {
-    state = const AsyncValue.loading();
-    final user = _supabaseClient.auth.currentUser;
-
-    if (user == null) {
-      state = AsyncValue.error('User not logged in', StackTrace.current);
-      return;
-    }
-
-    String? photoUrl;
-    String? photoPath;
-
-    try {
-      // 1. Upload photo if provided
-      if (photoFile != null) {
-        final fileExt = photoFile.path.split('.').last;
-        photoPath = '${user.id}/${_uuid.v4()}.$fileExt'; // Unique path
-
-        await _supabaseClient.storage
-            .from('progress-photos') // Corrected bucket name
-            .upload(
-              photoPath,
-              File(photoFile.path),
-              fileOptions: const FileOptions(
-                cacheControl: '3600',
-                upsert: false,
-              ),
-            );
-        // Get public URL (adjust bucket name if needed)
-        photoUrl = _supabaseClient.storage
-            .from('progress-photos') // Corrected bucket name
-            .getPublicUrl(photoPath);
-      }
-
-      // 2. Insert progress record into the database
-      await _supabaseClient.from('progress_records').insert({
-        'user_id': user.id,
-        'date': date.toIso8601String(),
-        'weight': weight,
-        'photo_url': photoUrl, // Store the public URL
-        'photo_path':
-            photoPath, // Store the storage path (optional, for deletion)
-      });
-
-      state = const AsyncValue.data(null); // Success
-    } catch (e, stackTrace) {
-      state = AsyncValue.error('Failed to save progress: $e', stackTrace);
-    }
-  }
-
-  // Method to update user goals - Corrected signature and logic
-  Future<void> updateGoals({
-    required String goalType, // Changed from fitnessGoal
-    required double targetWeight,
-    required DateTime targetDate, // Added targetDate
-  }) async {
-    state = const AsyncValue.loading();
-    final user = _supabaseClient.auth.currentUser;
-
-    if (user == null) {
-      state = AsyncValue.error('User not logged in', StackTrace.current);
-      return;
-    }
-
-    try {
-      // Use upsert to insert or update based on user_id in the 'goals' table
-      await _supabaseClient.from('goals').upsert({
-        'user_id': user.id,
-        'goal_type': goalType, // Use goalType
-        'target_weight': targetWeight,
-        'target_date': targetDate.toIso8601String(), // Use targetDate
-        'updated_at': DateTime.now().toIso8601String(), // Track last update
-      }, onConflict: 'user_id'); // Specify the column for conflict resolution
-
-      state = const AsyncValue.data(null); // Success
-    } catch (e, stackTrace) {
-      state = AsyncValue.error('Failed to update goals: $e', stackTrace);
-    }
-  }
-}
-
-// Provider for the ProgressController
 final progressControllerProvider =
     StateNotifierProvider<ProgressController, AsyncValue<void>>((ref) {
-      return ProgressController();
+      return ProgressController(ref);
     });
+
+class ProgressController extends StateNotifier<AsyncValue<void>> {
+  final SupabaseClient _supabaseClient = Supabase.instance.client;
+  final Ref _ref;
+
+  ProgressController(this._ref) : super(const AsyncValue.data(null));
+
+  Future<void> updateGoal({required String goalType}) async {
+    state = const AsyncValue.loading();
+    final user = _supabaseClient.auth.currentUser;
+
+    if (user == null) {
+      state = AsyncValue.error('User not logged in', StackTrace.current);
+      throw Exception('User not logged in');
+    }
+
+    try {
+      await _supabaseClient
+          .from('users')
+          .update({'goal': goalType})
+          .eq('user_id', user.id);
+
+      state = const AsyncValue.data(null);
+      _ref.invalidate(userGoalProvider);
+    } catch (e, stackTrace) {
+      print('Error updating goal: $e\n$stackTrace');
+      state = AsyncValue.error('Failed to update goal: $e', stackTrace);
+      throw Exception('Failed to update goal: ${e.toString()}');
+    }
+  }
+}
