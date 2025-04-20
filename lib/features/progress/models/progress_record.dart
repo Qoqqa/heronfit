@@ -23,7 +23,7 @@ class ProgressRecord {
       return ProgressRecord(
         id: json['id'] as String,
         date: DateTime.parse(json['date'] as String),
-        weight: (json['weight'] as num).toDouble(),
+        weight: (json['weight_kg'] as num).toDouble(), // Use weight_kg
         photoUrl: json['photo_url'] as String?,
         photoPath: json['photo_path'] as String?,
       );
@@ -42,7 +42,7 @@ class ProgressRecord {
     return {
       // 'id': id, // Usually not needed for inserts if DB generates it
       'date': date.toIso8601String(),
-      'weight': weight,
+      'weight_kg': weight, // Use weight_kg
       'photo_url': photoUrl,
       'photo_path': photoPath,
       // 'user_id' will be added by the controller/service layer

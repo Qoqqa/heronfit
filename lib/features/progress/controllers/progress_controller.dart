@@ -69,7 +69,7 @@ class ProgressNotifier extends StateNotifier<AsyncValue<List<ProgressRecord>>> {
       final Map<String, dynamic> newRecordData = {
         'user_id': user.id,
         'date': optimisticRecord.date.toIso8601String(),
-        'weight': weight,
+        'weight_kg': weight, // Use weight_kg instead of weight
         'photo_url': picUrl,
       };
 
