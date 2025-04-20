@@ -4,6 +4,8 @@ import 'package:heronfit/features/profile/controllers/profile_controller.dart';
 import 'package:heronfit/features/profile/models/user_model.dart';
 import 'package:heronfit/widgets/loading_indicator.dart'; // Assuming you have a loading widget
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:image_picker/image_picker.dart';
+import 'dart:io'; // Import dart:io for File
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -24,6 +26,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _contactController;
 
   UserModel? _initialUserData;
+  XFile? _pickedImage; // State variable to hold the picked image file
 
   @override
   void initState() {
@@ -119,7 +122,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         updatedData['contact'] = _contactController.text;
       }
 
-      // Only call update if there are actual changes
+      // Check if a new image was picked
+      final imageToUpload = _pickedImage; // Capture the value
+
+      // Call update for text fields if there are changes
       if (updatedData.isNotEmpty) {
         ref
             .read(profileControllerProvider.notifier)
@@ -165,12 +171,128 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               );
             });
-      } else {
-        // Check if the widget is still mounted before using context
+      }
+
+      // Call upload avatar if a new image was picked
+      if (imageToUpload != null) {
+        ref
+            .read(profileControllerProvider.notifier)
+            .uploadAndUpdateAvatar(imageToUpload)
+            .then((_) {
+              if (!mounted) return;
+              final state = ref.read(profileControllerProvider);
+              if (state is AsyncData) {
+                // Optionally show a separate success message for avatar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Avatar updated successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                // Clear the picked image after successful upload
+                setState(() {
+                  _pickedImage = null;
+                });
+              } else if (state is AsyncError) {
+                // Error handled by the general profile update state watcher?
+                // Or show specific error here if needed.
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error updating avatar: ${state.error}'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
+              }
+            })
+            .catchError((error) {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'An unexpected error occurred uploading avatar: $error',
+                  ),
+                  backgroundColor: Theme.of(context).colorScheme.error,
+                ),
+              );
+            });
+      } else if (updatedData.isEmpty) {
+        // Only show "No changes" if neither text fields nor image changed
         if (!mounted) return;
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('No changes detected.')));
+      }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    XFile? image;
+
+    // Show a dialog or bottom sheet to choose the source
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Camera'),
+                onTap: () {
+                  Navigator.of(context).pop(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    // If a source was selected, proceed with picking
+    if (source != null) {
+      try {
+        image = await picker.pickImage(
+          source: source,
+          // Optionally add image quality constraints
+          // imageQuality: 50, // 0-100
+          // maxWidth: 800, // Optional max width
+        );
+
+        if (image != null) {
+          setState(() {
+            _pickedImage = image;
+          });
+        } else {
+          // User canceled the picker from the chosen source
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('No image selected.')));
+          }
+        }
+      } catch (e) {
+        // Handle potential errors during picking (e.g., permissions)
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error picking image: $e')));
+        }
+      }
+    } else {
+      // User dismissed the source selection sheet
+      if (mounted) {
+        // Optionally show a message, or just do nothing
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   const SnackBar(content: Text('Image source selection cancelled.')),
+        // );
       }
     }
   }
@@ -238,17 +360,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 50,
+                          // Show picked image preview if available, else network/placeholder
                           backgroundImage:
-                              _initialUserData?.avatar !=
-                                      null // Changed from profileImageUrl
-                                  ? NetworkImage(
-                                    _initialUserData!
-                                        .avatar!, // Changed from profileImageUrl
-                                  )
-                                  : null, // Use NetworkImage if URL exists
+                              _pickedImage != null
+                                  ? FileImage(File(_pickedImage!.path))
+                                  : _initialUserData?.avatar != null
+                                  ? NetworkImage(_initialUserData!.avatar!)
+                                  : null // Use NetworkImage if URL exists
+                                      as ImageProvider?, // Cast to ImageProvider
                           child:
-                              _initialUserData?.avatar ==
-                                      null // Changed from profileImageUrl
+                              _pickedImage == null &&
+                                      _initialUserData?.avatar == null
                                   ? const Icon(Icons.person, size: 50)
                                   : null,
                         ),
@@ -257,16 +379,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                           right: 0,
                           child: IconButton(
                             icon: const Icon(Icons.camera_alt),
-                            onPressed: () {
-                              // TODO: Implement image picking logic
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Image picking not implemented yet.',
-                                  ),
-                                ),
-                              );
-                            },
+                            style: IconButton.styleFrom(
+                              // Add background for visibility
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.onPrimary,
+                            ),
+                            onPressed:
+                                _pickImage, // Call the image picking method
                           ),
                         ),
                       ],

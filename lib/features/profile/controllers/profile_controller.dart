@@ -1,9 +1,11 @@
 import 'dart:io'; // Import dart:io for File
+import 'package:flutter/foundation.dart'; // Import kIsWeb
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/features/profile/models/user_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:path/path.dart' as p;
+import 'dart:typed_data'; // Import for Uint8List
 
 // Provider to fetch the current user's profile data
 // Using FutureProvider for a one-time fetch, could be StreamProvider for real-time updates
@@ -106,29 +108,33 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
       }
       // --- End Get old avatar path ---
 
-      final fileExt = p.extension(imageFile.path);
+      final fileExt = p.extension(
+        imageFile.name,
+      ); // Use imageFile.name for web compatibility
       final fileName =
           '${user.id}_${DateTime.now().millisecondsSinceEpoch}$fileExt';
-      final newAvatarPath = 'avatars/$fileName'; // Path for the new avatar
+      // FIX: Path should be relative to the bucket, not include the bucket name.
+      final newAvatarPath =
+          fileName; // Path for the new avatar WITHIN the bucket
 
-      // 1. Upload NEW image to Supabase Storage
+      // Read image bytes
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+
+      // 1. Upload NEW image bytes to Supabase Storage using uploadBinary
       final uploadResponse = await _supabase.storage
-          .from('avatars')
-          .upload(
-            newAvatarPath,
-            File(imageFile.path),
-            fileOptions: const FileOptions(
+          .from('avatars') // Bucket name specified here
+          .uploadBinary(
+            // Use uploadBinary for Uint8List
+            newAvatarPath, // Path WITHIN the bucket
+            imageBytes, // Pass the image bytes
+            fileOptions: FileOptions(
               cacheControl: '3600',
-              upsert: false,
-            ), // Consider upsert: true if you want to overwrite by path, but unique names are safer
+              // upsert is often useful here if you want predictable paths,
+              // but unique names avoid accidental overwrites.
+              // Consider contentType based on fileExt if needed, though Supabase often infers it.
+              contentType: imageFile.mimeType, // Pass mimeType if available
+            ),
           );
-
-      // Check for upload errors explicitly
-      if (uploadResponse.isEmpty) {
-        throw Exception(
-          'Failed to upload image: Empty response from storage upload.',
-        );
-      }
 
       // 2. Get the public URL of the NEW uploaded image
       final newImageUrl = _supabase.storage
@@ -163,7 +169,7 @@ class ProfileController extends StateNotifier<AsyncValue<void>> {
       print('Storage Error uploading/deleting avatar: ${e.message}');
       state = AsyncValue.error('Storage Error: ${e.message}', st);
     } catch (e, st) {
-      print('Error in uploadAndUpdateAvatar: $e');
+      print('Error in uploadAndUpdateAvatar: $e\n$st'); // Print stack trace too
       state = AsyncValue.error('Failed to update avatar: $e', st);
     }
   }
