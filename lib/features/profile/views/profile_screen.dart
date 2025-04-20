@@ -80,6 +80,15 @@ class ProfileScreen extends ConsumerWidget {
                   user.avatar ??
                   'https://images.unsplash.com/photo-1531123414780-f74242c2b052?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NDV8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=900&q=60';
 
+              ImageProvider? avatarProvider;
+              if (user.avatar != null && user.avatar!.isNotEmpty) {
+                avatarProvider = CachedNetworkImageProvider(user.avatar!);
+              } else {
+                avatarProvider = const AssetImage(
+                  'assets/images/heronfit_icon.png',
+                );
+              }
+
               return Column(
                 mainAxisSize: MainAxisSize.max,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,89 +108,38 @@ class ProfileScreen extends ConsumerWidget {
                                 Row(
                                   mainAxisSize: MainAxisSize.max,
                                   children: [
-                                    Container(
-                                      width: 72,
-                                      height: 72,
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.secondary,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: HeronFitTheme.primary,
-                                          width: 3,
-                                        ),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(3),
-                                        child: InkWell(
-                                          splashColor: Colors.transparent,
-                                          focusColor: Colors.transparent,
-                                          hoverColor: Colors.transparent,
-                                          highlightColor: Colors.transparent,
-                                          onTap: () async {
-                                            showDialog(
-                                              context: context,
-                                              builder:
-                                                  (_) => Dialog(
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                            8.0,
-                                                          ),
-                                                      child: CachedNetworkImage(
-                                                        imageUrl:
-                                                            profileImageUrl,
-                                                        fit: BoxFit.contain,
-                                                        placeholder:
-                                                            (
-                                                              context,
-                                                              url,
-                                                            ) => const Center(
-                                                              child:
-                                                                  CircularProgressIndicator(),
-                                                            ),
-                                                        errorWidget:
-                                                            (
-                                                              context,
-                                                              url,
-                                                              error,
-                                                            ) => const Icon(
-                                                              SolarIconsBold
-                                                                  .user,
-                                                              size: 100,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                            );
-                                          },
-                                          child: ClipRRect(
-                                            borderRadius: BorderRadius.circular(
-                                              50,
-                                            ),
-                                            child: CachedNetworkImage(
-                                              imageUrl: profileImageUrl,
-                                              width: 60,
-                                              height: 60,
-                                              fit: BoxFit.cover,
-                                              placeholder:
-                                                  (context, url) => Center(
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          color:
-                                                              HeronFitTheme
-                                                                  .primary,
-                                                          strokeWidth: 2,
-                                                        ),
-                                                  ),
-                                              errorWidget:
-                                                  (context, url, error) => Icon(
-                                                    SolarIconsBold.user,
+                                    CircleAvatar(
+                                      // Outer border
+                                      radius:
+                                          40 +
+                                          2 +
+                                          2, // Base radius + inner width (4) + outer width (4)
+                                      backgroundColor:
+                                          colorScheme
+                                              .primary, // Outer border color
+                                      child: CircleAvatar(
+                                        // Inner border
+                                        radius:
+                                            40 +
+                                            2, // Base radius + inner width (4)
+                                        backgroundColor:
+                                            Colors.white, // Inner border color
+                                        child: CircleAvatar(
+                                          // Original Avatar with image
+                                          radius: 40,
+                                          backgroundImage: avatarProvider,
+                                          backgroundColor:
+                                              colorScheme.surfaceVariant,
+                                          child:
+                                              avatarProvider == null
+                                                  ? Icon(
+                                                    Icons.person,
+                                                    size: 40,
                                                     color:
-                                                        HeronFitTheme.primary,
-                                                    size: 30,
-                                                  ),
-                                            ),
-                                          ),
+                                                        colorScheme
+                                                            .onSurfaceVariant,
+                                                  )
+                                                  : null,
                                         ),
                                       ),
                                     ),
@@ -208,28 +166,27 @@ class ProfileScreen extends ConsumerWidget {
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                           ),
-                                          const SizedBox(height: 4),
+                                          const SizedBox(height: 0),
                                           RichText(
                                             text: TextSpan(
                                               children: [
                                                 TextSpan(
                                                   text: 'Goal | ',
-                                                  style: textTheme.bodyMedium
+                                                  style: textTheme.bodyLarge
                                                       ?.copyWith(
-                                                        color: colorScheme
-                                                            .onSurface
-                                                            .withAlpha(
-                                                              ((0.7 * 255)
-                                                                  .round()),
-                                                            ),
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                        color:
+                                                            colorScheme
+                                                                .onSurface,
                                                       ),
                                                 ),
                                                 TextSpan(
                                                   text: user.goal ?? 'Not Set',
-                                                  style: textTheme.bodyMedium
+                                                  style: textTheme.bodyLarge
                                                       ?.copyWith(
                                                         fontWeight:
-                                                            FontWeight.w600,
+                                                            FontWeight.w500,
                                                         color:
                                                             colorScheme
                                                                 .onSurface,
@@ -254,17 +211,17 @@ class ProfileScreen extends ConsumerWidget {
                                   },
                                   style: ElevatedButton.styleFrom(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
+                                      horizontal: 32,
                                     ),
                                     backgroundColor: colorScheme.secondary,
                                     foregroundColor: Colors.white,
-                                    textStyle: textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
+                                    textStyle: textTheme.labelLarge?.copyWith(
+                                      fontWeight: FontWeight.w500,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    elevation: 2,
+                                    elevation: 0,
                                   ),
                                   child: const Text('Edit'),
                                 ),
@@ -350,7 +307,7 @@ class ProfileScreen extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 minimumSize: const Size(double.infinity, 48),
-                                elevation: 2,
+                                elevation: 0,
                               ),
                             ),
                           ),
@@ -375,7 +332,7 @@ class ProfileScreen extends ConsumerWidget {
       child: Card(
         clipBehavior: Clip.antiAliasWithSaveLayer,
         color: colorScheme.surface,
-        elevation: 4,
+        elevation: 0,
         shadowColor: Theme.of(
           context,
         ).shadowColor.withAlpha(((0.5 * 255).round())),

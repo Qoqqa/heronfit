@@ -358,21 +358,39 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Center(
                     child: Stack(
                       children: [
+                        // Apply nested CircleAvatars for borders
                         CircleAvatar(
-                          radius: 50,
-                          // Show picked image preview if available, else network/placeholder
-                          backgroundImage:
-                              _pickedImage != null
-                                  ? FileImage(File(_pickedImage!.path))
-                                  : _initialUserData?.avatar != null
-                                  ? NetworkImage(_initialUserData!.avatar!)
-                                  : null // Use NetworkImage if URL exists
-                                      as ImageProvider?, // Cast to ImageProvider
-                          child:
-                              _pickedImage == null &&
-                                      _initialUserData?.avatar == null
-                                  ? const Icon(Icons.person, size: 50)
-                                  : null,
+                          // Outer border
+                          radius:
+                              50 +
+                              2 +
+                              2, // Base radius + inner width (2) + outer width (2)
+                          backgroundColor:
+                              Theme.of(
+                                context,
+                              ).colorScheme.primary, // Outer border color
+                          child: CircleAvatar(
+                            // Inner border
+                            radius: 50 + 2, // Base radius + inner width (2)
+                            backgroundColor: Colors.white, // Inner border color
+                            child: CircleAvatar(
+                              // Original Avatar with image
+                              radius: 50,
+                              // Show picked image preview if available, else network/placeholder
+                              backgroundImage:
+                                  _pickedImage != null
+                                      ? FileImage(File(_pickedImage!.path))
+                                      : _initialUserData?.avatar != null
+                                      ? NetworkImage(_initialUserData!.avatar!)
+                                      : null // Use NetworkImage if URL exists
+                                          as ImageProvider?, // Cast to ImageProvider
+                              child:
+                                  _pickedImage == null &&
+                                          _initialUserData?.avatar == null
+                                      ? const Icon(Icons.person, size: 50)
+                                      : null,
+                            ),
+                          ),
                         ),
                         Positioned(
                           bottom: 0,
