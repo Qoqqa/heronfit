@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart'; // Import AppRoutes
 import 'package:heronfit/features/progress/controllers/progress_controller.dart';
 import 'package:heronfit/features/progress/models/progress_record.dart';
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+import 'dart:ui'; // Import dart:ui for PointMode
 
 class ViewProgressPhotosWidget extends ConsumerStatefulWidget {
-  const ViewProgressPhotosWidget({super.key});
+  final int? initialIndex; // Add optional initial index parameter
+
+  const ViewProgressPhotosWidget({
+    this.initialIndex,
+    super.key,
+  }); // Update constructor
 
   @override
   ConsumerState<ViewProgressPhotosWidget> createState() =>
@@ -18,8 +25,16 @@ class _ViewProgressPhotosWidgetState
     extends ConsumerState<ViewProgressPhotosWidget> {
   int _selectedPhotoIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the selected index from the widget parameter if provided
+    _selectedPhotoIndex = widget.initialIndex ?? 0;
+  }
+
   String _formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
+    // Format date as "15 October 2024"
+    return DateFormat('dd MMMM yyyy').format(date);
   }
 
   @override
@@ -50,6 +65,22 @@ class _ViewProgressPhotosWidgetState
               fontWeight: FontWeight.bold, // Set font weight to bold
             ),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                SolarIconsOutline.menuDots, // Options icon from Figma
+                color: theme.primaryColor,
+                size: 28,
+              ),
+              tooltip: 'Options',
+              onPressed: () {
+                // TODO: Implement options menu (e.g., delete photo)
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Options menu (TODO)')),
+                );
+              },
+            ),
+          ],
           centerTitle: true,
         ),
         body: SafeArea(
@@ -63,12 +94,13 @@ class _ViewProgressPhotosWidgetState
                       )
                       .toList();
 
+              // Ensure initial index is valid after data loads
               if (_selectedPhotoIndex >= photoRecords.length &&
                   photoRecords.isNotEmpty) {
                 _selectedPhotoIndex = photoRecords.length - 1;
               }
               if (photoRecords.isEmpty) {
-                _selectedPhotoIndex = 0;
+                _selectedPhotoIndex = 0; // Reset if list becomes empty
               }
 
               if (photoRecords.isEmpty) {
@@ -84,25 +116,56 @@ class _ViewProgressPhotosWidgetState
                 );
               }
 
+              // Ensure index is valid before accessing the record
+              if (_selectedPhotoIndex < 0 ||
+                  _selectedPhotoIndex >= photoRecords.length) {
+                // Handle invalid index, maybe show first photo or an error
+                // For now, default to 0 if possible
+                _selectedPhotoIndex = photoRecords.isNotEmpty ? 0 : -1;
+                if (_selectedPhotoIndex == -1) {
+                  return const Center(
+                    child: Text('Error: Invalid photo index.'),
+                  );
+                }
+              }
+
               final selectedRecord = photoRecords[_selectedPhotoIndex];
 
               return Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  16,
+                  16,
+                ), // Adjust padding
                 child: Column(
                   mainAxisSize: MainAxisSize.max,
                   children: [
                     Expanded(
-                      flex: 3,
+                      flex: 5, // Give more space to the image
                       child: Padding(
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Container(
                           width: double.infinity,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
+                            // Lighter background for the image container
+                            color: theme.cardColor,
+                            borderRadius: BorderRadius.circular(
+                              12,
+                            ), // Rounded corners
+                            boxShadow: [
+                              // Subtle shadow
+                              BoxShadow(
+                                blurRadius: 6,
+                                color: theme.shadowColor.withOpacity(0.1),
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(
+                              12,
+                            ), // Match container
                             child: Image.network(
                               selectedRecord.photoUrl!,
                               fit: BoxFit.contain,
@@ -129,6 +192,7 @@ class _ViewProgressPhotosWidgetState
                         ),
                       ),
                     ),
+                    // --- Metadata and Actions Section (Reordered to match Figma) ---
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12.0),
                       child: Column(
@@ -147,7 +211,8 @@ class _ViewProgressPhotosWidgetState
                                 ),
                                 tooltip: 'View All Photos',
                                 onPressed: () {
-                                  context.push('/progressPhotoList');
+                                  // Use AppRoutes constant
+                                  context.push(AppRoutes.progressPhotoList);
                                 },
                               ),
                               IconButton(
@@ -160,66 +225,92 @@ class _ViewProgressPhotosWidgetState
                                 ),
                                 tooltip: 'Compare Photos',
                                 onPressed: () {
-                                  context.push('/compareProgressPhotos');
+                                  // Use AppRoutes constant
+                                  context.push(
+                                    AppRoutes.progressPhotoCompare,
+                                  ); // Corrected route
                                 },
                               ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            '${selectedRecord.weight} kg',
-                            style: theme.textTheme.labelLarge?.copyWith(
+                            '${selectedRecord.weight.toStringAsFixed(1)} kg', // Format weight
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              // Use titleMedium
                               color: theme.primaryColor,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.bold, // Make bold
                             ),
                           ),
                           Text(
-                            _formatDate(selectedRecord.date),
-                            style: theme.textTheme.labelSmall?.copyWith(
+                            _formatDate(
+                              selectedRecord.date,
+                            ), // Use formatted date
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              // Use bodySmall
+                              color: theme.hintColor, // Use hint color
                               fontWeight: FontWeight.normal,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    // --- Timeline/Thumbnail Slider ---
+                    // Simple line indicator (optional, visual flair)
+                    Container(
+                      height: 4,
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: CustomPaint(
+                        painter: TimelinePainter(
+                          selectedIndex: _selectedPhotoIndex,
+                          itemCount: photoRecords.length,
+                          color: theme.primaryColor,
+                          backgroundColor: theme.dividerColor,
+                        ),
+                      ),
+                    ),
+                    // Thumbnail List
                     SizedBox(
-                      height: 100,
+                      height: 70, // Adjust height for thumbnails
                       child: ListView.separated(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         scrollDirection: Axis.horizontal,
                         itemCount: photoRecords.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        separatorBuilder:
+                            (_, __) =>
+                                const SizedBox(width: 12), // Increase spacing
                         itemBuilder: (context, index) {
                           final record = photoRecords[index];
                           final isSelected = _selectedPhotoIndex == index;
 
-                          return Container(
-                            width: 100,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border:
-                                  isSelected
-                                      ? Border.all(
-                                        color: theme.primaryColor,
-                                        width: 3,
-                                      )
-                                      : Border.all(
-                                        color: Colors.grey.shade400,
-                                        width: 1,
-                                      ),
-                            ),
-                            child: InkWell(
-                              splashColor: Colors.transparent,
-                              focusColor: Colors.transparent,
-                              hoverColor: Colors.transparent,
-                              highlightColor: Colors.transparent,
-                              onTap: () {
-                                setState(() {
-                                  _selectedPhotoIndex = index;
-                                });
-                              },
-                              child: ClipRRect(
+                          return GestureDetector(
+                            // Use GestureDetector instead of InkWell
+                            onTap: () {
+                              setState(() {
+                                _selectedPhotoIndex = index;
+                              });
+                            },
+                            child: Container(
+                              width: 70, // Square thumbnails
+                              decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color:
+                                      isSelected
+                                          ? theme.primaryColor
+                                          : theme
+                                              .dividerColor, // Use divider color for non-selected
+                                  width:
+                                      isSelected
+                                          ? 3
+                                          : 1, // Thicker border if selected
+                                ),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                  isSelected ? 5 : 7, // Inner radius adjust
+                                ),
                                 child: Image.network(
                                   record.photoUrl!,
                                   fit: BoxFit.cover,
@@ -229,18 +320,23 @@ class _ViewProgressPhotosWidgetState
                                     loadingProgress,
                                   ) {
                                     if (loadingProgress == null) return child;
-                                    return const Center(
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
+                                    return Container(
+                                      // Add background for loading
+                                      color: Colors.grey[200],
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
                                       ),
                                     );
                                   },
                                   errorBuilder:
                                       (context, error, stackTrace) => Container(
                                         color: Colors.grey[300],
-                                        child: const Icon(
-                                          Icons.error_outline,
-                                          color: Colors.grey,
+                                        child: Icon(
+                                          SolarIconsOutline
+                                              .galleryRemove, // Use SolarIcon
+                                          color: Colors.grey[600],
                                           size: 30,
                                         ),
                                       ),
@@ -270,5 +366,64 @@ class _ViewProgressPhotosWidgetState
         ),
       ),
     );
+  }
+}
+
+// Custom Painter for the simple timeline indicator
+class TimelinePainter extends CustomPainter {
+  final int selectedIndex;
+  final int itemCount;
+  final Color color;
+  final Color backgroundColor;
+
+  TimelinePainter({
+    required this.selectedIndex,
+    required this.itemCount,
+    required this.color,
+    required this.backgroundColor,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paintBg =
+        Paint()
+          ..color = backgroundColor
+          ..strokeWidth = 2
+          ..strokeCap = StrokeCap.round;
+
+    final paintFg =
+        Paint()
+          ..color = color
+          ..strokeWidth =
+              4 // Make dot slightly thicker
+          ..strokeCap = StrokeCap.round;
+
+    // Draw background line
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      paintBg,
+    );
+
+    // Draw selected dot
+    if (itemCount > 0) {
+      final double dx =
+          (size.width / (itemCount > 1 ? itemCount - 1 : 1)) * selectedIndex;
+      // Clamp dx to prevent drawing outside bounds if itemCount is 1
+      final double clampedDx = dx.clamp(0.0, size.width);
+      canvas.drawPoints(
+        PointMode.points, // Now defined
+        [Offset(clampedDx, size.height / 2)],
+        paintFg,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant TimelinePainter oldDelegate) {
+    return oldDelegate.selectedIndex != selectedIndex ||
+        oldDelegate.itemCount != itemCount ||
+        oldDelegate.color != color ||
+        oldDelegate.backgroundColor != backgroundColor;
   }
 }

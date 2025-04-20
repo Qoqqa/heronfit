@@ -99,12 +99,10 @@ class ProgressPhotosListWidget extends ConsumerWidget {
                       child: InkWell(
                         // Wrap with InkWell for tap effect
                         onTap: () {
-                          // Navigate to view single photo (if needed)
-                          // context.push('${AppRoutes.viewProgressPhoto}/${record.id}');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Navigate to View Photo (TODO)'),
-                            ),
+                          // Navigate to the single photo view, passing the index
+                          context.push(
+                            AppRoutes.progressViewPhoto,
+                            extra: index,
                           );
                         },
                         child: Container(

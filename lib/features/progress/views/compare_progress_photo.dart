@@ -20,37 +20,52 @@ class _CompareProgressPhotosWidgetState
   ProgressRecord? _selectedPhoto2;
 
   String _formatDate(DateTime date) {
-    return DateFormat('MMM dd, yyyy').format(date);
+    return DateFormat('dd MMMM yyyy').format(date);
   }
 
   @override
   Widget build(BuildContext context) {
     final progressRecordsAsyncValue = ref.watch(progressRecordsProvider);
-    final theme = Theme.of(context); // Get theme
+    final theme = Theme.of(context);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: theme.scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: Colors.transparent, // Set background to transparent
-          elevation: 0, // Remove elevation
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           automaticallyImplyLeading: false,
           leading: IconButton(
             icon: Icon(
-              SolarIconsOutline.altArrowLeft, // Use SolarIcons
-              color: theme.primaryColor, // Use primary color
-              size: 28, // Adjust size as needed
+              SolarIconsOutline.altArrowLeft,
+              color: theme.primaryColor,
+              size: 28,
             ),
             onPressed: () => context.canPop() ? context.pop() : null,
           ),
           title: Text(
             'Compare Photos',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: theme.primaryColor, // Use primary color
-              fontWeight: FontWeight.bold, // Set font weight to bold
+              color: theme.primaryColor,
+              fontWeight: FontWeight.bold,
             ),
           ),
+          actions: [
+            IconButton(
+              icon: Icon(
+                SolarIconsOutline.menuDots,
+                color: theme.primaryColor,
+                size: 28,
+              ),
+              tooltip: 'Options',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Options menu (TODO)')),
+                );
+              },
+            ),
+          ],
           centerTitle: true,
         ),
         body: SafeArea(
@@ -80,18 +95,18 @@ class _CompareProgressPhotosWidgetState
                 children: [
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 16),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _buildComparisonImage(context, _selectedPhoto1, 1),
-                          const VerticalDivider(thickness: 1),
+                          const SizedBox(width: 8),
                           _buildComparisonImage(context, _selectedPhoto2, 2),
                         ],
                       ),
                     ),
                   ),
-                  const Divider(height: 1),
+                  const Divider(height: 1, thickness: 1),
                   _buildPhotoSelector(context, photoRecords),
                 ],
               );
@@ -118,22 +133,29 @@ class _CompareProgressPhotosWidgetState
     ProgressRecord? record,
     int position,
   ) {
+    final theme = Theme.of(context);
     return Expanded(
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
             child: Container(
-              margin: const EdgeInsets.all(8),
+              margin: const EdgeInsets.only(bottom: 8),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Theme.of(context).dividerColor),
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    blurRadius: 6,
+                    color: theme.shadowColor.withOpacity(0.1),
+                    offset: const Offset(0, 3),
+                  ),
+                ],
               ),
               child:
                   record?.photoUrl != null
                       ? ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(12),
                         child: Image.network(
                           record!.photoUrl!,
                           fit: BoxFit.contain,
@@ -144,10 +166,10 @@ class _CompareProgressPhotosWidgetState
                             );
                           },
                           errorBuilder:
-                              (context, error, stackTrace) => const Center(
+                              (context, error, stackTrace) => Center(
                                 child: Icon(
-                                  Icons.error,
-                                  color: Colors.red,
+                                  SolarIconsOutline.galleryRemove,
+                                  color: theme.hintColor,
                                   size: 40,
                                 ),
                               ),
@@ -156,22 +178,37 @@ class _CompareProgressPhotosWidgetState
                       : Center(
                         child: Text(
                           'Select Photo $position',
-                          style: Theme.of(context).textTheme.labelMedium,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.hintColor,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            record != null ? _formatDate(record.date) : '-',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          Text(
-            record != null ? '${record.weight} kg' : '-',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+            child: Column(
+              children: [
+                Text(
+                  record != null
+                      ? '${record.weight.toStringAsFixed(1)} kg'
+                      : '-',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.primaryColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                Text(
+                  record != null ? _formatDate(record.date) : '-',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -182,13 +219,16 @@ class _CompareProgressPhotosWidgetState
     BuildContext context,
     List<ProgressRecord> photoRecords,
   ) {
+    final theme = Theme.of(context);
     return Container(
-      height: 140,
+      height: 120,
       padding: const EdgeInsets.symmetric(vertical: 16.0),
-      color: Theme.of(context).cardColor,
-      child: ListView.builder(
+      color: theme.scaffoldBackgroundColor,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: photoRecords.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final record = photoRecords[index];
           final isSelected1 = _selectedPhoto1?.id == record.id;
@@ -206,15 +246,25 @@ class _CompareProgressPhotosWidgetState
                   if (_selectedPhoto1 == null) {
                     _selectedPhoto1 = record;
                   } else if (_selectedPhoto2 == null) {
-                    _selectedPhoto2 = record;
+                    if (_selectedPhoto1?.id != record.id) {
+                      _selectedPhoto2 = record;
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Cannot select the same photo twice.'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
                   } else {
                     _selectedPhoto1 = record;
                     _selectedPhoto2 = null;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                          'Deselected Photo 2. Tap another photo to select it.',
+                          'Selected new Photo 1. Tap another photo to select Photo 2.',
                         ),
+                        duration: Duration(seconds: 2),
                       ),
                     );
                   }
@@ -222,20 +272,16 @@ class _CompareProgressPhotosWidgetState
               });
             },
             child: Container(
-              width: 100,
-              margin: const EdgeInsets.symmetric(horizontal: 8.0),
+              width: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color:
-                      isSelected
-                          ? Theme.of(context).primaryColor
-                          : Colors.transparent,
-                  width: 3,
+                  color: isSelected ? theme.primaryColor : theme.dividerColor,
+                  width: isSelected ? 3 : 1,
                 ),
               ),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(isSelected ? 5 : 7),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -244,13 +290,21 @@ class _CompareProgressPhotosWidgetState
                       fit: BoxFit.cover,
                       loadingBuilder: (context, child, loadingProgress) {
                         if (loadingProgress == null) return child;
-                        return const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
                         );
                       },
                       errorBuilder:
-                          (context, error, stackTrace) => const Center(
-                            child: Icon(Icons.error_outline, size: 30),
+                          (context, error, stackTrace) => Container(
+                            color: Colors.grey[300],
+                            child: Icon(
+                              SolarIconsOutline.galleryRemove,
+                              color: Colors.grey[600],
+                              size: 30,
+                            ),
                           ),
                     ),
                     if (!isSelected)
@@ -259,17 +313,16 @@ class _CompareProgressPhotosWidgetState
                       Align(
                         alignment: Alignment.bottomCenter,
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 2,
-                          ),
-                          color: Theme.of(
-                            context,
-                          ).primaryColor.withOpacity(0.8),
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          color: theme.primaryColor.withOpacity(0.85),
                           child: Text(
                             isSelected1 ? 'Photo 1' : 'Photo 2',
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: Colors.white),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

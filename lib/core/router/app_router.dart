@@ -31,6 +31,8 @@ import 'package:heronfit/features/progress/views/update_weight.dart';
 import 'package:heronfit/features/progress/views/progress_tracker.dart';
 import 'package:heronfit/features/progress/views/progress_photo_list.dart';
 import 'package:heronfit/features/progress/views/progress_details_screen.dart'; // Import Progress Details Screen
+import 'package:heronfit/features/progress/views/view_progress_photo.dart'; // Import ViewProgressPhotosWidget
+import 'package:heronfit/features/progress/views/compare_progress_photo.dart'; // Import CompareProgressPhotosWidget
 import 'package:heronfit/features/onboarding/views/onboarding_hero.dart';
 import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
@@ -164,6 +166,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.progressPhotoList,
         builder: (context, state) => const ProgressPhotosListWidget(),
+      ),
+      // Add route for viewing a single photo
+      GoRoute(
+        path: AppRoutes.progressViewPhoto,
+        builder: (context, state) {
+          // Extract the index passed as an extra parameter
+          final initialIndex = state.extra as int?;
+          return ViewProgressPhotosWidget(initialIndex: initialIndex);
+        },
+      ),
+      // Add route for comparing photos
+      GoRoute(
+        path: AppRoutes.progressPhotoCompare,
+        builder: (context, state) => const CompareProgressPhotosWidget(),
       ),
       // Add the new route for Progress Details
       GoRoute(
