@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../core/router/app_routes.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 class OnboardingWidget extends StatefulWidget {
   const OnboardingWidget({super.key});
@@ -23,143 +24,117 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
       },
       child: Scaffold(
         backgroundColor: HeronFitTheme.bgLight,
-        body: Column(
-          mainAxisSize: MainAxisSize.max,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Container(
-              width: double.infinity,
-              height: 48.0,
-              decoration: BoxDecoration(),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.asset(
-                  'assets/images/logotype_heronfit.png',
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 32.0,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  height: 40.0,
+                  child: Image.asset(
+                    'assets/images/logotype_heronfit.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+                const Spacer(flex: 1),
+
+                Container(
                   width: double.infinity,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-            Flexible(
-              child: Container(
-                width: double.infinity,
-                height: 400.0,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
+                  child: Image.asset(
+                    'assets/images/onboarding_hero.png',
                     fit: BoxFit.cover,
-                    image:
-                        Image.asset('assets/images/onboarding_hero.png').image,
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Column(
-                    mainAxisSize: MainAxisSize.max,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Align(
-                        alignment: AlignmentDirectional(0.0, 0.0),
-                        child: Text(
-                          'Welcome to HeronFit',
-                          textAlign: TextAlign.center,
-                          style: HeronFitTheme.textTheme.headlineMedium
-                              ?.copyWith(
-                                color: HeronFitTheme.primary,
-                                fontWeight: FontWeight.w800,
-                              ),
+                const Spacer(flex: 1),
+
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Welcome to HeronFit',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+                        color: HeronFitTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Your Fitness Journey Starts Here',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                        color: HeronFitTheme.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        context.push(AppRoutes.register);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 52.0),
+                        backgroundColor: HeronFitTheme.primary,
+                        foregroundColor: HeronFitTheme.bgLight,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Align(
-                        alignment: AlignmentDirectional(0.0, 0.0),
-                        child: Text(
-                          'Your Fitness Journey Starts Here',
-                          style: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                            color: HeronFitTheme.primary,
+                      child: const Text('Get Started'),
+                    ),
+                    const SizedBox(height: 16.0),
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      focusColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      onTap: () {
+                        context.push(AppRoutes.login);
+                      },
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                            color: HeronFitTheme.textMuted,
                           ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsetsDirectional.fromSTEB(
-                          0.0,
-                          16.0,
-                          0.0,
-                          16.0,
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            context.push(AppRoutes.register);
-                          },
-                          style: ElevatedButton.styleFrom(
-                            minimumSize: const Size(double.infinity, 48.0),
-                            backgroundColor: HeronFitTheme.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
+                          children: [
+                            const TextSpan(text: 'Already have an account? '),
+                            TextSpan(
+                              text: 'Log in',
+                              style: HeronFitTheme.textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: HeronFitTheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () {
+                                      context.push(AppRoutes.login);
+                                    },
                             ),
-                          ),
-                          child: Text(
-                            'Get Started',
-                            style: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                              color: HeronFitTheme.bgLight,
-                            ),
-                          ),
+                          ],
                         ),
                       ),
-                      InkWell(
-                        splashColor: Colors.transparent,
-                        focusColor: Colors.transparent,
-                        hoverColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onTap: () {
-                          context.push(AppRoutes.login);
-                        },
-                        child: RichText(
-                          text: TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Already have an account?',
-                                style: HeronFitTheme.textTheme.labelMedium
-                                    ?.copyWith(
-                                      color: HeronFitTheme.primary,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                              TextSpan(
-                                text: ' Log In',
-                                style: HeronFitTheme.textTheme.labelMedium
-                                    ?.copyWith(
-                                      color: HeronFitTheme.primaryDark,
-                                      fontWeight: FontWeight.w600,
-                                      decoration: TextDecoration.underline,
-                                    ),
-                                recognizer:
-                                    TapGestureRecognizer()
-                                      ..onTap = () {
-                                        context.push(AppRoutes.login);
-                                      },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

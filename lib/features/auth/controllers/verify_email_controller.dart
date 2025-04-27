@@ -1,31 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-Future<bool> verifyEmailWithToken(
-  String email,
-  String? token,
-) async {
-  // Instantiate Supabase client
+// Returns the AuthResponse on success, otherwise throws error
+Future<AuthResponse> verifyEmailWithToken(String email, String? token) async {
   final supabase = Supabase.instance.client;
 
   try {
-    // Call the Supabase verifyOTP function
-    // If successful, a response with the user and session is returned
     final AuthResponse res = await supabase.auth.verifyOTP(
       type: OtpType.signup,
       token: token ?? "",
       email: email,
     );
 
-    // Return true if session is not null (i.e., user has signed in)
-    return res.session != null;
+    // Check if verification was successful (user/session is usually present)
+    if (res.session == null && res.user == null) {
+      debugPrint('verifyOTP successful call but no session/user returned.');
+      // This might happen in some edge cases, treat as failure for profile creation
+      throw Exception('Verification failed: Invalid token or expired session.');
+    }
+    debugPrint(
+      'verifyOTP successful: User ${res.user?.id}, Session ${res.session != null}',
+    );
+    return res;
   } on AuthException catch (e) {
-    // Catch any authentication errors and print them to the console
-    debugPrint("AuthException: ${e.message}");
-    return false;
+    debugPrint("AuthException during verifyOTP: ${e.message}");
+    throw Exception('Verification failed: ${e.message}');
   } catch (error) {
-    // Catch any other errors
-    debugPrint("Error: $error");
-    return false;
+    debugPrint("Error during verifyOTP: $error");
+    throw Exception('An unexpected error occurred during verification: $error');
   }
 }

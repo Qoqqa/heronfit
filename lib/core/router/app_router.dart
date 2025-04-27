@@ -4,9 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Import necessary screen/widget files
 import 'package:heronfit/features/splash/views/splash_screen.dart'; // Import Splash Screen
-import 'package:heronfit/features/auth/views/login_widget.dart';
+import 'package:heronfit/features/auth/views/login_screen.dart';
 import 'package:heronfit/features/auth/views/register_screen.dart';
-import 'package:heronfit/features/auth/views/register_verification.dart';
+import 'package:heronfit/features/auth/views/register_verification.dart'
+    as reg_verify;
 import 'package:heronfit/features/home/views/home_screen.dart';
 import 'package:heronfit/features/profile/views/profile_screen.dart';
 import 'package:heronfit/features/profile/views/edit_profile.dart';
@@ -36,6 +37,9 @@ import 'package:heronfit/features/progress/views/compare_progress_photo.dart'; /
 import 'package:heronfit/features/onboarding/views/onboarding_hero.dart';
 import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
+import 'package:heronfit/features/auth/views/register_getting_to_know_screen.dart';
+import 'package:heronfit/features/auth/views/register_set_goals_screen.dart';
+import 'package:heronfit/features/auth/views/register_success_screen.dart';
 
 import 'app_routes.dart';
 
@@ -62,25 +66,34 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const LoginWidget(),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: AppRoutes.register,
+        name: AppRoutes.register,
         builder: (context, state) => const RegisterWidget(),
         routes: [
+          GoRoute(
+            path: 'getting-to-know',
+            name: AppRoutes.registerGettingToKnow,
+            builder: (context, state) => const RegisterGettingToKnowScreen(),
+          ),
+          GoRoute(
+            path: 'set-goals',
+            name: AppRoutes.registerSetGoals,
+            builder: (context, state) => const RegisterSetGoalsScreen(),
+          ),
           GoRoute(
             path: 'verify',
             name: AppRoutes.registerVerify,
             builder: (context, state) {
-              final args = state.extra as Map<String, String>? ?? {};
-              return RegisterVerificationWidget(
-                email: args['email'] ?? '',
-                password: args['password'] ?? '',
-                confirmPassword: args['confirmPassword'] ?? '',
-                firstName: args['firstName'] ?? '',
-                lastName: args['lastName'] ?? '',
-              );
+              return const reg_verify.RegisterVerificationScreen();
             },
+          ),
+          GoRoute(
+            path: 'success',
+            name: AppRoutes.registerSuccess,
+            builder: (context, state) => const RegisterSuccessScreen(),
           ),
         ],
       ),

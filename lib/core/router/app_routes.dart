@@ -5,6 +5,9 @@ class AppRoutes {
   static const register = '/register';
   static const registerVerify = '/register/verify'; // Example, adjust as needed
   static const registerStep2 = '/register/step2'; // Example, adjust as needed
+  static const registerGettingToKnow = '/register/getting-to-know';
+  static const registerSetGoals = '/register/set-goals';
+  static const registerSuccess = '/register/success';
 
   static const home =
       '/home'; // Base for main app features often using ShellRoute
