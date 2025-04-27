@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:go_router/go_router.dart';
-import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
-// Import the new card widgets
 import '../widgets/gym_availability_card.dart';
 import '../widgets/upcoming_session_card.dart';
 import '../widgets/recent_activity_card.dart';
