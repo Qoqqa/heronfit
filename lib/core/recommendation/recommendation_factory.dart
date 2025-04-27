@@ -1,4 +1,3 @@
-import '../../features/workout/models/workout_model.dart';
 import 'base_recommendation_service.dart';
 import 'random_recommendation_service.dart';
 import 'content_based_recommendation_service.dart';
