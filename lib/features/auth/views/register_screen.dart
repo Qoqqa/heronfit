@@ -5,43 +5,38 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart'; // Updated import path
 import 'login_screen.dart'; // Import the LoginWidget
-import 'registerverification_widget.dart'; // Ensure this file defines the RegisterVerificationWidget class
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../controllers/registration_controller.dart';
 
-class RegisterWidget extends StatefulWidget {
+class RegisterWidget extends ConsumerStatefulWidget {
   const RegisterWidget({super.key});
 
   static String routePath = '/register';
 
   @override
-  State<RegisterWidget> createState() => _RegisterWidgetState();
+  ConsumerState<RegisterWidget> createState() => _RegisterWidgetState();
 }
 
-class _RegisterWidgetState extends State<RegisterWidget> {
+class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-
-  final TextEditingController firstNameTextController = TextEditingController();
-  final TextEditingController lastNameTextController = TextEditingController();
-  final TextEditingController emailAddressTextController =
-      TextEditingController();
-  final TextEditingController passwordTextController = TextEditingController();
-  final TextEditingController passwordConfirmTextController =
-      TextEditingController();
 
   bool passwordVisibility = false;
   bool passwordConfirmVisibility = false;
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController passwordConfirmController =
+      TextEditingController();
 
   @override
   void dispose() {
-    firstNameTextController.dispose();
-    lastNameTextController.dispose();
-    emailAddressTextController.dispose();
-    passwordTextController.dispose();
-    passwordConfirmTextController.dispose();
+    passwordController.dispose();
+    passwordConfirmController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final registration = ref.watch(registrationProvider);
+    final registrationNotifier = ref.read(registrationProvider.notifier);
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -102,7 +97,9 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                 child: Container(
                                   width: double.infinity,
                                   child: TextFormField(
-                                    controller: firstNameTextController,
+                                    initialValue: registration.firstName,
+                                    onChanged:
+                                        registrationNotifier.updateFirstName,
                                     autofocus: true,
                                     autofillHints: [AutofillHints.name],
                                     textCapitalization:
@@ -167,7 +164,9 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                 child: Container(
                                   width: double.infinity,
                                   child: TextFormField(
-                                    controller: lastNameTextController,
+                                    initialValue: registration.lastName,
+                                    onChanged:
+                                        registrationNotifier.updateLastName,
                                     autofocus: true,
                                     autofillHints: [AutofillHints.name],
                                     textCapitalization:
@@ -231,7 +230,8 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                 child: Container(
                                   width: double.infinity,
                                   child: TextFormField(
-                                    controller: emailAddressTextController,
+                                    initialValue: registration.email,
+                                    onChanged: registrationNotifier.updateEmail,
                                     autofocus: true,
                                     autofillHints: [AutofillHints.email],
                                     textInputAction: TextInputAction.next,
@@ -293,7 +293,9 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                 child: Container(
                                   width: double.infinity,
                                   child: TextFormField(
-                                    controller: passwordTextController,
+                                    controller: passwordController,
+                                    onChanged:
+                                        registrationNotifier.updatePassword,
                                     autofocus: true,
                                     autofillHints: [AutofillHints.password],
                                     textInputAction: TextInputAction.next,
@@ -372,7 +374,7 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                                 child: Container(
                                   width: double.infinity,
                                   child: TextFormField(
-                                    controller: passwordConfirmTextController,
+                                    controller: passwordConfirmController,
                                     autofocus: true,
                                     autofillHints: [AutofillHints.password],
                                     textInputAction: TextInputAction.send,
@@ -529,7 +531,8 @@ class _RegisterWidgetState extends State<RegisterWidget> {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          context.push(AppRoutes.registerVerify);
+                          // Validate and collect registration data, then navigate to next step using named route
+                          context.pushNamed(AppRoutes.registerGettingToKnow);
                         },
                         child: Text('Register'),
                         style: ElevatedButton.styleFrom(
