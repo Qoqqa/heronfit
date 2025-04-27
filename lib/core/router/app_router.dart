@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Import necessary screen/widget files
 import 'package:heronfit/features/splash/views/splash_screen.dart'; // Import Splash Screen
-import 'package:heronfit/features/auth/views/login_widget.dart';
+import 'package:heronfit/features/auth/views/login_screen.dart';
 import 'package:heronfit/features/auth/views/register_screen.dart';
 import 'package:heronfit/features/auth/views/register_verification.dart'
     as reg_verify;
@@ -66,10 +66,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const LoginWidget(),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: AppRoutes.register,
+        name: AppRoutes.register,
         builder: (context, state) => const RegisterWidget(),
         routes: [
           GoRoute(

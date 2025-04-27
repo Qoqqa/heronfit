@@ -5,7 +5,7 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:intl/intl.dart';
 import '../controllers/registration_controller.dart';
-// TODO: import SolarIcons when available
+import 'package:solar_icons/solar_icons.dart';
 
 class RegisterGettingToKnowScreen extends ConsumerStatefulWidget {
   const RegisterGettingToKnowScreen({super.key});
@@ -19,50 +19,67 @@ class _RegisterGettingToKnowScreenState
     extends ConsumerState<RegisterGettingToKnowScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _birthdayController = TextEditingController();
+  final TextEditingController _weightController = TextEditingController();
+  final TextEditingController _heightController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final birthday = ref.read(registrationProvider).birthday;
+    final registrationState = ref.read(registrationProvider);
+
+    final birthday = registrationState.birthday;
     if (birthday.isNotEmpty) {
       try {
-        // Attempt to parse and format the stored date
         final parsedDate = DateTime.parse(birthday);
         _birthdayController.text = DateFormat('yyyy-MM-dd').format(parsedDate);
       } catch (e) {
-        // Handle potential parsing errors if the stored string is invalid
         print("Error parsing stored birthday: $e");
         _birthdayController.text = '';
       }
     }
+
+    _weightController.text = registrationState.weight;
+    _heightController.text = registrationState.height;
   }
 
   @override
   void dispose() {
     _birthdayController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
     super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now().subtract(
-        const Duration(days: 365 * 18),
-      ), // Default to 18 years ago
+      initialDate:
+          _birthdayController.text.isNotEmpty
+              ? (DateTime.tryParse(_birthdayController.text) ??
+                  DateTime.now().subtract(const Duration(days: 365 * 18)))
+              : DateTime.now().subtract(const Duration(days: 365 * 18)),
       firstDate: DateTime(1920),
       lastDate: DateTime.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: HeronFitTheme.primary, // header background color
-              onPrimary: Colors.white, // header text color
-              onSurface: HeronFitTheme.textPrimary, // body text color
+              primary: HeronFitTheme.primary,
+              onPrimary: Colors.white,
+              onSurface: HeronFitTheme.textPrimary,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: HeronFitTheme.primaryDark, // button text color
+                foregroundColor: HeronFitTheme.primaryDark,
               ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12.0),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: HeronFitTheme.bgSecondary,
             ),
           ),
           child: child!,
@@ -87,12 +104,12 @@ class _RegisterGettingToKnowScreenState
       appBar: AppBar(
         backgroundColor: HeronFitTheme.bgLight,
         elevation: 0,
-        leading: BackButton(color: HeronFitTheme.primary),
+        leading: BackButton(color: HeronFitTheme.primaryDark),
       ),
       backgroundColor: HeronFitTheme.bgLight,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -103,23 +120,18 @@ class _RegisterGettingToKnowScreenState
                     child: Column(
                       children: [
                         Container(
-                          height: 180,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            color: HeronFitTheme.primary.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.person_outline, // Placeholder
-                              color: HeronFitTheme.primary,
-                              size: 80,
-                            ),
+                          padding: const EdgeInsets.symmetric(vertical: 24.0),
+                          child: Image.asset(
+                            'assets/images/register_intro.png',
+                            fit: BoxFit.cover,
+                            height: 260,
+                            width: 300,
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        // const SizedBox(height: 8),
                         Text(
                           'Tell us a little about yourself',
+                          textAlign: TextAlign.center,
                           style: HeronFitTheme.textTheme.headlineSmall
                               ?.copyWith(
                                 color: HeronFitTheme.primary,
@@ -129,7 +141,9 @@ class _RegisterGettingToKnowScreenState
                         const SizedBox(height: 8),
                         Text(
                           'This will help us create a personalized experience just for you.',
-                          style: HeronFitTheme.textTheme.bodyMedium,
+                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                            color: HeronFitTheme.textSecondary,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
@@ -140,12 +154,26 @@ class _RegisterGettingToKnowScreenState
                                   : registration.gender,
                           decoration: InputDecoration(
                             labelText: 'Choose Gender',
+                            prefixIcon: const Icon(
+                              SolarIconsOutline.usersGroupRounded,
+                              color: HeronFitTheme.primary,
+                              size: 20,
+                            ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
+                              borderRadius: BorderRadius.circular(12.0),
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
                             fillColor: HeronFitTheme.bgSecondary,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 16,
+                            ),
+                          ),
+                          style: HeronFitTheme.textTheme.bodyLarge,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down,
+                            color: HeronFitTheme.textMuted,
                           ),
                           items: const [
                             DropdownMenuItem(
@@ -175,23 +203,30 @@ class _RegisterGettingToKnowScreenState
                                   value == null || value.isEmpty
                                       ? 'Please select a gender'
                                       : null,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                         ),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _birthdayController,
                           decoration: InputDecoration(
                             labelText: 'Date of Birth',
+                            prefixIcon: const Icon(
+                              SolarIconsOutline.calendar,
+                              color: HeronFitTheme.primary,
+                              size: 20,
+                            ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8.0),
+                              borderRadius: BorderRadius.circular(12.0),
                               borderSide: BorderSide.none,
                             ),
                             filled: true,
                             fillColor: HeronFitTheme.bgSecondary,
-                            suffixIcon: Icon(
-                              Icons.calendar_today,
-                              color: HeronFitTheme.textMuted,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 16,
                             ),
                           ),
+                          style: HeronFitTheme.textTheme.bodyLarge,
                           readOnly: true,
                           onTap: () => _selectDate(context),
                           validator:
@@ -199,24 +234,44 @@ class _RegisterGettingToKnowScreenState
                                   value == null || value.isEmpty
                                       ? 'Please enter your date of birth'
                                       : null,
+                          autovalidateMode: AutovalidateMode.onUserInteraction,
                         ),
                         const SizedBox(height: 16),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: TextFormField(
-                                initialValue: registration.weight,
-                                onChanged: registrationNotifier.updateWeight,
+                                controller: _weightController,
+                                onChanged:
+                                    (value) => registrationNotifier
+                                        .updateWeight(value.trim()),
                                 decoration: InputDecoration(
                                   labelText: 'Your Weight',
+                                  prefixIcon: const Icon(
+                                    SolarIconsOutline.scale,
+                                    color: HeronFitTheme.primary,
+                                    size: 20,
+                                  ),
+                                  suffixText: 'KG',
+                                  suffixStyle: HeronFitTheme
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: HeronFitTheme.textMuted,
+                                      ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
+                                    borderRadius: BorderRadius.circular(12.0),
                                     borderSide: BorderSide.none,
                                   ),
                                   filled: true,
                                   fillColor: HeronFitTheme.bgSecondary,
-                                  suffixText: 'KG',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 16,
+                                  ),
                                 ),
+                                style: HeronFitTheme.textTheme.bodyLarge,
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
                                       decimal: true,
@@ -226,33 +281,59 @@ class _RegisterGettingToKnowScreenState
                                     return 'Enter weight';
                                   if (double.tryParse(value) == null)
                                     return 'Invalid number';
+                                  if (double.parse(value) <= 0)
+                                    return 'Must be > 0';
                                   return null;
                                 },
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                               ),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
                               child: TextFormField(
-                                initialValue: registration.height,
-                                onChanged: registrationNotifier.updateHeight,
+                                controller: _heightController,
+                                onChanged:
+                                    (value) => registrationNotifier
+                                        .updateHeight(value.trim()),
                                 decoration: InputDecoration(
                                   labelText: 'Your Height',
+                                  prefixIcon: const Icon(
+                                    SolarIconsOutline.ruler,
+                                    color: HeronFitTheme.primary,
+                                    size: 20,
+                                  ),
+                                  suffixText: 'CM',
+                                  suffixStyle: HeronFitTheme
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(
+                                        color: HeronFitTheme.textMuted,
+                                      ),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
+                                    borderRadius: BorderRadius.circular(12.0),
                                     borderSide: BorderSide.none,
                                   ),
                                   filled: true,
                                   fillColor: HeronFitTheme.bgSecondary,
-                                  suffixText: 'CM',
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                    horizontal: 16,
+                                  ),
                                 ),
+                                style: HeronFitTheme.textTheme.bodyLarge,
                                 keyboardType: TextInputType.number,
                                 validator: (value) {
                                   if (value == null || value.isEmpty)
                                     return 'Enter height';
                                   if (int.tryParse(value) == null)
                                     return 'Invalid number';
+                                  if (int.parse(value) <= 0)
+                                    return 'Must be > 0';
                                   return null;
                                 },
+                                autovalidateMode:
+                                    AutovalidateMode.onUserInteraction,
                               ),
                             ),
                           ],
@@ -265,23 +346,27 @@ class _RegisterGettingToKnowScreenState
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
+                      registrationNotifier.updateWeight(
+                        _weightController.text.trim(),
+                      );
+                      registrationNotifier.updateHeight(
+                        _heightController.text.trim(),
+                      );
                       context.pushNamed(AppRoutes.registerSetGoals);
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: HeronFitTheme.primaryDark,
+                    backgroundColor: HeronFitTheme.primary,
                     foregroundColor: HeronFitTheme.bgLight,
-                    minimumSize: const Size(double.infinity, 48),
+                    minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  child: Text(
-                    'Next',
-                    style: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                      color: HeronFitTheme.bgLight,
-                    ),
-                  ),
+                  child: const Text('Next'),
                 ),
               ],
             ),
