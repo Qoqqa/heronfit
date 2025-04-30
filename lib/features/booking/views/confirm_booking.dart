@@ -23,6 +23,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController ticketIdController = TextEditingController();
   final FocusNode ticketIdFocusNode = FocusNode();
+  bool _noTicket = false; // Add a state variable for the checkbox
 
   @override
   void dispose() {
@@ -147,6 +148,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                   TextField(
                     controller: ticketIdController,
                     focusNode: ticketIdFocusNode,
+                    enabled: !_noTicket,
                     decoration: InputDecoration(
                       hintText: 'Enter Ticket ID',
                       filled: true,
@@ -165,10 +167,24 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Leave the field blank if you don\'t have a ticket yet.',
-                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  // Checkbox for no ticket
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: _noTicket,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            _noTicket = value ?? false;
+                            if (_noTicket) {
+                              ticketIdController.clear();
+                              ticketIdFocusNode.unfocus();
+                            }
+                          });
+                        },
+                      ),
+                      const Text('I don\'t have a ticket'),
+                    ],
                   ),
                 ],
               ),
@@ -181,7 +197,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
-                        if (ticketIdController.text.isNotEmpty) {
+                        if (_noTicket || ticketIdController.text.isNotEmpty) {
                           final slotCapacity =
                               await fetchSlotCapacity(widget.time ?? '');
                           Navigator.push(

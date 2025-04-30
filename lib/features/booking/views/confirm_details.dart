@@ -155,12 +155,17 @@ class _ReviewBookingDetailsScreenState
                           value: widget.email ?? 'N/A',
                         ),
                         const SizedBox(height: 8),
-                        _buildDetailRow(
-                          icon: Icons.confirmation_number,
-                          label: 'Ticket ID:',
-                          value: widget.ticketId,
-                        ),
-                        const SizedBox(height: 8),
+                        if (widget.ticketId.isNotEmpty)
+                          Column(
+                            children: [
+                              _buildDetailRow(
+                                icon: Icons.confirmation_number,
+                                label: 'Ticket ID:',
+                                value: widget.ticketId,
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
                         _buildDetailRow(
                           icon: Icons.calendar_today,
                           label: 'Date:',

@@ -43,14 +43,6 @@ class UpcomingSessionCard extends StatelessWidget {
     return FutureBuilder<Map<String, dynamic>?>(
       future: fetchUpcomingSession(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return const Center(child: Text('Error fetching upcoming session'));
-        }
-
         final session = snapshot.data;
 
         return Container(
@@ -62,66 +54,79 @@ class UpcomingSessionCard extends StatelessWidget {
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InkWell(
-                  splashColor: Colors.transparent,
-                  focusColor: Colors.transparent,
-                  hoverColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  onTap: () {
-                    context.go(AppRoutes.booking); // Navigate to the BookingScreen using GoRouter
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: snapshot.connectionState == ConnectionState.waiting
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Upcoming Session',
-                        style: textTheme.titleSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                      InkWell(
+                        splashColor: Colors.transparent,
+                        focusColor: Colors.transparent,
+                        hoverColor: Colors.transparent,
+                        highlightColor: Colors.transparent,
+                        onTap: () {
+                          context.go(AppRoutes.booking);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Upcoming Session',
+                              style: textTheme.titleSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Icon(
+                              SolarIconsOutline.clipboardList,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ],
                         ),
                       ),
-                      const Icon(
-                        SolarIconsOutline.clipboardList,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                      const SizedBox(height: 16),
+                      if (snapshot.hasError)
+                        const Center(
+                          child: Text(
+                            'Error fetching upcoming session',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )
+                      else if (session != null) ...[
+                        HomeInfoRow(
+                          icon: SolarIconsOutline.calendar,
+                          text: DateFormat('EEEE, MMMM d').format(
+                            DateTime.parse(session['date']),
+                          ),
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        const SizedBox(height: 8),
+                        HomeInfoRow(
+                          icon: SolarIconsOutline.clockCircle,
+                          text: session['time'],
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ] else ...[
+                        const HomeInfoRow(
+                          icon: SolarIconsOutline.calendar,
+                          text: 'No Booked Sessions!',
+                          iconColor: Colors.white,
+                          textColor: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ],
                     ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                if (session != null) ...[
-                  HomeInfoRow(
-                    icon: SolarIconsOutline.calendar,
-                    text: DateFormat('EEEE, MMMM d').format(
-                      DateTime.parse(session['date']),
-                    ),
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  const SizedBox(height: 8),
-                  HomeInfoRow(
-                    icon: SolarIconsOutline.clockCircle,
-                    text: session['time'],
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ] else ...[
-                  const HomeInfoRow(
-                    icon: SolarIconsOutline.calendar,
-                    text: 'No Booked Sessions!',
-                    iconColor: Colors.white,
-                    textColor: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ],
-              ],
-            ),
           ),
         );
       },

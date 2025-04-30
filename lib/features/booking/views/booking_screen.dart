@@ -96,6 +96,7 @@ class _BookingScreenState extends State<BookingScreen> {
   DateTime focusedDate = DateTime.now();
   final Map<String, int> sessionBookings =
       {}; // To store the number of bookings per session
+  bool hasActiveOrUpcomingSession = false; // Add a state variable to track active/upcoming sessions
 
   @override
   void initState() {
@@ -119,6 +120,7 @@ class _BookingScreenState extends State<BookingScreen> {
       });
     });
     _fetchSessionBookings(); // Fetch the number of bookings for each session
+    _checkActiveOrUpcomingSession();
   }
 
   @override
@@ -131,22 +133,57 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   Future<void> _fetchSessionBookings() async {
-  try {
-    final response = await Supabase.instance.client
-        .from('sessions')
-        .select()
-        .eq('date', selectedDate!.toIso8601String());
+    try {
+      final response = await Supabase.instance.client
+          .from('sessions')
+          .select()
+          .eq('date', selectedDate!.toIso8601String());
 
-    if (response != null && response is List) {
-      debugPrint('Fetched sessions: $response'); // Log the fetched data
+      if (response != null && response is List) {
+        debugPrint('Fetched sessions: $response'); // Log the fetched data
+        setState(() {
+          allSessions = response.map((e) => SessionsRow.fromJson(e)).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching session bookings: $e');
+    }
+  }
+
+  Future<void> _checkActiveOrUpcomingSession() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      final response = await Supabase.instance.client
+          .from('sessions')
+          .select()
+          .eq('email', user.email ?? '')
+          .gte('date', DateTime.now().toIso8601String())
+          .order('date', ascending: true)
+          .order('time', ascending: true)
+          .limit(1)
+          .single();
+
+      if (response != null) {
+        setState(() {
+          hasActiveOrUpcomingSession = true;
+        });
+      } else {
+        setState(() {
+          hasActiveOrUpcomingSession = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking active/upcoming session: $e');
       setState(() {
-        allSessions = response.map((e) => SessionsRow.fromJson(e)).toList();
+        hasActiveOrUpcomingSession = false;
       });
     }
-  } catch (e) {
-    debugPrint('Error fetching session bookings: $e');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +223,19 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (selectedDate != null) ...[
+                if (hasActiveOrUpcomingSession)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      'You already have a booked session. Please complete or cancel it before booking another.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else if (selectedDate != null) ...[
                   if (DateFormat('EEEE').format(selectedDate!) != 'Saturday' &&
                       DateFormat('EEEE').format(selectedDate!) != 'Sunday')
                     ..._buildSessionWidgets(),
@@ -242,138 +291,144 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   List<Widget> _buildSessionWidgets() {
-  final now = DateTime.now();
+    final now = DateTime.now();
 
-  return List.generate(9, (index) {
-    int sessionIndex = index + 1;
-    final sessionTime = textControllers[sessionIndex]?.text ?? '';
-    final sessionCount = filterSessionsByTime(
-      allSessions,
-      sessionTime,
-      selectedDate,
-    );
+    return List.generate(9, (index) {
+      int sessionIndex = index + 1;
+      final sessionTime = textControllers[sessionIndex]?.text ?? '';
+      final sessionCount = filterSessionsByTime(
+        allSessions,
+        sessionTime,
+        selectedDate,
+      );
 
-    // Check if the session is in the past
-    final isPastSession =
-        selectedDate != null &&
-        (selectedDate!.isBefore(DateTime(now.year, now.month, now.day)) ||
-            (selectedDate!.isAtSameMomentAs(
-                  DateTime(now.year, now.month, now.day),
-                ) &&
-                _parseSessionTime(sessionTime)?.isBefore(now) == true));
+      // Check if the session is in the past
+      final isPastSession =
+          selectedDate != null &&
+          (selectedDate!.isBefore(DateTime(now.year, now.month, now.day)) ||
+              (selectedDate!.isAtSameMomentAs(
+                    DateTime(now.year, now.month, now.day),
+                  ) &&
+                  _parseSessionTime(sessionTime)?.isBefore(now) == true));
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Container(
-        padding: const EdgeInsets.all(16.0),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              blurRadius: 10,
-              color: Colors.grey.withOpacity(0.2),
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Session details (time and slots)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      size: 20,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      sessionTime,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black, // Black text for session time
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: hasActiveOrUpcomingSession ? Colors.grey[300] : Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 10,
+                color: Colors.grey.withOpacity(0.2),
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Session details (time and slots)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        size: 20,
+                        color: Colors.grey,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.people, size: 20, color: Colors.grey),
-                    const SizedBox(width: 8),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: '$sessionCount',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black, // Black text for count
-                            ),
-                          ),
-                          const TextSpan(
-                            text: '/15 slots',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey, // Grey text for slots
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            // Book button
-            ElevatedButton(
-              onPressed: isPastSession
-                  ? null
-                  : () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ConfirmBookingScreen(
-                            date: selectedDate,
-                            time: sessionTime,
-                            email: getCurrentUserEmail(),
-                          ),
+                      const SizedBox(width: 8),
+                      Text(
+                        sessionTime,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: hasActiveOrUpcomingSession
+                              ? Colors.grey
+                              : Colors.black, // Grey text for disabled sessions
                         ),
-                      );
-                    },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isPastSession ? Colors.grey : const Color.fromRGBO(67, 59, 255, 1), // Blue for active, grey for disabled
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.people, size: 20, color: Colors.grey),
+                      const SizedBox(width: 8),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '$sessionCount',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: hasActiveOrUpcomingSession
+                                    ? Colors.grey
+                                    : Colors.black, // Grey text for disabled sessions
+                              ),
+                            ),
+                            const TextSpan(
+                              text: '/15 slots',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey, // Grey text for slots
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              // Book button
+              ElevatedButton(
+                onPressed: isPastSession || hasActiveOrUpcomingSession
+                    ? null
+                    : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ConfirmBookingScreen(
+                              date: selectedDate,
+                              time: sessionTime,
+                              email: getCurrentUserEmail(),
+                            ),
+                          ),
+                        );
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isPastSession || hasActiveOrUpcomingSession
+                      ? Colors.grey
+                      : const Color.fromRGBO(67, 59, 255, 1), // Blue for active, grey for disabled
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                child: const Text(
+                  'Book',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white, // White text for the button
+                  ),
                 ),
               ),
-              child: const Text(
-                'Book',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white, // White text for the button
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    );
-  });
-}
+      );
+    });
+  }
 
   DateTime? _parseSessionTime(String sessionText) {
     try {
