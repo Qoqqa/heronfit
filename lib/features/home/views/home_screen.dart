@@ -4,6 +4,7 @@ import 'package:solar_icons/solar_icons.dart';
 import '../widgets/gym_availability_card.dart';
 import '../widgets/upcoming_session_card.dart';
 import '../widgets/recent_activity_card.dart';
+import 'package:heronfit/features/booking/views/booking_screen.dart';
 
 class HomeWidget extends StatefulWidget {
   const HomeWidget({super.key});

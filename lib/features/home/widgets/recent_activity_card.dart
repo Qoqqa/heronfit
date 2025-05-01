@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'home_info_row.dart'; // Import the reusable row widget
 import '../../../core/theme.dart'; // Import HeronFitTheme
+import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 
-class RecentActivityCard extends StatelessWidget {
-  // TODO: Add parameters for dynamic data (last workout, weekly stats, onTap)
+class RecentActivityCard extends ConsumerWidget {
   const RecentActivityCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
+
+    final workoutHistory = ref.watch(workoutHistoryProvider);
 
     return Container(
       width: double.infinity,
@@ -32,8 +37,7 @@ class RecentActivityCard extends StatelessWidget {
               hoverColor: Colors.transparent,
               highlightColor: Colors.transparent,
               onTap: () {
-                // TODO: Navigate to Workout History screen
-                print('Recent Activity Tapped');
+                context.push(AppRoutes.profileHistory); // Navigate to the Workout History screen using GoRouter with back navigation support
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -54,21 +58,45 @@ class RecentActivityCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const HomeInfoRow(
-              icon: SolarIconsOutline.calendarDate,
-              text:
-                  'Last Workout: Yesterday, 45 mins', // TODO: Replace with actual data
-            ),
-            const SizedBox(height: 8),
-            const HomeInfoRow(
-              icon: SolarIconsOutline.refresh, // Or maybe dumbbell?
-              text: 'Workouts This Week: 3', // TODO: Replace with actual data
-            ),
-            const SizedBox(height: 8),
-            const HomeInfoRow(
-              icon: SolarIconsOutline.clockCircle, // Changed from timer
-              text:
-                  'Total Time This Week: 2.5 hours', // TODO: Replace with actual data
+            workoutHistory.when(
+              data: (workouts) {
+                if (workouts.isNotEmpty) {
+                  final lastWorkout = workouts.first;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeInfoRow(
+                        icon: SolarIconsOutline.calendarDate,
+                        text:
+                            'Last Workout: ${lastWorkout.name}, ${lastWorkout.duration.inMinutes} mins',
+                      ),
+                      const SizedBox(height: 8),
+                      HomeInfoRow(
+                        icon: SolarIconsOutline.refresh,
+                        text: 'Workouts This Week: ${workouts.length}',
+                      ),
+                      const SizedBox(height: 8),
+                      HomeInfoRow(
+                        icon: SolarIconsOutline.clockCircle,
+                        text:
+                            'Total Time This Week: ${workouts.fold<int>(0, (sum, workout) => sum + workout.duration.inMinutes)} mins',
+                      ),
+                    ],
+                  );
+                } else {
+                  return const HomeInfoRow(
+                    icon: SolarIconsOutline.calendarDate,
+                    text: 'No Workouts Yet!',
+                  );
+                }
+              },
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (error, stack) => const HomeInfoRow(
+                icon: SolarIconsOutline.calendarDate,
+                text: 'Error fetching workouts!',
+              ),
             ),
           ],
         ),
