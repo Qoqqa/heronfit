@@ -357,8 +357,13 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
                                     recognizer:
                                         TapGestureRecognizer()
                                           ..onTap = () {
-                                            // TODO: Navigate to Privacy Policy screen
-                                            print('Navigate to Privacy Policy');
+                                            // Navigate to Privacy Policy screen
+                                            context.push(
+                                              AppRoutes.profilePrivacy,
+                                            );
+                                            print(
+                                              'Navigate to Privacy Policy',
+                                            ); // Keep print for debug or remove if not needed
                                           },
                                   ),
                                   const TextSpan(text: ' and '),
@@ -371,11 +376,13 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
                                     recognizer:
                                         TapGestureRecognizer()
                                           ..onTap = () {
-                                            // TODO: Navigate to Terms of Use screen
+                                            // Navigate to Terms of Use screen
                                             context.push(
                                               AppRoutes.profileTerms,
-                                            ); // Example navigation
-                                            print('Navigate to Terms of Use');
+                                            );
+                                            print(
+                                              'Navigate to Terms of Use',
+                                            ); // Keep print for debug or remove if not needed
                                           },
                                   ),
                                 ],
