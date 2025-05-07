@@ -10,18 +10,31 @@ import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Ref
 // Provider for WorkoutSupabaseService (if not already globally available)
 // Ensure this provider exists and is accessible
 final workoutSupabaseServiceProvider = Provider<WorkoutSupabaseService>((ref) {
+  // It's better to provide the Supabase client to WorkoutSupabaseService if it needs it
+  // For example: return WorkoutSupabaseService(ref.watch(supabaseClientProvider));
+  // Assuming WorkoutSupabaseService() constructor is parameterless for now or handles its own client.
   return WorkoutSupabaseService();
 });
 
 class WorkoutRecommendationService {
   final Ref _ref; // Add Ref to access other providers
-  final String _recommendationApiBaseUrl =
-      'https://heronfit-recommendation-service.onrender.com';
+  // Allow base URL to be configured, e.g., via provider or environment variable
+  // For now, keeping it as it was but this should ideally be configurable.
+  final String _recommendationApiBaseUrl;
 
-  WorkoutRecommendationService(this._ref); // Constructor to accept Ref
+  WorkoutRecommendationService(this._ref, {String? baseUrl})
+    : _recommendationApiBaseUrl =
+          baseUrl ??
+          (kDebugMode
+              // Use the actual IP address for local debugging
+              ? 'http://192.168.1.6:5000' // Local debug URL with specific IP
+              : 'https://heronfit-recommendation-service.onrender.com'); // Prod URL
 
-  // Fetches recommended workout templates from the API
-  Future<List<Workout>> fetchRecommendationsFromApi(String userId) async {
+  // Internal helper to fetch and process categorized recommendations
+  Future<List<Workout>> _fetchAndProcessCategorizedRecommendations(
+    String userId,
+    String categoryKey,
+  ) async {
     final url = Uri.parse(
       '$_recommendationApiBaseUrl/recommendations/workout/$userId',
     );
@@ -31,10 +44,13 @@ class WorkoutRecommendationService {
 
       if (response.statusCode == 200) {
         final decodedBody = jsonDecode(response.body);
-        final recommendationsData = decodedBody['recommendations'] as List?;
+        // Use the categoryKey to get the correct list of templates
+        final recommendationsData = decodedBody[categoryKey] as List?;
 
         if (recommendationsData == null) {
-          debugPrint('No recommendations array found in API response.');
+          debugPrint(
+            'No recommendations array found for key "$categoryKey" in API response.',
+          );
           return [];
         }
 
@@ -44,95 +60,114 @@ class WorkoutRecommendationService {
           if (recData is Map<String, dynamic>) {
             final exerciseIds =
                 (recData['exercises'] as List?)
-                    ?.map((id) => id.toString())
+                    ?.map((id) => id.toString()) // Ensure IDs are strings
                     .toList() ??
                 [];
             final templateName =
                 recData['template_name'] as String? ?? 'Recommended Workout';
-            // final focus = recData['focus'] as String? ?? ''; // Can be used if needed
+            final focus = recData['focus'] as String? ?? '';
 
             if (exerciseIds.isNotEmpty) {
-              // Use a Future to fetch exercises and build the Workout object
               futureWorkouts.add(
-                _buildWorkoutFromIds(templateName, exerciseIds),
+                _buildWorkoutFromIds(templateName, focus, exerciseIds),
               );
             }
           }
         }
-
-        // Wait for all exercise fetching and workout building to complete
         final List<Workout> workouts = await Future.wait(futureWorkouts);
         return workouts;
       } else {
         debugPrint(
-          'Failed to load recommendations: ${response.statusCode} ${response.body}',
+          'Failed to load $categoryKey recommendations: ${response.statusCode} ${response.body}',
         );
-        throw Exception('Failed to load recommendations');
+        // Consider more specific error types or logging
+        throw Exception('Failed to load $categoryKey recommendations');
       }
     } catch (e) {
-      debugPrint('Error fetching recommendations: $e');
-      throw Exception('Error fetching recommendations: $e');
+      debugPrint('Error fetching $categoryKey recommendations: $e');
+      throw Exception('Error fetching $categoryKey recommendations: $e');
     }
   }
 
   // Helper to fetch exercises and build a Workout object
   Future<Workout> _buildWorkoutFromIds(
     String name,
+    String focus, // Added focus/description
     List<String> exerciseIds,
   ) async {
     try {
+      // Assuming workoutSupabaseServiceProvider is correctly set up
       final supabaseService = _ref.read(workoutSupabaseServiceProvider);
+
+      // Ensure getExercisesByIds exists in WorkoutSupabaseService and handles potential errors
       final List<Exercise> exercises = await supabaseService.getExercisesByIds(
         exerciseIds,
       );
 
       // Estimate duration (e.g., 5 mins per exercise, adjust as needed)
-      final estimatedDuration = Duration(minutes: exercises.length * 5);
+      final estimatedDurationMinutes = exercises.length * 5;
+
+      // Determine image URL, e.g., from the first exercise or a placeholder
+      // String? imageUrl;
+      // if (exercises.isNotEmpty && exercises.first.imageUrl != null && exercises.first.imageUrl!.isNotEmpty) {
+      //   imageUrl = exercises.first.imageUrl;
+      // }
+      // else if (exercises.isNotEmpty && exercises.first.gifUrl != null && exercises.first.gifUrl!.isNotEmpty) {
+      //   imageUrl = exercises.first.gifUrl; // Prioritize GIF if available
+      // }
 
       return Workout(
-        // Generate a unique ID for the workout instance if needed, or use template name
         id:
             'rec_${name.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}',
-        name: name,
+        name:
+            name, // Using template_name as name. 'focus' can be used if Workout model had a description field.
+        // description: focus, // Workout model does not have description
         exercises: exercises,
-        duration: estimatedDuration,
-        timestamp: DateTime.now(), // Or null if not applicable here
+        duration: Duration(
+          minutes: estimatedDurationMinutes,
+        ), // Corrected to use Duration
+        // estimatedDurationMinutes: estimatedDurationMinutes, // Workout model uses 'duration'
+        // imageUrl: imageUrl, // Workout model does not have imageUrl
+        // category: 'Recommended',
+        // difficultyLevel: 'Intermediate',
+        timestamp:
+            DateTime.now(), // Setting timestamp to now, can be null if model allows
         createdAt: DateTime.now(),
       );
     } catch (e) {
       debugPrint('Error building workout $name: $e');
-      // Return an empty/error workout or rethrow
       return Workout(
-        id: 'error_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Error Loading Workout',
+        id:
+            'error_${name.replaceAll(' ', '_').toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}',
+        name: 'Error Loading: $name',
+        // description: 'Could not load exercises for this workout.',
         exercises: [],
-        duration: Duration.zero,
+        duration: Duration.zero, // Corrected to use Duration
+        // estimatedDurationMinutes: 0,
         timestamp: DateTime.now(),
+        createdAt: DateTime.now(),
       );
     }
   }
 
-  // --- Updated Public Methods ---
+  // --- Public Methods for Specific Recommendation Types ---
 
-  // Simulates fetching recommended workouts (returns a subset from API)
-  Future<List<Workout>> getRecommendedWorkouts(int limit) async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) {
-      debugPrint('User not logged in, cannot fetch recommendations.');
-      return []; // Return empty list if user is not logged in
-    }
-    final recommendations = await fetchRecommendationsFromApi(userId);
-    return recommendations.take(limit).toList();
+  Future<List<Workout>> getContentBasedRecommendedWorkouts({
+    required String userId,
+  }) async {
+    return _fetchAndProcessCategorizedRecommendations(
+      userId,
+      'for_you_recommendations',
+    );
   }
 
-  // Simulates fetching all "For You" workouts from API
-  Future<List<Workout>> getAllRecommendedWorkouts() async {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
-    if (userId == null) {
-      debugPrint('User not logged in, cannot fetch recommendations.');
-      return []; // Return empty list if user is not logged in
-    }
-    return fetchRecommendationsFromApi(userId);
+  Future<List<Workout>> getCollaborativeRecommendedWorkouts({
+    required String userId,
+  }) async {
+    return _fetchAndProcessCategorizedRecommendations(
+      userId,
+      'community_recommendations',
+    );
   }
 
   // --- Kept Placeholder Methods (Can be removed or adapted later) ---
@@ -176,5 +211,21 @@ class WorkoutRecommendationService {
   Future<void> setAlgorithm(String algorithm) async {
     await Future.delayed(const Duration(milliseconds: 50)); // Simulate delay
     debugPrint('Setting algorithm preference (placeholder): $algorithm');
+  }
+
+  // Simulates fetching all "For You" workouts from API
+  Future<List<Workout>> getAllRecommendedWorkouts() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      debugPrint('User not logged in, cannot fetch recommendations.');
+      return []; // Return empty list if user is not logged in
+    }
+    // This method might be deprecated. If called, perhaps default to content-based.
+    // Or, if your old endpoint returned a general mix, this might need a different backend call.
+    // For now, let's assume it defaults to content-based if still used.
+    debugPrint(
+      "getAllRecommendedWorkouts is called, defaulting to content-based. Consider removing or refactoring.",
+    );
+    return getContentBasedRecommendedWorkouts(userId: userId);
   }
 }
