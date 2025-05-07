@@ -8,6 +8,7 @@ import 'package:heronfit/features/workout/models/exercise_model.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/set_data_model.dart'; // Import SetData
 import 'package:uuid/uuid.dart'; // Import Uuid for unique IDs
+import 'package:heronfit/features/auth/controllers/auth_controller.dart'; // For currentUserProvider
 
 // Provider for the WorkoutStorageService (adjust if already defined elsewhere)
 final workoutStorageServiceProvider = Provider(
@@ -98,8 +99,17 @@ final recommendedWorkoutsProvider = FutureProvider.autoDispose<List<Workout>>((
   ref,
 ) async {
   final recommendationService = ref.watch(workoutRecommendationServiceProvider);
-  // Fetch a specific number for the preview, e.g., 4
-  return recommendationService.getRecommendedWorkouts(4);
+  final userId = ref.watch(currentUserProvider)?.id;
+
+  if (userId == null) {
+    // If no user is logged in, return empty list or handle as appropriate
+    return [];
+  }
+  // Fetch all content-based recommendations
+  final allContentBased = await recommendationService
+      .getContentBasedRecommendedWorkouts(userId: userId);
+  // Return the first 4 for the preview
+  return allContentBased.take(4).toList();
 });
 
 // Provider to manage the selected category filter on the RecommendedWorkoutsScreen

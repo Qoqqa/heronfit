@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:heronfit/core/router/app_routes.dart';
+// import 'package:go_router/go_router.dart'; // Unused import
+import 'package:heronfit/features/auth/controllers/auth_controller.dart';
+// import 'package:heronfit/core/router/app_routes.dart'; // Unused import
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/workout/controllers/workout_providers.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
@@ -19,9 +20,22 @@ final recommendedWorkoutsByCategoryProvider =
       final recommendationService = ref.watch(
         workoutRecommendationServiceProvider,
       );
+      final String? userId = ref.watch(currentUserProvider)?.id;
 
       if (selectedCategory == 'For You') {
-        return recommendationService.getAllRecommendedWorkouts();
+        if (userId == null) {
+          return [];
+        }
+        return recommendationService.getContentBasedRecommendedWorkouts(
+          userId: userId,
+        );
+      } else if (selectedCategory == 'Community') {
+        if (userId == null) {
+          return [];
+        }
+        return recommendationService.getCollaborativeRecommendedWorkouts(
+          userId: userId,
+        );
       } else {
         return recommendationService.getPremadeWorkouts(selectedCategory);
       }
@@ -36,6 +50,7 @@ class RecommendedWorkoutsScreen extends ConsumerWidget {
     final workoutsAsync = ref.watch(recommendedWorkoutsByCategoryProvider);
     final categories = [
       'For You',
+      'Community',
       'Gain Muscle',
       'Lose Weight',
       'Overall Fitness',
@@ -91,7 +106,12 @@ class RecommendedWorkoutsScreen extends ConsumerWidget {
                               category;
                         }
                       },
-                      selectedColor: HeronFitTheme.primary.withOpacity(0.1),
+                      selectedColor: Color.fromRGBO(
+                        HeronFitTheme.primary.red,
+                        HeronFitTheme.primary.green,
+                        HeronFitTheme.primary.blue,
+                        0.1,
+                      ),
                       backgroundColor: HeronFitTheme.bgSecondary,
                       labelStyle: TextStyle(
                         color:
