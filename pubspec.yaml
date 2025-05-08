@@ -84,7 +84,7 @@ flutter:
     - assets/.env
     - assets/images/
     - assets/fonts/poppins/
-    - assets/fonts/classh_display/
+    - assets/fonts/clash_display/
     
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

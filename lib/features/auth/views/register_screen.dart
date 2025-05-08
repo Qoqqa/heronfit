@@ -260,7 +260,7 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
                           if (value == null || value.isEmpty)
                             return 'Please enter your email';
                           if (!RegExp(
-                            r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
                           ).hasMatch(value)) {
                             return 'Please enter a valid email';
                           }
