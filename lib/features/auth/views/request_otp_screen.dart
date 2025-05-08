@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart'; // For navigation
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/core/router/app_routes.dart'; // For new routes
 import 'package:heronfit/features/auth/controllers/password_recovery_controller.dart';
+import 'package:solar_icons/solar_icons.dart'; // Import Solar Icons
 
 class RequestOtpScreen extends ConsumerWidget {
   const RequestOtpScreen({super.key});
@@ -19,7 +20,7 @@ class RequestOtpScreen extends ConsumerWidget {
           title: Column(
             children: [
               const Icon(
-                Icons.mail_lock_outlined,
+                SolarIconsOutline.mailbox,
                 color: HeronFitTheme.primary,
                 size: 60,
               ),
@@ -101,7 +102,7 @@ class RequestOtpScreen extends ConsumerWidget {
       height: 180,
       alignment: Alignment.center,
       child: const Icon(
-        Icons.phonelink_lock_outlined,
+        SolarIconsBold.letter,
         size: 100,
         color: HeronFitTheme.primary,
       ),
@@ -119,7 +120,10 @@ class RequestOtpScreen extends ConsumerWidget {
         backgroundColor: HeronFitTheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HeronFitTheme.textWhite),
+          icon: const Icon(
+            SolarIconsOutline.arrowLeft,
+            color: HeronFitTheme.textWhite,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
@@ -147,7 +151,7 @@ class RequestOtpScreen extends ConsumerWidget {
                   labelText: 'Email',
                   hintText: 'Enter your email address',
                   prefixIcon: const Icon(
-                    Icons.email_outlined,
+                    SolarIconsOutline.letter,
                     color: HeronFitTheme.textMuted,
                   ),
                   border: OutlineInputBorder(

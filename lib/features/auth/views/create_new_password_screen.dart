@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/features/auth/controllers/password_recovery_controller.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 class CreateNewPasswordScreen extends ConsumerStatefulWidget {
   // final String email; // May not be needed if session is established
@@ -41,7 +42,7 @@ class _CreateNewPasswordScreenState
           title: Column(
             children: [
               const Icon(
-                Icons.check_circle_outline,
+                SolarIconsBold.checkCircle,
                 color: HeronFitTheme.success,
                 size: 60,
               ),
@@ -145,14 +146,14 @@ class _CreateNewPasswordScreenState
                   labelText: 'New Password',
                   hintText: 'Enter your new password',
                   prefixIcon: const Icon(
-                    Icons.lock_outline,
+                    SolarIconsOutline.lockPassword,
                     color: HeronFitTheme.textMuted,
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _newPasswordVisible
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                          ? SolarIconsOutline.eyeClosed
+                          : SolarIconsOutline.eye,
                       color: HeronFitTheme.textMuted,
                     ),
                     onPressed:
@@ -190,14 +191,14 @@ class _CreateNewPasswordScreenState
                   labelText: 'Confirm New Password',
                   hintText: 'Re-enter your new password',
                   prefixIcon: const Icon(
-                    Icons.lock_outline,
+                    SolarIconsOutline.lockPassword,
                     color: HeronFitTheme.textMuted,
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _confirmPasswordVisible
-                          ? Icons.visibility_off
-                          : Icons.visibility,
+                          ? SolarIconsOutline.eyeClosed
+                          : SolarIconsOutline.eye,
                       color: HeronFitTheme.textMuted,
                     ),
                     onPressed:

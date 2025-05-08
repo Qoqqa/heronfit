@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/features/auth/controllers/password_recovery_controller.dart';
+import 'package:pinput/pinput.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 class EnterOtpScreen extends ConsumerStatefulWidget {
   final String email;
@@ -16,10 +18,12 @@ class EnterOtpScreen extends ConsumerStatefulWidget {
 class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _otpController = TextEditingController();
+  final FocusNode _otpFocusNode = FocusNode();
 
   @override
   void dispose() {
     _otpController.dispose();
+    _otpFocusNode.dispose();
     super.dispose();
   }
 
@@ -51,10 +55,42 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Verification code sent to ${widget.email}')),
         );
+        _otpController.clear();
+        _otpFocusNode.requestFocus();
       }
     });
 
     final passwordRecoveryState = ref.watch(passwordRecoveryControllerProvider);
+
+    final defaultPinTheme = PinTheme(
+      width: 56,
+      height: 60,
+      textStyle: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+        color: HeronFitTheme.textPrimary,
+      ),
+      decoration: BoxDecoration(
+        color: HeronFitTheme.bgSecondary,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: HeronFitTheme.textMuted.withOpacity(0.5)),
+      ),
+    );
+
+    final focusedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: HeronFitTheme.primary, width: 2),
+      ),
+    );
+
+    final errorPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: HeronFitTheme.error, width: 2),
+      ),
+    );
+    final submittedPinTheme = defaultPinTheme.copyWith(
+      decoration: defaultPinTheme.decoration!.copyWith(
+        border: Border.all(color: HeronFitTheme.success, width: 2),
+      ),
+    );
 
     return Scaffold(
       backgroundColor: HeronFitTheme.bgLight,
@@ -68,7 +104,10 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
         backgroundColor: HeronFitTheme.primary,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: HeronFitTheme.textWhite),
+          icon: const Icon(
+            SolarIconsOutline.arrowLeft,
+            color: HeronFitTheme.textWhite,
+          ),
           onPressed: () => context.pop(),
         ),
       ),
@@ -80,6 +119,12 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 20),
+              const Icon(
+                SolarIconsBold.shieldKeyhole,
+                size: 80,
+                color: HeronFitTheme.primary,
+              ),
+              const SizedBox(height: 20),
               Text(
                 'We\'ve sent a verification code to your email address: ${widget.email}. Please enter the code below.',
                 style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
@@ -88,34 +133,14 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              TextFormField(
+              Pinput(
                 controller: _otpController,
-                decoration: InputDecoration(
-                  labelText: 'Verification Code',
-                  hintText: 'Enter the 6-digit code',
-                  prefixIcon: const Icon(
-                    Icons.password_rounded,
-                    color: HeronFitTheme.textMuted,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12.0),
-                    borderSide: const BorderSide(
-                      color: HeronFitTheme.primary,
-                      width: 1.5,
-                    ),
-                  ),
-                  filled: true,
-                  fillColor: HeronFitTheme.bgLight,
-                ),
-                keyboardType: TextInputType.number,
-                maxLength: 6, // Assuming OTP is 6 digits
-                textAlign: TextAlign.center,
-                style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-                  letterSpacing: 8,
-                ),
+                focusNode: _otpFocusNode,
+                length: 6,
+                defaultPinTheme: defaultPinTheme,
+                focusedPinTheme: focusedPinTheme,
+                errorPinTheme: errorPinTheme,
+                submittedPinTheme: submittedPinTheme,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter the OTP';
@@ -125,6 +150,15 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
                   }
                   return null;
                 },
+                onCompleted: (pin) {
+                  if (_formKey.currentState!.validate()) {
+                    ref
+                        .read(passwordRecoveryControllerProvider.notifier)
+                        .verifyRecoveryOtp(pin);
+                  }
+                },
+                pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                showCursor: true,
               ),
               const SizedBox(height: 30),
               ElevatedButton(
@@ -151,7 +185,7 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
                     passwordRecoveryState is PasswordRecoveryLoading &&
                             (passwordRecoveryState
                                     as PasswordRecoveryLoading) !=
-                                PasswordRecoveryInitial() // More specific loading check if needed
+                                PasswordRecoveryInitial()
                         ? const SizedBox(
                           height: 20,
                           width: 20,
