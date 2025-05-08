@@ -224,9 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         alignment: Alignment.centerRight,
                         child: TextButton(
                           onPressed: () {
-                            // TODO: Implement forgot password navigation/logic
-                            print('Forgot Password Tapped');
-                            // Example: context.push(AppRoutes.forgotPassword);
+                            context.push(AppRoutes.requestOtp);
                           },
                           child: Text(
                             'Forgot your password?',
