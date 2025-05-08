@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/gestures.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -11,7 +10,6 @@ import '../../../widgets/loading_indicator.dart';
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
-  static String routeName = 'Login';
   static String routePath = AppRoutes.login;
 
   @override
@@ -75,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('An unexpected error occurred: ${e.toString()}'),
+          content: Text('An unexpected error occurred. Please try again.'),
           backgroundColor: HeronFitTheme.error,
         ),
       );
@@ -91,68 +89,67 @@ class _LoginScreenState extends State<LoginScreen> {
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
-        appBar: AppBar(
-          backgroundColor: HeronFitTheme.bgLight,
-          elevation: 0,
-          leading: BackButton(color: HeronFitTheme.primaryDark),
-        ),
         body: SafeArea(
           top: true,
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 32.0,
+              ),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 400),
                 child: Form(
                   key: _formKey,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Title Section
                       Text(
-                        'Great to See You Again!',
-                        textAlign: TextAlign.center,
-                        style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                          color: HeronFitTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Let's Pick Up Where You Left Off.",
+                        'Great To See You Again',
                         textAlign: TextAlign.center,
                         style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w600,
                           color: HeronFitTheme.primary,
-                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 32),
+                      // const SizedBox(height: 8),
+                      Text(
+                        "Log In To Continue Your Fitness Journey.",
+                        textAlign: TextAlign.center,
+                        style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          color: HeronFitTheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
 
-                      // Email Field
                       TextFormField(
                         controller: _emailController,
                         focusNode: emailFocusNode,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Please enter your email';
-                          if (!RegExp(r'^.+@.+\.[a-zA-Z]+$').hasMatch(value))
+                          }
+                          if (!RegExp(
+                            r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
+                          ).hasMatch(value)) {
                             return 'Please enter a valid email';
+                          }
                           return null;
                         },
-                        autofillHints: [AutofillHints.email],
+                        autofillHints: const [AutofillHints.email],
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Email',
+                          hintText: 'Email',
                           prefixIcon: const Icon(
                             SolarIconsOutline.letter,
-                            color: HeronFitTheme.primary,
+                            color: HeronFitTheme.textMuted,
                             size: 20,
                           ),
                           filled: true,
@@ -166,29 +163,31 @@ class _LoginScreenState extends State<LoginScreen> {
                             horizontal: 16,
                           ),
                         ),
-                        style: HeronFitTheme.textTheme.bodyLarge,
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 16),
 
-                      // Password Field
                       TextFormField(
                         controller: _passwordController,
                         focusNode: passwordFocusNode,
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'Please enter your password';
+                          }
                           return null;
                         },
-                        autofillHints: [AutofillHints.password],
+                        autofillHints: const [AutofillHints.password],
                         obscureText: !_passwordVisible,
                         textInputAction: TextInputAction.done,
-                        onFieldSubmitted: (_) => _signIn(),
+                        onFieldSubmitted: (_) => _isLoading ? null : _signIn(),
                         decoration: InputDecoration(
-                          labelText: 'Password',
+                          hintText: 'Password',
                           prefixIcon: const Icon(
                             SolarIconsOutline.lockPassword,
-                            color: HeronFitTheme.primary,
+                            color: HeronFitTheme.textMuted,
                             size: 20,
                           ),
                           suffixIcon: IconButton(
@@ -216,27 +215,34 @@ class _LoginScreenState extends State<LoginScreen> {
                             horizontal: 16,
                           ),
                         ),
-                        style: HeronFitTheme.textTheme.bodyLarge,
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
                       ),
-                      const SizedBox(height: 8),
-                      // Forgot Password
+                      const SizedBox(height: 12),
+
                       Align(
-                        alignment: Alignment.centerRight,
+                        alignment: Alignment.center,
                         child: TextButton(
                           onPressed: () {
                             context.push(AppRoutes.requestOtp);
                           },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
                           child: Text(
                             'Forgot your password?',
                             style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                              color: HeronFitTheme.textMuted,
+                              color: HeronFitTheme.textSecondary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 24),
 
-                      // Login Button
+                      const SizedBox(height: 64),
+
                       if (_isLoading)
                         const Center(
                           child: Padding(
@@ -245,44 +251,41 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         )
                       else
-                        ElevatedButton.icon(
+                        ElevatedButton(
                           onPressed: _signIn,
-                          icon: const Icon(
-                            SolarIconsOutline.login_3,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                          label: const Text('Login'),
                           style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52.0),
                             backgroundColor: HeronFitTheme.primary,
-                            foregroundColor: HeronFitTheme.bgLight,
-                            minimumSize: const Size(double.infinity, 52),
+                            foregroundColor: HeronFitTheme.textWhite,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(12.0),
                             ),
-                            textStyle: HeronFitTheme.textTheme.titleSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                            textStyle: HeronFitTheme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
+                          child: const Text('Log In'),
                         ),
-                      const SizedBox(height: 24),
-                      // Register Link
-                      Center(
+                      const SizedBox(height: 16),
+
+                      InkWell(
+                        onTap: () {
+                          context.push(AppRoutes.register);
+                        },
                         child: RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
                             style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                              color: HeronFitTheme.textMuted,
+                              color: HeronFitTheme.primary,
                             ),
                             children: [
-                              const TextSpan(
-                                text: "Don't have an account yet? ",
-                              ),
+                              const TextSpan(text: 'New to HeronFit? '),
                               TextSpan(
                                 text: 'Register',
-                                style: TextStyle(
-                                  color: HeronFitTheme.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: HeronFitTheme.textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: HeronFitTheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                 recognizer:
                                     TapGestureRecognizer()
                                       ..onTap = () {
