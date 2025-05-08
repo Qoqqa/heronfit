@@ -5,7 +5,24 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/widgets/loading_indicator.dart';
 import '../controllers/registration_controller.dart';
-import 'package:solar_icons/solar_icons.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart'; // Added import
+
+// Define a data class for goal items
+class GoalItem {
+  final String imagePath;
+  final String
+  title; // Kept for data model consistency, not displayed in carousel
+  final String
+  description; // Kept for data model consistency, not displayed in carousel
+  final String backendValue; // Value to be stored in Supabase
+
+  const GoalItem({
+    required this.imagePath,
+    required this.title,
+    required this.description,
+    required this.backendValue,
+  });
+}
 
 class RegisterSetGoalsScreen extends ConsumerStatefulWidget {
   const RegisterSetGoalsScreen({super.key});
@@ -18,153 +35,196 @@ class RegisterSetGoalsScreen extends ConsumerStatefulWidget {
 class _RegisterSetGoalsScreenState
     extends ConsumerState<RegisterSetGoalsScreen> {
   bool _isLoading = false;
-  String? _selectedGoal;
-  final _formKey = GlobalKey<FormState>();
+  // viewportFraction allows peeking of next/previous items
+  final PageController _pageController = PageController(viewportFraction: 0.8);
+  int _currentPage = 0;
+
+  final List<GoalItem> _goals = [
+    const GoalItem(
+      imagePath: 'assets/images/goals_weight_loss.webp',
+      title: 'Weight Loss & Confidence Boost',
+      description: 'Reach your ideal weight and unlock newfound self-esteem.',
+      backendValue: 'lose_weight',
+    ),
+    const GoalItem(
+      imagePath: 'assets/images/goals_overall_fitness.webp',
+      title: 'Boost Energy & Fitness',
+      description:
+          'Feel more energized, move with ease, and improve your overall health.',
+      backendValue: 'general_fitness',
+    ),
+    const GoalItem(
+      imagePath: 'assets/images/goals_build_muscle.webp',
+      title: 'Build Muscle, Gain Power',
+      description:
+          'Become stronger, more capable, and build a physique you\'re proud of.',
+      backendValue: 'build_muscle',
+    ),
+  ];
 
   @override
   void initState() {
     super.initState();
-    // Initialize local state from provider
-    _selectedGoal = ref.read(registrationProvider).goal;
+    final initialGoal = ref.read(registrationProvider).goal;
+    if (initialGoal.isNotEmpty) {
+      final initialIndex = _goals.indexWhere(
+        (goal) => goal.backendValue == initialGoal,
+      );
+      if (initialIndex != -1) {
+        _currentPage = initialIndex;
+      }
+    }
+    if (_goals.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref
+              .read(registrationProvider.notifier)
+              .updateGoal(_goals[_currentPage].backendValue);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final registrationNotifier = ref.read(registrationProvider.notifier);
 
+    final PageController pageControllerWithInitial = PageController(
+      initialPage: _currentPage,
+      viewportFraction: 0.75,
+    );
+
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
-        elevation: 0,
-        leading: BackButton(color: HeronFitTheme.primaryDark),
-      ),
       backgroundColor: HeronFitTheme.bgLight,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24.0, 0, 24.0, 24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        AspectRatio(
-                          aspectRatio: 1.5,
-                          child: Container(
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: HeronFitTheme.primary.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                            child: Center(
-                              child: Icon(
-                                SolarIconsOutline.target,
-                                color: HeronFitTheme.primary,
-                                size: 80,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        Text(
-                          "Let's Conquer Your Fitness Goals",
-                          style: HeronFitTheme.textTheme.headlineSmall
-                              ?.copyWith(
-                                color: HeronFitTheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tell us what you\'re aiming for, and we\'ll guide you to success.',
-                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                            color: HeronFitTheme.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-                        DropdownButtonFormField<String>(
-                          value:
-                              _selectedGoal?.isEmpty ?? true
-                                  ? null
-                                  : _selectedGoal,
-                          decoration: InputDecoration(
-                            labelText: 'Select Your Goal',
-                            prefixIcon: const Icon(
-                              SolarIconsOutline.target,
-                              color: HeronFitTheme.primary,
-                              size: 20,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: HeronFitTheme.bgSecondary,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 16,
-                            ),
-                          ),
-                          style: HeronFitTheme.textTheme.bodyLarge,
-                          icon: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: HeronFitTheme.textMuted,
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'lose_weight',
-                              child: Text('Lose Weight and Feel Confident'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'build_muscle',
-                              child: Text('Build Muscle and Strength'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'improve_endurance',
-                              child: Text('Improve Endurance'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'general_fitness',
-                              child: Text('General Fitness'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              setState(() {
-                                _selectedGoal = value;
-                              });
-                              registrationNotifier.updateGoal(value);
-                            }
-                          },
-                          validator:
-                              (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Please select a goal'
-                                      : null,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                        ),
-                        const SizedBox(height: 24),
-                      ],
+          padding: const EdgeInsets.symmetric(vertical: 20.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      'Let\'s Conquer Your Fitness Goals',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+                        color: HeronFitTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
+                    // const SizedBox(height: 8),
+                    Text(
+                      'Pick your focus, and we\'ll tailor your path to success.',
+                      textAlign: TextAlign.center,
+                      style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                        color: HeronFitTheme.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
                 ),
-                if (_isLoading)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 16.0),
-                    child: LoadingIndicator(),
-                  )
-                else
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (!(_formKey.currentState?.validate() ?? false)) {
-                        return;
-                      }
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: PageView.builder(
+                        controller: pageControllerWithInitial,
+                        itemCount: _goals.length,
+                        onPageChanged: (int page) {
+                          setState(() {
+                            _currentPage = page;
+                          });
+                          registrationNotifier.updateGoal(
+                            _goals[page].backendValue,
+                          );
+                        },
+                        itemBuilder: (context, index) {
+                          final goal = _goals[index];
 
+                          return AnimatedBuilder(
+                            animation: pageControllerWithInitial,
+                            builder: (context, child) {
+                              double scaleValue = 1.0;
+                              double verticalPaddingValue = 0.0;
+
+                              if (pageControllerWithInitial
+                                  .position
+                                  .haveDimensions) {
+                                double page = pageControllerWithInitial.page!;
+                                scaleValue = (1 - ((page - index).abs() * 0.15))
+                                    .clamp(0.85, 1.0);
+                                verticalPaddingValue = ((page - index).abs() *
+                                        20.0)
+                                    .clamp(0.0, 25.0);
+                              } else {
+                                scaleValue = index == _currentPage ? 1.0 : 0.85;
+                                verticalPaddingValue =
+                                    index == _currentPage ? 0.0 : 25.0;
+                              }
+
+                              return Transform.scale(
+                                scale: scaleValue,
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: verticalPaddingValue,
+                                    horizontal: 4.0,
+                                  ),
+                                  child: Image.asset(
+                                    goal.imagePath,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SmoothPageIndicator(
+                      controller: pageControllerWithInitial,
+                      count: _goals.length,
+                      effect: WormEffect(
+                        dotHeight: 10,
+                        dotWidth: 10,
+                        activeDotColor: HeronFitTheme.primary,
+                        dotColor: HeronFitTheme.primary.withOpacity(0.5),
+                        paintStyle: PaintingStyle.fill,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                ),
+              ),
+              if (_isLoading)
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 32.0,
+                    left: 24.0,
+                    right: 24.0,
+                  ),
+                  child: const LoadingIndicator(),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: 32.0,
+                    left: 24.0,
+                    right: 24.0,
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () async {
                       setState(() => _isLoading = true);
                       try {
                         await registrationNotifier.initiateSignUp();
@@ -174,7 +234,11 @@ class _RegisterSetGoalsScreenState
                       } catch (e) {
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: ${e.toString()}')),
+                            SnackBar(
+                              content: Text(
+                                'Error: ${e.toString().replaceFirst("Exception: ", "")}',
+                              ),
+                            ),
                           );
                         }
                       } finally {
@@ -190,14 +254,14 @@ class _RegisterSetGoalsScreenState
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
+                      textStyle: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Confirm'),
+                    child: const Text('Confirm & Continue'),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
       ),
