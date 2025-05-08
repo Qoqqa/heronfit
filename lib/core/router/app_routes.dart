@@ -4,7 +4,12 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const registerVerify = '/register/verify'; // Example, adjust as needed
-  static const forgotPassword = '/login/forgot-password'; // Added route
+  static const requestOtp =
+      '/password-recovery/request-otp'; // Renamed and new path
+  static const enterOtp =
+      '/password-recovery/enter-otp'; // New route for OTP entry
+  static const createNewPassword =
+      '/password-recovery/create-new-password'; // New route for new password
   static const registerStep2 = '/register/step2'; // Example, adjust as needed
   static const registerGettingToKnow = '/register/getting-to-know';
   static const registerSetGoals = '/register/set-goals';

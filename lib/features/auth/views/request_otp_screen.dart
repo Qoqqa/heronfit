@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heronfit/core/theme.dart'; // Assuming theme.dart is in lib/core/
-import 'package:heronfit/features/auth/controllers/forgot_password_controller.dart';
-// TODO: Import your actual image asset if you have one, or use a placeholder
-// import 'package:flutter_svg/flutter_svg.dart'; // Example for SVG
+import 'package:go_router/go_router.dart'; // For navigation
+import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/core/router/app_routes.dart'; // For new routes
+import 'package:heronfit/features/auth/controllers/password_recovery_controller.dart';
 
-class ForgotPasswordScreen extends ConsumerWidget {
-  const ForgotPasswordScreen({super.key});
+class RequestOtpScreen extends ConsumerWidget {
+  const RequestOtpScreen({super.key});
 
-  void _showCheckEmailDialog(BuildContext context) {
+  void _showCheckEmailDialog(BuildContext context, String email) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -18,9 +18,8 @@ class ForgotPasswordScreen extends ConsumerWidget {
           ),
           title: Column(
             children: [
-              // TODO: Replace with your actual image asset for the dialog
               const Icon(
-                Icons.email_outlined,
+                Icons.mail_lock_outlined,
                 color: HeronFitTheme.primary,
                 size: 60,
               ),
@@ -35,7 +34,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
             ],
           ),
           content: Text(
-            'Password reset email sent! Please check your inbox for instructions.',
+            'A verification code has been sent to $email. Please check your inbox for instructions.',
             style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
               color: HeronFitTheme.textSecondary,
             ),
@@ -51,25 +50,21 @@ class ForgotPasswordScreen extends ConsumerWidget {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: HeronFitTheme.primary,
-                minimumSize: const Size(
-                  double.infinity,
-                  50,
-                ), // Make button wide
+                minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
               child: Text(
-                'Okay!',
+                'Okay',
                 style: HeronFitTheme.textTheme.labelLarge?.copyWith(
                   color: HeronFitTheme.textWhite,
                 ),
               ),
               onPressed: () {
                 Navigator.of(dialogContext).pop(); // Close dialog
-                Navigator.of(
-                  context,
-                ).pop(); // Go back from ForgotPasswordScreen (e.g., to Login)
+                // Navigate to EnterOtpScreen, passing the email
+                context.pushNamed(AppRoutes.enterOtp, extra: email);
               },
             ),
           ],
@@ -83,14 +78,14 @@ class ForgotPasswordScreen extends ConsumerWidget {
     final formKey = GlobalKey<FormState>();
     final emailController = TextEditingController();
 
-    // Listen to the controller state
-    ref.listen<ForgotPasswordState>(forgotPasswordControllerProvider, (
+    ref.listen<PasswordRecoveryState>(passwordRecoveryControllerProvider, (
       previous,
       next,
     ) {
-      if (next is ForgotPasswordSuccess) {
-        _showCheckEmailDialog(context);
-      } else if (next is ForgotPasswordError) {
+      final currentEmail = emailController.text.trim();
+      if (next is PasswordRecoveryOtpSent) {
+        _showCheckEmailDialog(context, currentEmail);
+      } else if (next is PasswordRecoveryError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(next.message),
@@ -100,24 +95,23 @@ class ForgotPasswordScreen extends ConsumerWidget {
       }
     });
 
-    final forgotPasswordState = ref.watch(forgotPasswordControllerProvider);
+    final passwordRecoveryState = ref.watch(passwordRecoveryControllerProvider);
 
-    // TODO: Replace with your actual image asset or a more suitable placeholder
     Widget illustration = Container(
-      height: 180, // Adjusted height
+      height: 180,
       alignment: Alignment.center,
       child: const Icon(
-        Icons.lock_reset,
+        Icons.phonelink_lock_outlined,
         size: 100,
         color: HeronFitTheme.primary,
-      ), // Placeholder
+      ),
     );
 
     return Scaffold(
       backgroundColor: HeronFitTheme.bgLight,
       appBar: AppBar(
         title: Text(
-          'Forgot Password',
+          'Password Recovery',
           style: HeronFitTheme.textTheme.titleLarge?.copyWith(
             color: HeronFitTheme.textWhite,
           ),
@@ -138,9 +132,9 @@ class ForgotPasswordScreen extends ConsumerWidget {
             children: <Widget>[
               const SizedBox(height: 20),
               illustration,
-              const SizedBox(height: 24), // Adjusted spacing
+              const SizedBox(height: 24),
               Text(
-                'Having trouble logging in? No problem! Enter your email address, and we\'ll send you a link to reset your password.',
+                'Enter your email address below, and we\'ll send you a verification code to reset your password.',
                 style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                   color: HeronFitTheme.textSecondary,
                 ),
@@ -157,9 +151,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                     color: HeronFitTheme.textMuted,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(
-                      12.0,
-                    ), // Slightly more rounded
+                    borderRadius: BorderRadius.circular(12.0),
                     borderSide: BorderSide(
                       color: HeronFitTheme.textMuted.withOpacity(0.5),
                     ),
@@ -178,9 +170,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                     ),
                   ),
                   filled: true,
-                  fillColor:
-                      HeronFitTheme
-                          .bgLight, // Or Colors.white if preferred against bgLight
+                  fillColor: HeronFitTheme.bgLight,
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16.0,
                     horizontal: 12.0,
@@ -207,11 +197,9 @@ class ForgotPasswordScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8.0,
-                ), // Added padding for this text
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
-                  'If an account with this email exists, you\'ll receive an email with instructions. Please check your inbox.',
+                  'If an account with this email exists, you\'ll receive a verification code. Please check your inbox.',
                   style: HeronFitTheme.textTheme.bodySmall?.copyWith(
                     color: HeronFitTheme.textMuted,
                   ),
@@ -222,30 +210,28 @@ class ForgotPasswordScreen extends ConsumerWidget {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: HeronFitTheme.primary,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 18,
-                  ), // Increased padding
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      12.0,
-                    ), // Consistent rounding
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
                   textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
                     color: HeronFitTheme.textWhite,
                   ),
                 ),
                 onPressed:
-                    forgotPasswordState is ForgotPasswordLoading
-                        ? null // Disable button when loading
+                    passwordRecoveryState is PasswordRecoveryLoading
+                        ? null
                         : () {
                           if (formKey.currentState!.validate()) {
                             ref
-                                .read(forgotPasswordControllerProvider.notifier)
-                                .sendResetLink(emailController.text.trim());
+                                .read(
+                                  passwordRecoveryControllerProvider.notifier,
+                                )
+                                .sendRecoveryOtp(emailController.text.trim());
                           }
                         },
                 child:
-                    forgotPasswordState is ForgotPasswordLoading
+                    passwordRecoveryState is PasswordRecoveryLoading
                         ? const SizedBox(
                           height: 20,
                           width: 20,
@@ -257,7 +243,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                           ),
                         )
                         : Text(
-                          'Send Reset Link',
+                          'Send Verification Code',
                           style: HeronFitTheme.textTheme.labelLarge?.copyWith(
                             color: HeronFitTheme.textWhite,
                           ),
@@ -282,7 +268,7 @@ class ForgotPasswordScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 20), // Bottom padding
+              const SizedBox(height: 20),
             ],
           ),
         ),

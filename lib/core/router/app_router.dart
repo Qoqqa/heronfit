@@ -40,7 +40,9 @@ import 'package:heronfit/widgets/main_screen_wrapper.dart';
 import 'package:heronfit/features/auth/views/register_getting_to_know_screen.dart';
 import 'package:heronfit/features/auth/views/register_set_goals_screen.dart';
 import 'package:heronfit/features/auth/views/register_success_screen.dart';
-import 'package:heronfit/features/auth/views/forgot_password_screen.dart';
+import 'package:heronfit/features/auth/views/request_otp_screen.dart'; // New import
+import 'package:heronfit/features/auth/views/enter_otp_screen.dart'; // New import
+import 'package:heronfit/features/auth/views/create_new_password_screen.dart'; // New import
 
 import 'app_routes.dart';
 
@@ -70,8 +72,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: AppRoutes.forgotPassword,
-        builder: (context, state) => const ForgotPasswordScreen(),
+        path: AppRoutes.requestOtp, // Changed from AppRoutes.forgotPassword
+        builder:
+            (context, state) =>
+                const RequestOtpScreen(), // Changed from ForgotPasswordScreen
+      ),
+      GoRoute(
+        path: AppRoutes.enterOtp,
+        name:
+            AppRoutes
+                .enterOtp, // Added name for type safety with pushReplacementNamed
+        builder: (context, state) {
+          final email = state.extra as String?;
+          if (email == null) {
+            // If email is not provided, redirect back or show an error
+            // For simplicity, redirecting to requestOtp. Consider a dedicated error screen.
+            return const RequestOtpScreen(); // Or some error/redirect logic
+          }
+          return EnterOtpScreen(email: email);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.createNewPassword,
+        name: AppRoutes.createNewPassword, // Added name for consistency
+        builder: (context, state) {
+          // final email = state.extra as String?; // Email might not be strictly needed here if session from OTP handles auth context
+          return const CreateNewPasswordScreen();
+        },
       ),
       GoRoute(
         path: AppRoutes.register,
