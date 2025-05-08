@@ -9,7 +9,7 @@ import '../controllers/verify_email_controller.dart'; // Import verification log
 import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
 import '../../../widgets/loading_indicator.dart'; // Import LoadingIndicator
 import 'package:pinput/pinput.dart';
-import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+// import 'package:solar_icons/solar_icons.dart'; // No longer used in this UI
 
 class RegisterVerificationScreen extends ConsumerStatefulWidget {
   const RegisterVerificationScreen({super.key});
@@ -34,6 +34,7 @@ class _RegisterVerificationScreenState
   }
 
   Future<void> _verifyAndRegister() async {
+    FocusScope.of(context).unfocus();
     if (pinCodeController.text.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter the full 6-digit code.')),
@@ -78,7 +79,11 @@ class _RegisterVerificationScreenState
         pinCodeController.clear();
         pinCodeFocusNode.requestFocus();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('An error occurred: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              'An error occurred: ${e.toString().replaceFirst("Exception: ", "")}',
+            ),
+          ),
         );
       }
     } finally {
@@ -89,8 +94,16 @@ class _RegisterVerificationScreenState
   }
 
   Future<void> _resendCode() async {
+    FocusScope.of(context).unfocus();
     final email = ref.read(registrationProvider).email;
-    if (email.isEmpty) return;
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Email address not found to resend code.'),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
     try {
@@ -111,7 +124,11 @@ class _RegisterVerificationScreenState
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error resending code: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              'Error resending code: ${e.toString().replaceFirst("Exception: ", "")}',
+            ),
+          ),
         );
       }
     } finally {
@@ -126,107 +143,101 @@ class _RegisterVerificationScreenState
     final email = ref.watch(registrationProvider).email;
 
     final defaultPinTheme = PinTheme(
-      width: 52,
+      width: 48, // Slightly smaller to fit 6 across comfortably with spacing
       height: 52,
       textStyle: HeronFitTheme.textTheme.headlineSmall?.copyWith(
         color: HeronFitTheme.textPrimary,
+        fontWeight: FontWeight.bold, // Make digits bold
       ),
       decoration: BoxDecoration(
-        color: HeronFitTheme.bgSecondary,
+        color: HeronFitTheme.bgSecondary, // Light purple from Figma
         borderRadius: BorderRadius.circular(12),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyDecorationWith(
-      border: Border.all(color: HeronFitTheme.primary, width: 2),
+      border: Border.all(color: HeronFitTheme.primary, width: 1.5),
+      borderRadius: BorderRadius.circular(12),
     );
 
     final submittedPinTheme = defaultPinTheme.copyWith(
-      textStyle: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-        color: HeronFitTheme.primaryDark,
-      ),
       decoration: defaultPinTheme.decoration?.copyWith(
-        color: HeronFitTheme.primary.withOpacity(0.1),
+        color: HeronFitTheme.bgSecondary, // Keep same background on submit
       ),
     );
 
     final errorPinTheme = defaultPinTheme.copyDecorationWith(
       border: Border.all(color: HeronFitTheme.error, width: 1),
-      color: HeronFitTheme.error.withOpacity(0.1),
+      color: HeronFitTheme.bgLight, // Lighter background for error state
     );
 
     return Scaffold(
       key: scaffoldKey,
-      appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
-        elevation: 0,
-        leading: BackButton(color: HeronFitTheme.primaryDark),
-      ),
+      // AppBar removed
       backgroundColor: HeronFitTheme.bgLight,
       body: SafeArea(
         top: true,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          padding: const EdgeInsets.symmetric(
+            horizontal: 24.0,
+            vertical: 32.0,
+          ), // Consistent padding
           child: Column(
-            mainAxisSize: MainAxisSize.max,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment:
+                MainAxisAlignment.center, // Center content vertically
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(vertical: 24.0),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 20.0,
+                        ), // Adjusted padding
                         child: Image.asset(
-                          'assets/images/register_verify_email.png',
-                          fit: BoxFit.contain,
-                          height: 250,
+                          'assets/images/register_email_sent.webp', // Placeholder - ensure this path is correct
+                          fit: BoxFit.cover,
+                          height: 300, // Adjusted height
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      Align(
-                        alignment: Alignment.center,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Column(
+                      const SizedBox(height: 32),
+                      Text(
+                        'Email Sent!', // Updated title
+                        textAlign: TextAlign.center,
+                        style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+                          color: HeronFitTheme.primary,
+                          // fontWeight is handled by theme (ClashDisplay)
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: TextSpan(
+                            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                              color: HeronFitTheme.textSecondary,
+                            ),
                             children: [
-                              Text(
-                                'Almost There!',
-                                textAlign: TextAlign.center,
-                                style: HeronFitTheme.textTheme.headlineSmall
-                                    ?.copyWith(
-                                      color: HeronFitTheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                              const TextSpan(
+                                text:
+                                    'A 6-digit verification code has been sent to ',
                               ),
-                              const SizedBox(height: 8),
-                              RichText(
-                                textAlign: TextAlign.center,
-                                text: TextSpan(
-                                  style: HeronFitTheme.textTheme.bodyMedium
-                                      ?.copyWith(
-                                        color: HeronFitTheme.textSecondary,
-                                      ),
-                                  children: [
-                                    const TextSpan(
-                                      text:
-                                          'Please enter the 6 digit code sent to ',
-                                    ),
-                                    TextSpan(
-                                      text: email,
-                                      style: TextStyle(
-                                        color: HeronFitTheme.primary,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const TextSpan(
-                                      text:
-                                          ' to verify your account and start your fitness journey.',
-                                    ),
-                                  ],
+                              TextSpan(
+                                text:
+                                    email.isNotEmpty
+                                        ? email
+                                        : 'your email', // Display actual email
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: HeronFitTheme.primary, // Email color
                                 ),
+                              ),
+                              const TextSpan(
+                                text:
+                                    '. Please enter it below to confirm your account and begin your HeronFit journey.',
                               ),
                             ],
                           ),
@@ -240,12 +251,16 @@ class _RegisterVerificationScreenState
                         autofocus: true,
                         hapticFeedbackType: HapticFeedbackType.lightImpact,
                         onCompleted: (pin) {
-                          _verifyAndRegister();
+                          if (!_isLoading) _verifyAndRegister();
                         },
                         defaultPinTheme: defaultPinTheme,
                         focusedPinTheme: focusedPinTheme,
                         submittedPinTheme: submittedPinTheme,
                         errorPinTheme: errorPinTheme,
+                        separatorBuilder:
+                            (index) => const SizedBox(
+                              width: 8,
+                            ), // Spacing between pins
                         pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
                         showCursor: true,
                         cursor: Column(
@@ -254,7 +269,7 @@ class _RegisterVerificationScreenState
                             Container(
                               margin: const EdgeInsets.only(bottom: 9),
                               width: 22,
-                              height: 2,
+                              height: 1.5,
                               color: HeronFitTheme.primary,
                             ),
                           ],
@@ -271,52 +286,60 @@ class _RegisterVerificationScreenState
                           ),
                         ),
                       ),
+                      const SizedBox(
+                        height: 16,
+                      ), // Spacer to push buttons down if content is short
                     ],
                   ),
                 ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_isLoading)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 16.0),
-                      child: LoadingIndicator(),
-                    )
-                  else ...[
+              // Buttons at the bottom
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: LoadingIndicator(),
+                )
+              else
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     ElevatedButton(
                       onPressed: _verifyAndRegister,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: HeronFitTheme.primary,
-                        foregroundColor: HeronFitTheme.bgLight,
+                        foregroundColor: HeronFitTheme.textWhite,
                         minimumSize: const Size(double.infinity, 52),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(12.0),
                         ),
-                        textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        textStyle: HeronFitTheme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       child: const Text('Confirm'),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
                     TextButton(
                       onPressed: () {
-                        ref.read(registrationProvider.notifier).reset();
-                        context.goNamed(AppRoutes.register);
+                        // Navigate back to register screen allowing email change
+                        // Consider clearing partially entered registration data or specific fields
+                        ref
+                            .read(registrationProvider.notifier)
+                            .updatePassword(''); // Clear password for safety
+                        context.go(
+                          AppRoutes.register,
+                        ); // Go back to register to change email
                       },
                       child: Text(
                         'Change Email',
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          color: HeronFitTheme.textMuted,
+                          color: HeronFitTheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
                   ],
-                ],
-              ),
+                ),
             ],
           ),
         ),
