@@ -3,7 +3,6 @@ import 'package:flutter/gestures.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme.dart';
 import '../../../core/router/app_routes.dart';
-import 'package:solar_icons/solar_icons.dart';
 
 class OnboardingWidget extends StatefulWidget {
   const OnboardingWidget({super.key});
@@ -26,32 +25,32 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
         backgroundColor: HeronFitTheme.bgLight,
         body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 32.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  height: 40.0,
-                  child: Image.asset(
-                    'assets/images/logotype_heronfit.png',
-                    fit: BoxFit.contain,
+                const SizedBox(height: 48.0),
+
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    height: 36.0,
+                    child: Image.asset(
+                      'assets/images/logotype_heronfit.webp',
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
-                const Spacer(flex: 1),
+                const SizedBox(height: 48.0),
 
                 Container(
                   width: double.infinity,
                   child: Image.asset(
-                    'assets/images/onboarding_hero.png',
-                    fit: BoxFit.cover,
+                    'assets/images/onboarding_hero.webp',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const Spacer(flex: 1),
+                const Spacer(),
 
                 Column(
                   mainAxisSize: MainAxisSize.min,
@@ -59,26 +58,19 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                     Text(
                       'Welcome to HeronFit',
                       textAlign: TextAlign.center,
-                      style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
+                      style: HeronFitTheme.textTheme.headlineMedium?.copyWith(
                         color: HeronFitTheme.primary,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    // const SizedBox(height: 4),
                     Text(
                       'Your Fitness Journey Starts Here',
                       textAlign: TextAlign.center,
                       style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
-                        color: HeronFitTheme.textSecondary,
+                        color: HeronFitTheme.primary,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 32),
-
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                    const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () {
                         context.push(AppRoutes.register);
@@ -90,13 +82,12 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
-                        textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        textStyle: HeronFitTheme.textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       child: const Text('Get Started'),
                     ),
-                    const SizedBox(height: 16.0),
+                    const SizedBox(height: 24.0),
                     InkWell(
                       splashColor: Colors.transparent,
                       focusColor: Colors.transparent,
@@ -109,7 +100,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                         textAlign: TextAlign.center,
                         text: TextSpan(
                           style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                            color: HeronFitTheme.textMuted,
+                            color: HeronFitTheme.primary,
                           ),
                           children: [
                             const TextSpan(text: 'Already have an account? '),
@@ -119,6 +110,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                                   ?.copyWith(
                                     color: HeronFitTheme.primary,
                                     fontWeight: FontWeight.bold,
+                                    // decoration: TextDecoration.underline,
                                   ),
                               recognizer:
                                   TapGestureRecognizer()
@@ -132,6 +124,7 @@ class _OnboardingWidgetState extends State<OnboardingWidget> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 48.0),
               ],
             ),
           ),
