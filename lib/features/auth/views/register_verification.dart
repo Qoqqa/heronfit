@@ -275,20 +275,6 @@ class _RegisterVerificationScreenState
                           ],
                         ),
                       ),
-                      const SizedBox(height: 24),
-                      TextButton(
-                        onPressed: _isLoading ? null : _resendCode,
-                        child: Text(
-                          'Resend Code',
-                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                            color: HeronFitTheme.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 16,
-                      ), // Spacer to push buttons down if content is short
                     ],
                   ),
                 ),
@@ -304,6 +290,17 @@ class _RegisterVerificationScreenState
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    TextButton(
+                      onPressed: _isLoading ? null : _resendCode,
+                      child: Text(
+                        'Resend Code',
+                        style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                          color: HeronFitTheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
                     ElevatedButton(
                       onPressed: _verifyAndRegister,
                       style: ElevatedButton.styleFrom(
@@ -318,7 +315,7 @@ class _RegisterVerificationScreenState
                       ),
                       child: const Text('Confirm'),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4), // Decreased from 8
                     TextButton(
                       onPressed: () {
                         // Navigate back to register screen allowing email change
