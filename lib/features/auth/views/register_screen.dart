@@ -88,7 +88,6 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
     try {
       // Update Riverpod state with current controller values before initiating sign up
       // This ensures the controller has the latest data if onChanged was used directly
-      // on controllers without immediate Riverpod update (though current setup updates Riverpod on each change)
       ref
           .read(registrationProvider.notifier)
           .updateFirstName(_firstNameController.text.trim());
@@ -102,10 +101,9 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
           .read(registrationProvider.notifier)
           .updatePassword(_passwordController.text.trim());
 
-      await ref.read(registrationProvider.notifier).initiateSignUp();
+      // Navigate to the Getting to Know screen
       if (mounted) {
-        // Navigate to the screen where the user can verify their email / enter OTP
-        context.go(AppRoutes.registerVerify);
+        context.pushNamed(AppRoutes.registerGettingToKnow);
       }
     } catch (e) {
       if (mounted) {
