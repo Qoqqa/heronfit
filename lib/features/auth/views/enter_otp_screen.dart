@@ -27,9 +27,6 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
     ref
         .read(passwordRecoveryControllerProvider.notifier)
         .sendRecoveryOtp(widget.email);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('A new OTP has been sent to ${widget.email}')),
-    );
   }
 
   @override
@@ -39,24 +36,20 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
       next,
     ) {
       if (next is PasswordRecoveryOtpVerificationSuccess) {
-        // Navigate to CreateNewPasswordScreen, passing the email or relying on controller state
-        // For now, let's assume CreateNewPasswordScreen might need the email if session isn't fully established for update yet.
         context.pushReplacementNamed(
           AppRoutes.createNewPassword,
           extra: widget.email,
         );
-      } else if (next is PasswordRecoveryError &&
-          next.stage == RecoveryStage.otpVerification) {
+      } else if (next is PasswordRecoveryError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(next.message),
+            content: Text("Error (${next.stage.name}): ${next.message}"),
             backgroundColor: HeronFitTheme.error,
           ),
         );
       } else if (next is PasswordRecoveryOtpSent) {
-        // This state might be triggered if resend is successful
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('A new OTP has been sent to ${widget.email}')),
+          SnackBar(content: Text('Verification code sent to ${widget.email}')),
         );
       }
     });
