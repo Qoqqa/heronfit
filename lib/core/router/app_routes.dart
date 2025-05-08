@@ -4,6 +4,7 @@ class AppRoutes {
   static const login = '/login';
   static const register = '/register';
   static const registerVerify = '/register/verify'; // Example, adjust as needed
+  static const forgotPassword = '/login/forgot-password'; // Added route
   static const registerStep2 = '/register/step2'; // Example, adjust as needed
   static const registerGettingToKnow = '/register/getting-to-know';
   static const registerSetGoals = '/register/set-goals';

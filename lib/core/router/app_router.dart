@@ -40,6 +40,7 @@ import 'package:heronfit/widgets/main_screen_wrapper.dart';
 import 'package:heronfit/features/auth/views/register_getting_to_know_screen.dart';
 import 'package:heronfit/features/auth/views/register_set_goals_screen.dart';
 import 'package:heronfit/features/auth/views/register_success_screen.dart';
+import 'package:heronfit/features/auth/views/forgot_password_screen.dart';
 
 import 'app_routes.dart';
 
@@ -67,6 +68,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.login,
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
         path: AppRoutes.register,
