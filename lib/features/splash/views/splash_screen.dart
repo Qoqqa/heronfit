@@ -104,7 +104,7 @@ class _SplashScreenWidgetState extends ConsumerState<SplashScreenWidget> {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.0),
                             child: Image.asset(
-                              'assets/images/logo_heronfit.png',
+                              'assets/images/logo_heronfit.webp',
                               width: double.infinity,
                               height: 100.0,
                               fit: BoxFit.contain,
@@ -125,8 +125,10 @@ class _SplashScreenWidgetState extends ConsumerState<SplashScreenWidget> {
                         alignment: AlignmentDirectional(0.0, 0.0),
                         child: Text(
                           'HeronFit',
-                          style: HeronFitTheme.textTheme.displayMedium
-                              ?.copyWith(color: HeronFitTheme.bgLight),
+                          style: HeronFitTheme.textTheme.displaySmall?.copyWith(
+                            color: HeronFitTheme.bgLight,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],

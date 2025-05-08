@@ -101,11 +101,6 @@ class _RegisterGettingToKnowScreenState
     final registrationNotifier = ref.read(registrationProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: HeronFitTheme.bgLight,
-        elevation: 0,
-        leading: BackButton(color: HeronFitTheme.primaryDark),
-      ),
       backgroundColor: HeronFitTheme.bgLight,
       body: SafeArea(
         child: Padding(
@@ -117,232 +112,279 @@ class _RegisterGettingToKnowScreenState
               children: [
                 Expanded(
                   child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 24.0),
-                          child: Image.asset(
-                            'assets/images/register_intro.png',
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 64.0),
+                      child: Column(
+                        children: [
+                          // Image and heading
+                          Image.asset(
+                            'assets/images/register_details.webp',
                             fit: BoxFit.cover,
-                            height: 260,
-                            width: 300,
+                            height: 250,
+                            width: double.infinity,
                           ),
-                        ),
-                        // const SizedBox(height: 8),
-                        Text(
-                          'Tell us a little about yourself',
-                          textAlign: TextAlign.center,
-                          style: HeronFitTheme.textTheme.headlineSmall
-                              ?.copyWith(
-                                color: HeronFitTheme.primary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'This will help us create a personalized experience just for you.',
-                          style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                            color: HeronFitTheme.textSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-                        DropdownButtonFormField<String>(
-                          value:
-                              registration.gender.isEmpty
-                                  ? null
-                                  : registration.gender,
-                          decoration: InputDecoration(
-                            labelText: 'Choose Gender',
-                            prefixIcon: const Icon(
-                              SolarIconsOutline.usersGroupRounded,
+                          const SizedBox(height: 24),
+                          Text(
+                            'Tell Us A Little About Yourself',
+                            textAlign: TextAlign.center,
+                            style: HeronFitTheme.textTheme.titleLarge?.copyWith(
                               color: HeronFitTheme.primary,
-                              size: 20,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: HeronFitTheme.bgSecondary,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 16,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          style: HeronFitTheme.textTheme.bodyLarge,
-                          icon: Icon(
-                            Icons.keyboard_arrow_down,
-                            color: HeronFitTheme.textMuted,
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'male',
-                              child: Text('Male'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'female',
-                              child: Text('Female'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'other',
-                              child: Text('Other'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'prefer_not_to_say',
-                              child: Text('Prefer not to say'),
-                            ),
-                          ],
-                          onChanged: (value) {
-                            if (value != null) {
-                              registrationNotifier.updateGender(value);
-                            }
-                          },
-                          validator:
-                              (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Please select a gender'
-                                      : null,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _birthdayController,
-                          decoration: InputDecoration(
-                            labelText: 'Date of Birth',
-                            prefixIcon: const Icon(
-                              SolarIconsOutline.calendar,
+                          // const SizedBox(height: 4),
+                          Text(
+                            'This will help us create a personalized experience just for you.',
+                            style: HeronFitTheme.textTheme.labelLarge?.copyWith(
                               color: HeronFitTheme.primary,
-                              size: 20,
                             ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: HeronFitTheme.bgSecondary,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 16,
-                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          style: HeronFitTheme.textTheme.bodyLarge,
-                          readOnly: true,
-                          onTap: () => _selectDate(context),
-                          validator:
-                              (value) =>
-                                  value == null || value.isEmpty
-                                      ? 'Please enter your date of birth'
-                                      : null,
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: TextFormField(
-                                controller: _weightController,
-                                onChanged:
-                                    (value) => registrationNotifier
-                                        .updateWeight(value.trim()),
-                                decoration: InputDecoration(
-                                  labelText: 'Your Weight',
-                                  prefixIcon: const Icon(
-                                    SolarIconsOutline.scale,
-                                    color: HeronFitTheme.primary,
-                                    size: 20,
-                                  ),
-                                  suffixText: 'KG',
-                                  suffixStyle: HeronFitTheme
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: HeronFitTheme.textMuted,
-                                      ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  filled: true,
-                                  fillColor: HeronFitTheme.bgSecondary,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 16,
-                                  ),
+                          const SizedBox(height: 32),
+
+                          // Gender Dropdown - Updated styling to match design
+                          Container(
+                            decoration: BoxDecoration(
+                              color: HeronFitTheme.bgSecondary,
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: DropdownButtonFormField<String>(
+                              value:
+                                  registration.gender.isEmpty
+                                      ? null
+                                      : registration.gender,
+                              decoration: InputDecoration(
+                                hintText: 'Choose Gender',
+                                prefixIcon: Icon(
+                                  SolarIconsOutline.usersGroupRounded,
+                                  color: HeronFitTheme.textMuted,
+                                  size: 20,
                                 ),
-                                style: HeronFitTheme.textTheme.bodyLarge,
-                                keyboardType:
-                                    const TextInputType.numberWithOptions(
-                                      decimal: true,
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 16,
+                                ),
+                              ),
+                              style: HeronFitTheme.textTheme.bodyLarge,
+                              icon: Icon(
+                                Icons.keyboard_arrow_down,
+                                color: HeronFitTheme.textMuted,
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'male',
+                                  child: Text('Male'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'female',
+                                  child: Text('Female'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'other',
+                                  child: Text('Other'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'prefer_not_to_say',
+                                  child: Text('Prefer not to say'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  registrationNotifier.updateGender(value);
+                                }
+                              },
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Please select a gender'
+                                          : null,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              dropdownColor: HeronFitTheme.bgSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Date of Birth - Updated styling to match design
+                          Container(
+                            decoration: BoxDecoration(
+                              color: HeronFitTheme.bgSecondary,
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: TextFormField(
+                              controller: _birthdayController,
+                              decoration: InputDecoration(
+                                hintText: 'Date of Birth',
+                                prefixIcon: Icon(
+                                  SolarIconsOutline.calendar,
+                                  color: HeronFitTheme.textMuted,
+                                  size: 20,
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 16,
+                                ),
+                              ),
+                              style: HeronFitTheme.textTheme.bodyLarge,
+                              readOnly: true,
+                              onTap: () => _selectDate(context),
+                              validator:
+                                  (value) =>
+                                      value == null || value.isEmpty
+                                          ? 'Please enter your date of birth'
+                                          : null,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Weight field with KG button - styled to match design
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: HeronFitTheme.bgSecondary,
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                  child: TextFormField(
+                                    controller: _weightController,
+                                    onChanged:
+                                        (value) => registrationNotifier
+                                            .updateWeight(value.trim()),
+                                    decoration: InputDecoration(
+                                      hintText: 'Your Weight',
+                                      prefixIcon: Icon(
+                                        SolarIconsOutline.scale,
+                                        color: HeronFitTheme.textMuted,
+                                        size: 20,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                            horizontal: 16,
+                                          ),
                                     ),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return 'Enter weight';
-                                  if (double.tryParse(value) == null)
-                                    return 'Invalid number';
-                                  if (double.parse(value) <= 0)
-                                    return 'Must be > 0';
-                                  return null;
-                                },
-                                autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: TextFormField(
-                                controller: _heightController,
-                                onChanged:
-                                    (value) => registrationNotifier
-                                        .updateHeight(value.trim()),
-                                decoration: InputDecoration(
-                                  labelText: 'Your Height',
-                                  prefixIcon: const Icon(
-                                    SolarIconsOutline.ruler,
-                                    color: HeronFitTheme.primary,
-                                    size: 20,
-                                  ),
-                                  suffixText: 'CM',
-                                  suffixStyle: HeronFitTheme
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(
-                                        color: HeronFitTheme.textMuted,
-                                      ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  filled: true,
-                                  fillColor: HeronFitTheme.bgSecondary,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                    horizontal: 16,
+                                    style: HeronFitTheme.textTheme.bodyLarge,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty)
+                                        return 'Enter weight';
+                                      if (double.tryParse(value) == null)
+                                        return 'Invalid number';
+                                      if (double.parse(value) <= 0)
+                                        return 'Must be > 0';
+                                      return null;
+                                    },
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
                                   ),
                                 ),
-                                style: HeronFitTheme.textTheme.bodyLarge,
-                                keyboardType: TextInputType.number,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty)
-                                    return 'Enter height';
-                                  if (int.tryParse(value) == null)
-                                    return 'Invalid number';
-                                  if (int.parse(value) <= 0)
-                                    return 'Must be > 0';
-                                  return null;
-                                },
-                                autovalidateMode:
-                                    AutovalidateMode.onUserInteraction,
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
-                      ],
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: HeronFitTheme.primary,
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'KG',
+                                    style: HeronFitTheme.textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Height field with CM button - styled to match design
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: HeronFitTheme.bgSecondary,
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                  child: TextFormField(
+                                    controller: _heightController,
+                                    onChanged:
+                                        (value) => registrationNotifier
+                                            .updateHeight(value.trim()),
+                                    decoration: InputDecoration(
+                                      hintText: 'Your Height',
+                                      prefixIcon: Icon(
+                                        SolarIconsOutline.ruler,
+                                        color: HeronFitTheme.textMuted,
+                                        size: 20,
+                                      ),
+                                      border: InputBorder.none,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            vertical: 16,
+                                            horizontal: 16,
+                                          ),
+                                    ),
+                                    style: HeronFitTheme.textTheme.bodyLarge,
+                                    keyboardType: TextInputType.number,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty)
+                                        return 'Enter height';
+                                      if (int.tryParse(value) == null)
+                                        return 'Invalid number';
+                                      if (int.parse(value) <= 0)
+                                        return 'Must be > 0';
+                                      return null;
+                                    },
+                                    autovalidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 56,
+                                height: 56,
+                                decoration: BoxDecoration(
+                                  color: HeronFitTheme.primary,
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'CM',
+                                    style: HeronFitTheme.textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
+
+                // Next button - already styled correctly
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
@@ -362,8 +404,8 @@ class _RegisterGettingToKnowScreenState
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    textStyle: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   child: const Text('Next'),

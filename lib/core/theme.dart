@@ -57,130 +57,124 @@ class HeronFitTheme {
   // ✅ Typography (Material Design 3)
   static final TextTheme textTheme = TextTheme(
     displayLarge: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 57,
-      fontWeight: FontWeight.w700, // Bold (w700)
+      fontWeight: FontWeight.w700,
       color: textPrimary,
-      letterSpacing: -0.25, // Subtle negative spacing for large display
-      height: 1.12, // Line height ~64px
+      letterSpacing: -0.25,
+      height: 1.12,
     ),
     displayMedium: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 45,
-      fontWeight: FontWeight.w700, // Bold (w700)
+      fontWeight: FontWeight.w700,
       color: textPrimary,
       letterSpacing: 0,
-      height: 1.15, // Line height ~52px
+      height: 1.15,
     ),
     displaySmall: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 36,
-      fontWeight: FontWeight.w700, // Bold (w700)
+      fontWeight: FontWeight.w700,
       color: textPrimary,
       letterSpacing: 0,
-      height: 1.22, // Line height ~44px
+      height: 1.22,
     ),
     headlineLarge: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 32,
-      fontWeight: FontWeight.w800, // ExtraBold (w800)
+      fontWeight: FontWeight.w700,
       color: textPrimary,
       letterSpacing: 0,
-      height: 1.25, // Line height ~40px
+      height: 1.25,
     ),
     headlineMedium: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 28,
-      fontWeight: FontWeight.w800, // ExtraBold (w800)
+      fontWeight: FontWeight.w700,
       color: textPrimary,
       letterSpacing: 0,
-      height: 1.28, // Line height ~36px
+      height: 1.28,
     ),
     headlineSmall: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 24,
-      fontWeight: FontWeight.w800, // ExtraBold (w800)
+      fontWeight: FontWeight.w600,
       color: textPrimary,
       letterSpacing: 0,
-      height: 1.33, // Line height ~32px
+      height: 1.33,
     ),
     titleLarge: const TextStyle(
-      fontFamily: 'Poppins',
-      fontSize: 20, // Adjusted from 22 to 20 for better scale
-      fontWeight: FontWeight.w600, // SemiBold (w600)
+      fontFamily: 'ClashDisplay',
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
       color: textPrimary,
       letterSpacing: 0.1,
-      height: 1.4, // Line height ~28px
+      height: 1.4,
     ),
     titleMedium: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 16,
-      fontWeight: FontWeight.w600, // SemiBold (w600)
+      fontWeight: FontWeight.w600,
       color: textPrimary,
       letterSpacing: 0.15,
-      height: 1.5, // Line height ~24px
+      height: 1.5,
     ),
     titleSmall: const TextStyle(
-      fontFamily: 'Poppins',
+      fontFamily: 'ClashDisplay',
       fontSize: 14,
-      fontWeight: FontWeight.w600, // SemiBold (w600)
+      fontWeight: FontWeight.w600,
       color: textPrimary,
       letterSpacing: 0.1,
-      height: 1.43, // Line height ~20px
+      height: 1.43,
     ),
     bodyLarge: const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 16,
-      fontWeight: FontWeight.normal, // Normal (w400)
+      fontWeight: FontWeight.normal,
       color: textPrimary,
-      letterSpacing: 0.5, // Standard spacing for body
-      height: 1.5, // Line height ~24px
+      letterSpacing: 0.5,
+      height: 1.5,
     ),
     bodyMedium: const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 14,
-      fontWeight:
-          FontWeight
-              .normal, // Normal (w400) - Reverted from w600 based on previous feedback
+      fontWeight: FontWeight.normal,
       color: textSecondary,
       letterSpacing: 0.25,
-      height: 1.43, // Line height ~20px
+      height: 1.43,
     ),
     bodySmall: const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 12,
-      fontWeight: FontWeight.normal, // Normal (w400)
+      fontWeight: FontWeight.normal,
       color: textMuted,
       letterSpacing: 0.4,
-      height: 1.33, // Line height ~16px
+      height: 1.33,
     ),
     labelLarge: const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 14,
-      fontWeight: FontWeight.w500, // Medium (w500)
+      fontWeight: FontWeight.w500,
       color: textPrimary,
       letterSpacing: 0.1,
-      height: 1.43, // Line height ~20px
+      height: 1.43,
     ),
     labelMedium: const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 12,
-      fontWeight:
-          FontWeight
-              .w500, // Medium (w500) - Reverted from w600 based on previous feedback
+      fontWeight: FontWeight.w500,
       color: textSecondary,
       letterSpacing: 0.5,
-      height: 1.33, // Line height ~16px
+      height: 1.33,
     ),
     labelSmall: const TextStyle(
       fontFamily: 'Poppins',
       fontSize: 11,
-      fontWeight:
-          FontWeight
-              .w500, // Medium (w500) - Changed from normal for consistency
+      fontWeight: FontWeight.w500,
       color: textMuted,
       letterSpacing: 0.5,
-      height: 1.45, // Line height ~16px
+      height: 1.45,
     ),
   );
 }

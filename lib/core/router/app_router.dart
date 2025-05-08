@@ -34,7 +34,7 @@ import 'package:heronfit/features/progress/views/progress_photo_list.dart';
 import 'package:heronfit/features/progress/views/progress_details_screen.dart'; // Import Progress Details Screen
 import 'package:heronfit/features/progress/views/view_progress_photo.dart'; // Import ViewProgressPhotosWidget
 import 'package:heronfit/features/progress/views/compare_progress_photo.dart'; // Import CompareProgressPhotosWidget
-import 'package:heronfit/features/onboarding/views/onboarding_hero.dart';
+import 'package:heronfit/features/onboarding/views/onboarding_screen.dart';
 import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
 import 'package:heronfit/features/auth/views/register_getting_to_know_screen.dart';
