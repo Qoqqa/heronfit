@@ -3,15 +3,16 @@ import 'package:flutter/gestures.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:heronfit/core/router/app_routes.dart'; // Import routes
 import '../../../core/theme.dart'; // Updated import path
-import 'login_screen.dart'; // Import the LoginWidget
+// import 'login_screen.dart'; // No longer directly needed for UI elements from here
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/registration_controller.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
+import '../../../widgets/loading_indicator.dart'; // For loading state
 
 class RegisterWidget extends ConsumerStatefulWidget {
   const RegisterWidget({super.key});
 
-  static String routePath = '/register';
+  static String routePath = AppRoutes.register; // Corrected route path
 
   @override
   ConsumerState<RegisterWidget> createState() => _RegisterWidgetState();
@@ -19,472 +20,501 @@ class RegisterWidget extends ConsumerStatefulWidget {
 
 class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
-  final _formKey = GlobalKey<FormState>(); // Added Form Key
+  final _formKey = GlobalKey<FormState>();
 
-  bool passwordVisibility = false;
-  bool passwordConfirmVisibility = false;
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController passwordConfirmController =
+  bool _passwordVisibility = false; // Renamed for clarity
+  bool _passwordConfirmVisibility = false; // Renamed for clarity
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _passwordConfirmController =
       TextEditingController();
-  bool _termsAccepted = false; // State for checkbox
+  bool _termsAccepted = false;
+  bool _isLoading = false; // Local loading state for UI
+
+  // Controller for other fields to sync with Riverpod state if needed, or use initialValue
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize controllers with values from Riverpod state if they exist
+    // This helps in cases where the user navigates back and forth
+    final initialRegistrationState = ref.read(registrationProvider);
+    _firstNameController.text = initialRegistrationState.firstName;
+    _lastNameController.text = initialRegistrationState.lastName;
+    _emailController.text = initialRegistrationState.email;
+    _passwordController.text = initialRegistrationState.password;
+    // Note: passwordConfirmController should not be pre-filled from state typically
+  }
 
   @override
   void dispose() {
-    passwordController.dispose();
-    passwordConfirmController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _passwordConfirmController.dispose();
     super.dispose();
   }
 
-  // Validator for password confirmation
   String? _validatePasswordConfirm(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
     }
-    if (value != passwordController.text) {
+    if (value != _passwordController.text) {
       return 'Passwords do not match';
     }
     return null;
   }
 
+  Future<void> _onRegister() async {
+    FocusScope.of(context).unfocus(); // Dismiss keyboard
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    if (!_termsAccepted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept the terms and conditions.'),
+          backgroundColor: HeronFitTheme.error,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Update Riverpod state with current controller values before initiating sign up
+      // This ensures the controller has the latest data if onChanged was used directly
+      // on controllers without immediate Riverpod update (though current setup updates Riverpod on each change)
+      ref
+          .read(registrationProvider.notifier)
+          .updateFirstName(_firstNameController.text.trim());
+      ref
+          .read(registrationProvider.notifier)
+          .updateLastName(_lastNameController.text.trim());
+      ref
+          .read(registrationProvider.notifier)
+          .updateEmail(_emailController.text.trim());
+      ref
+          .read(registrationProvider.notifier)
+          .updatePassword(_passwordController.text.trim());
+
+      await ref.read(registrationProvider.notifier).initiateSignUp();
+      if (mounted) {
+        // Navigate to the screen where the user can verify their email / enter OTP
+        context.go(AppRoutes.registerVerify);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst("Exception: ", "")),
+            backgroundColor: HeronFitTheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final registration = ref.watch(registrationProvider);
+    final registrationState = ref.watch(registrationProvider);
     final registrationNotifier = ref.read(registrationProvider.notifier);
-    // Pre-fill controllers if needed (consider doing this in initState if state restoration is complex)
-    passwordController.text = registration.password;
+
+    // Sync controllers with Riverpod state if they haven't been changed by the user
+    // This helps keep them in sync if Riverpod state is updated externally, though less common for text fields
+    // _firstNameController.text = registrationState.firstName; // Be cautious with this; can cause cursor jumps
+    // ... similar for other controllers if absolutely necessary
 
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
-        FocusManager.instance.primaryFocus?.unfocus();
       },
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: HeronFitTheme.bgLight,
         body: SafeArea(
           top: true,
-          child: Padding(
-            padding: const EdgeInsets.all(24), // Consistent padding
-            child: Form(
-              // Wrap content in a Form
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                mainAxisAlignment:
-                    MainAxisAlignment.spaceBetween, // Space between elements
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch, // Stretch children
-                children: [
-                  // Title Section - Adjusted text styles and spacing
-                  Column(
-                    mainAxisSize: MainAxisSize.min, // Take minimum space
+          child: Center(
+            // Center content vertically
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 32.0,
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 400,
+                ), // Max width for content
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment:
+                        MainAxisAlignment.center, // Center column content
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 16), // Add top spacing
+                      // Title Section
                       Text(
                         'Welcome to HeronFit',
-                        textAlign: TextAlign.center, // Center align
-                        style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                          color: HeronFitTheme.textSecondary, // Adjusted color
-                        ),
-                      ),
-                      const SizedBox(height: 4), // Spacing
-                      Text(
-                        'Ready to Begin?',
-                        textAlign: TextAlign.center, // Center align
+                        textAlign: TextAlign.center,
                         style: HeronFitTheme.textTheme.headlineSmall?.copyWith(
-                          // Adjusted style
                           color: HeronFitTheme.primary,
-                          fontWeight: FontWeight.bold,
+                          // fontWeight is handled by theme
                         ),
                       ),
-                      const SizedBox(height: 32), // Spacing before form
-                    ],
-                  ),
+                      // const SizedBox(height: 8),
+                      Text(
+                        'Ready to unlock your fitness potential?',
+                        textAlign: TextAlign.center,
+                        style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          color: HeronFitTheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 48),
 
-                  // Form Fields Section - Use Expanded to fill available space
-                  Expanded(
-                    child: SingleChildScrollView(
-                      // Allow scrolling for smaller screens
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
+                      // First Name Field
+                      TextFormField(
+                        controller: _firstNameController,
+                        onChanged: registrationNotifier.updateFirstName,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Please enter your first name'
+                                    : null,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'First Name',
+                          prefixIcon: const Icon(
+                            SolarIconsOutline.user,
+                            color: HeronFitTheme.textMuted,
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: HeronFitTheme.bgSecondary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Last Name Field
+                      TextFormField(
+                        controller: _lastNameController,
+                        onChanged: registrationNotifier.updateLastName,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator:
+                            (value) =>
+                                value == null || value.isEmpty
+                                    ? 'Please enter your last name'
+                                    : null,
+                        textCapitalization: TextCapitalization.words,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'Last Name',
+                          prefixIcon: const Icon(
+                            SolarIconsOutline.user,
+                            color: HeronFitTheme.textMuted,
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: HeronFitTheme.bgSecondary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Email Field
+                      TextFormField(
+                        controller: _emailController,
+                        onChanged: registrationNotifier.updateEmail,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.isEmpty)
+                            return 'Please enter your email';
+                          if (!RegExp(
+                            r'^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$',
+                          ).hasMatch(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                        autofillHints: const [AutofillHints.email],
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'Email',
+                          prefixIcon: const Icon(
+                            SolarIconsOutline.letter,
+                            color: HeronFitTheme.textMuted,
+                            size: 20,
+                          ),
+                          filled: true,
+                          fillColor: HeronFitTheme.bgSecondary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Password Field
+                      TextFormField(
+                        controller: _passwordController,
+                        onChanged: registrationNotifier.updatePassword,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.isEmpty)
+                            return 'Please enter a password';
+                          if (value.length < 6)
+                            return 'Password must be at least 6 characters';
+                          return null;
+                        },
+                        autofillHints: const [AutofillHints.newPassword],
+                        obscureText: !_passwordVisibility,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          hintText: 'Password',
+                          prefixIcon: const Icon(
+                            SolarIconsOutline.lockPassword,
+                            color: HeronFitTheme.textMuted,
+                            size: 20,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _passwordVisibility
+                                  ? SolarIconsOutline.eye
+                                  : SolarIconsOutline.eyeClosed,
+                              color: HeronFitTheme.textMuted,
+                              size: 20,
+                            ),
+                            onPressed:
+                                () => setState(
+                                  () =>
+                                      _passwordVisibility =
+                                          !_passwordVisibility,
+                                ),
+                          ),
+                          filled: true,
+                          fillColor: HeronFitTheme.bgSecondary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Confirm Password Field
+                      TextFormField(
+                        controller: _passwordConfirmController,
+                        // No direct Riverpod update for confirm password; it's for validation only
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: _validatePasswordConfirm,
+                        autofillHints: const [AutofillHints.newPassword],
+                        obscureText: !_passwordConfirmVisibility,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted:
+                            (_) => _isLoading ? null : _onRegister(),
+                        decoration: InputDecoration(
+                          hintText: 'Confirm Password',
+                          prefixIcon: const Icon(
+                            SolarIconsOutline.lockPassword,
+                            color: HeronFitTheme.textMuted,
+                            size: 20,
+                          ),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _passwordConfirmVisibility
+                                  ? SolarIconsOutline.eye
+                                  : SolarIconsOutline.eyeClosed,
+                              color: HeronFitTheme.textMuted,
+                              size: 20,
+                            ),
+                            onPressed:
+                                () => setState(
+                                  () =>
+                                      _passwordConfirmVisibility =
+                                          !_passwordConfirmVisibility,
+                                ),
+                          ),
+                          filled: true,
+                          fillColor: HeronFitTheme.bgSecondary,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                            borderSide: BorderSide.none,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 16,
+                          ),
+                        ),
+                        style: HeronFitTheme.textTheme.bodyLarge?.copyWith(
+                          color: HeronFitTheme.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Terms and Conditions
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // First Name Field - Updated styling
-                          TextFormField(
-                            initialValue: registration.firstName,
-                            onChanged: registrationNotifier.updateFirstName,
-                            autovalidateMode:
-                                AutovalidateMode
-                                    .onUserInteraction, // Validate on interaction
-                            validator:
-                                (value) =>
-                                    value == null || value.isEmpty
-                                        ? 'Please enter your first name'
-                                        : null,
-                            // autofocus: true, // Consider removing autofocus for better initial screen view
-                            textCapitalization: TextCapitalization.words,
-                            textInputAction: TextInputAction.next,
-                            decoration: InputDecoration(
-                              labelText: 'First Name',
-                              prefixIcon: const Icon(
-                                SolarIconsOutline
-                                    .user, // Replaced with SolarIcons
-                                color: HeronFitTheme.primary, // Use theme color
-                                size: 20, // Adjusted size
-                              ),
-                              // Apply theme styles consistently
-                              filled: true,
-                              fillColor: HeronFitTheme.bgSecondary,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  12.0,
-                                ), // Rounded corners
-                                borderSide: BorderSide.none, // No border
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
-                              ), // Adjust padding
-                            ),
-                            style:
-                                HeronFitTheme
-                                    .textTheme
-                                    .bodyLarge, // Use theme text style
-                          ),
-                          const SizedBox(height: 16), // Spacing
-                          // Last Name Field - Updated styling
-                          TextFormField(
-                            initialValue: registration.lastName,
-                            onChanged: registrationNotifier.updateLastName,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator:
-                                (value) =>
-                                    value == null || value.isEmpty
-                                        ? 'Please enter your last name'
-                                        : null,
-                            textCapitalization: TextCapitalization.words,
-                            textInputAction: TextInputAction.next,
-                            decoration: InputDecoration(
-                              labelText: 'Last Name',
-                              prefixIcon: const Icon(
-                                SolarIconsOutline
-                                    .user, // Replaced with SolarIcons
-                                color: HeronFitTheme.primary,
-                                size: 20,
-                              ),
-                              filled: true,
-                              fillColor: HeronFitTheme.bgSecondary,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
-                              ),
-                            ),
-                            style: HeronFitTheme.textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Email Field - Updated styling
-                          TextFormField(
-                            initialValue: registration.email,
-                            onChanged: registrationNotifier.updateEmail,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator: (value) {
-                              if (value == null || value.isEmpty)
-                                return 'Please enter your email';
-                              if (!RegExp(
-                                r'^.+@.+\.[a-zA-Z]+$',
-                              ).hasMatch(value))
-                                return 'Please enter a valid email'; // Basic email validation
-                              return null;
-                            },
-                            autofillHints: [AutofillHints.email],
-                            textInputAction: TextInputAction.next,
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: const Icon(
-                                SolarIconsOutline
-                                    .letter, // Replaced with SolarIcons
-                                color: HeronFitTheme.primary,
-                                size: 20,
-                              ),
-                              filled: true,
-                              fillColor: HeronFitTheme.bgSecondary,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
-                              ),
-                            ),
-                            style: HeronFitTheme.textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Password Field - Updated styling and visibility toggle
-                          TextFormField(
-                            controller: passwordController, // Use controller
-                            onChanged: registrationNotifier.updatePassword,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator: (value) {
-                              if (value == null || value.isEmpty)
-                                return 'Please enter a password';
-                              if (value.length < 6)
-                                return 'Password must be at least 6 characters'; // Basic length check
-                              return null;
-                            },
-                            autofillHints: [AutofillHints.newPassword],
-                            textInputAction: TextInputAction.next,
-                            obscureText: !passwordVisibility,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(
-                                SolarIconsOutline
-                                    .lockPassword, // Replaced with SolarIcons
-                                color: HeronFitTheme.primary,
-                                size: 20,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  passwordVisibility
-                                      ? SolarIconsOutline
-                                          .eye // Replaced with SolarIcons
-                                      : SolarIconsOutline
-                                          .eyeClosed, // Replaced with SolarIcons
-                                  color: HeronFitTheme.textMuted,
-                                  size: 20,
-                                ),
-                                onPressed:
-                                    () => setState(
-                                      () =>
-                                          passwordVisibility =
-                                              !passwordVisibility,
-                                    ),
-                              ),
-                              filled: true,
-                              fillColor: HeronFitTheme.bgSecondary,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
-                              ),
-                            ),
-                            style: HeronFitTheme.textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Confirm Password Field - Updated styling
-                          TextFormField(
-                            controller: passwordConfirmController,
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            validator:
-                                _validatePasswordConfirm, // Use custom validator
-                            autofillHints: [AutofillHints.newPassword],
-                            textInputAction:
-                                TextInputAction.done, // Changed to done
-                            obscureText: !passwordConfirmVisibility,
-                            decoration: InputDecoration(
-                              labelText: 'Confirm Password',
-                              prefixIcon: const Icon(
-                                SolarIconsOutline
-                                    .lockPassword, // Replaced with SolarIcons
-                                color: HeronFitTheme.primary,
-                                size: 20,
-                              ),
-                              suffixIcon: IconButton(
-                                icon: Icon(
-                                  passwordConfirmVisibility
-                                      ? SolarIconsOutline
-                                          .eye // Replaced with SolarIcons
-                                      : SolarIconsOutline
-                                          .eyeClosed, // Replaced with SolarIcons
-                                  color: HeronFitTheme.textMuted,
-                                  size: 20,
-                                ),
-                                onPressed:
-                                    () => setState(
-                                      () =>
-                                          passwordConfirmVisibility =
-                                              !passwordConfirmVisibility,
-                                    ),
-                              ),
-                              filled: true,
-                              fillColor: HeronFitTheme.bgSecondary,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.0),
-                                borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 16,
-                              ),
-                            ),
-                            style: HeronFitTheme.textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Terms and Conditions Checkbox - Added CheckboxListTile
-                          CheckboxListTile(
-                            title: RichText(
-                              text: TextSpan(
-                                style: HeronFitTheme.textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: HeronFitTheme.textMuted,
-                                    ), // Smaller muted text
-                                children: [
-                                  const TextSpan(
-                                    text: 'By continuing you accept our ',
-                                  ),
-                                  TextSpan(
-                                    text: 'Privacy Policy',
-                                    style: const TextStyle(
-                                      fontWeight:
-                                          FontWeight.bold, // Make links bold
-                                      // decoration: TextDecoration.underline, // Underline optional
-                                    ),
-                                    recognizer:
-                                        TapGestureRecognizer()
-                                          ..onTap = () {
-                                            // Navigate to Privacy Policy screen
-                                            context.push(
-                                              AppRoutes.profilePrivacy,
-                                            );
-                                            print(
-                                              'Navigate to Privacy Policy',
-                                            ); // Keep print for debug or remove if not needed
-                                          },
-                                  ),
-                                  const TextSpan(text: ' and '),
-                                  TextSpan(
-                                    text: 'Terms of Use',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      // decoration: TextDecoration.underline,
-                                    ),
-                                    recognizer:
-                                        TapGestureRecognizer()
-                                          ..onTap = () {
-                                            // Navigate to Terms of Use screen
-                                            context.push(
-                                              AppRoutes.profileTerms,
-                                            );
-                                            print(
-                                              'Navigate to Terms of Use',
-                                            ); // Keep print for debug or remove if not needed
-                                          },
-                                  ),
-                                ],
-                              ),
-                            ),
+                          Checkbox(
                             value: _termsAccepted,
                             onChanged: (bool? value) {
                               setState(() {
                                 _termsAccepted = value ?? false;
                               });
                             },
-                            controlAffinity:
-                                ListTileControlAffinity
-                                    .leading, // Checkbox on the left
-                            contentPadding:
-                                EdgeInsets.zero, // Remove default padding
-                            activeColor:
-                                HeronFitTheme
-                                    .primary, // Theme color for checkbox
+                            activeColor: HeronFitTheme.primary,
+                            side: const BorderSide(
+                              color: HeronFitTheme.textMuted,
+                            ),
+                            visualDensity:
+                                VisualDensity.compact, // Makes checkbox smaller
+                            materialTapTargetSize:
+                                MaterialTapTargetSize
+                                    .shrinkWrap, // Reduces tap area
                           ),
-                          const SizedBox(height: 24), // Spacing before button
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: HeronFitTheme.textTheme.bodySmall
+                                    ?.copyWith(color: HeronFitTheme.textMuted),
+                                children: [
+                                  const TextSpan(
+                                    text: 'By continuing you accept our ',
+                                  ),
+                                  TextSpan(
+                                    text: 'Privacy Policy',
+                                    style: HeronFitTheme.textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: HeronFitTheme.textMuted,
+                                          fontWeight: FontWeight.bold,
+                                          // decoration: TextDecoration.underline, // Optional: Add underline
+                                        ),
+                                    recognizer:
+                                        TapGestureRecognizer()
+                                          ..onTap = () {
+                                            context.push(
+                                              AppRoutes.profilePrivacy,
+                                            );
+                                          },
+                                  ),
+                                  const TextSpan(text: ' and '),
+                                  TextSpan(
+                                    text: 'Terms of Use',
+                                    style: HeronFitTheme.textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: HeronFitTheme.textMuted,
+                                          fontWeight: FontWeight.bold,
+                                          // decoration: TextDecoration.underline, // Optional: Add underline
+                                        ),
+                                    recognizer:
+                                        TapGestureRecognizer()
+                                          ..onTap = () {
+                                            context.push(
+                                              AppRoutes.profileTerms,
+                                            );
+                                          },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                  ),
+                      const SizedBox(height: 32),
 
-                  // Bottom Section (Button and Login Link)
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          // Validate Form and Terms
-                          if (_formKey.currentState?.validate() ?? false) {
-                            if (_termsAccepted) {
-                              // Clear password controllers after storing value in provider
-                              registrationNotifier.updatePassword(
-                                passwordController.text,
-                              );
-                              // Navigate
-                              context.pushNamed(
-                                AppRoutes.registerGettingToKnow,
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Please accept the terms and conditions.',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              HeronFitTheme.primary, // Primary color
-                          foregroundColor: HeronFitTheme.bgLight,
-                          minimumSize: const Size(
-                            double.infinity,
-                            52,
-                          ), // Button size
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                              12,
-                            ), // Rounded corners
+                      // Register Button
+                      if (_isLoading)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16.0),
+                            child: LoadingIndicator(),
                           ),
-                          textStyle: HeronFitTheme.textTheme.titleSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold, // Bold text
-                              ),
+                        )
+                      else
+                        ElevatedButton(
+                          onPressed: _onRegister,
+                          style: ElevatedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 52.0),
+                            backgroundColor: HeronFitTheme.primary,
+                            foregroundColor: HeronFitTheme.textWhite,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            textStyle: HeronFitTheme.textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                          child: const Text('Register'),
                         ),
-                        child: const Text('Register'),
-                      ),
-                      const SizedBox(height: 16), // Spacing
-                      // Login Link - Updated styling
+                      const SizedBox(height: 24),
+
+                      // Already have an account? Login
                       InkWell(
-                        splashColor: Colors.transparent, // No splash
-                        onTap: () {
-                          context.go(
-                            AppRoutes.login,
-                          ); // Use go to replace stack
-                        },
+                        onTap: () => context.go(AppRoutes.login),
                         child: RichText(
                           textAlign: TextAlign.center,
                           text: TextSpan(
                             style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                              color: HeronFitTheme.textMuted,
+                              color: HeronFitTheme.primary,
                             ),
                             children: [
                               const TextSpan(text: 'Already have an account? '),
                               TextSpan(
-                                text: 'Log in', // Corrected text
-                                style: TextStyle(
-                                  color: HeronFitTheme.primary, // Primary color
-                                  fontWeight: FontWeight.bold, // Bold
-                                ),
+                                text: 'Log In',
+                                style: HeronFitTheme.textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: HeronFitTheme.primary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                 recognizer:
                                     TapGestureRecognizer()
-                                      ..onTap = () {
-                                        context.go(AppRoutes.login);
-                                      },
+                                      ..onTap =
+                                          () => context.go(AppRoutes.login),
                               ),
                             ],
                           ),
@@ -493,7 +523,7 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
                       const SizedBox(height: 16), // Bottom spacing
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
