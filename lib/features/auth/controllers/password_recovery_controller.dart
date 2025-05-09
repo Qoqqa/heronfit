@@ -10,7 +10,10 @@ class PasswordRecoveryLoading
     extends PasswordRecoveryState {} // Generic loading state
 
 // OTP Sent
-class PasswordRecoveryOtpSent extends PasswordRecoveryState {}
+class PasswordRecoveryOtpSent extends PasswordRecoveryState {
+  final String email;
+  PasswordRecoveryOtpSent(this.email);
+}
 
 // OTP Verification
 class PasswordRecoveryOtpVerificationSuccess extends PasswordRecoveryState {}
@@ -44,7 +47,7 @@ class PasswordRecoveryController extends StateNotifier<PasswordRecoveryState> {
         // Supabase plans to support `channel` selection e.g. 'sms' or 'email'
         // but for now, it defaults to email if phone is not provided.
       );
-      state = PasswordRecoveryOtpSent();
+      state = PasswordRecoveryOtpSent(email); // Pass email here
     } on AuthException catch (e) {
       state = PasswordRecoveryError(e.message, RecoveryStage.otpRequest);
     } catch (e) {
@@ -67,16 +70,12 @@ class PasswordRecoveryController extends StateNotifier<PasswordRecoveryState> {
     state = PasswordRecoveryLoading();
     try {
       final AuthResponse response = await Supabase.instance.client.auth
-          .verifyOTP(
-            email: _currentEmail!,
-            token: otp,
-            type: OtpType.recovery, // Crucial for password recovery flow
-          );
+          .verifyOTP(token: otp, type: OtpType.recovery, email: _currentEmail);
       if (response.session != null) {
         // OTP verified, user is effectively "authenticated" for password update
         state = PasswordRecoveryOtpVerificationSuccess();
       } else {
-        // This case should ideally be caught by AuthException if OTP is invalid
+        // If session is null, but no AuthException, it might mean OTP was incorrect
         state = PasswordRecoveryError(
           'Invalid OTP. Please try again.',
           RecoveryStage.otpVerification,
@@ -105,7 +104,7 @@ class PasswordRecoveryController extends StateNotifier<PasswordRecoveryState> {
       state = PasswordRecoveryError(e.message, RecoveryStage.passwordUpdate);
     } catch (e) {
       state = PasswordRecoveryError(
-        'An unexpected error occurred while updating password.',
+        'An unexpected error occurred while updating your password.',
         RecoveryStage.passwordUpdate,
       );
     }

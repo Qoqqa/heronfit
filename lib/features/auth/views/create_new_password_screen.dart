@@ -42,11 +42,11 @@ class _CreateNewPasswordScreenState
           title: Column(
             children: [
               const Icon(
-                SolarIconsBold.checkCircle,
-                color: HeronFitTheme.success,
-                size: 60,
+                SolarIconsBold.confetti,
+                color: HeronFitTheme.primary,
+                size: 100,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 48),
               Text(
                 'Password Updated',
                 style: HeronFitTheme.textTheme.titleLarge?.copyWith(
@@ -65,11 +65,11 @@ class _CreateNewPasswordScreenState
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: HeronFitTheme.primary,
-                minimumSize: const Size(100, 44),
+                minimumSize: const Size(double.infinity, 44),
               ),
               child: Text(
                 'Login',
-                style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                   color: HeronFitTheme.textWhite,
                 ),
               ),
@@ -90,6 +90,8 @@ class _CreateNewPasswordScreenState
       previous,
       next,
     ) {
+      if (!mounted) return; // Add this check
+
       if (next is PasswordRecoveryFlowComplete) {
         _showPasswordUpdatedDialog(context);
       } else if (next is PasswordRecoveryError &&
@@ -111,17 +113,19 @@ class _CreateNewPasswordScreenState
         title: Text(
           'Create New Password',
           style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-            color: HeronFitTheme.textWhite,
+            color: HeronFitTheme.primary,
           ),
         ),
-        backgroundColor: HeronFitTheme.primary,
+        backgroundColor: HeronFitTheme.bgLight,
         elevation: 0,
-        // leading: IconButton(
-        //   icon: const Icon(Icons.arrow_back, color: HeronFitTheme.textWhite),
-        //   onPressed: () => context.pop(), // Or prevent back navigation
-        // ),
-        automaticallyImplyLeading:
-            false, // Prevent back navigation once OTP is verified
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            SolarIconsOutline.altArrowLeft,
+            color: HeronFitTheme.primary,
+          ),
+          onPressed: () => context.pop(),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -131,8 +135,13 @@ class _CreateNewPasswordScreenState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 20),
+              Image.asset(
+                'assets/images/create_new_password.webp',
+                height: 300,
+              ),
+              const SizedBox(height: 20),
               Text(
-                'Protect your account with a strong password. Your new password should be at least 8 characters and include a mix of letters, numbers, and symbols.',
+                'Your new password needs to be strong! Make sure it\'s at least 8 characters long and includes a combination of letters, numbers, and symbols for better security.',
                 style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                   color: HeronFitTheme.textSecondary,
                 ),
@@ -163,6 +172,7 @@ class _CreateNewPasswordScreenState
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
@@ -172,7 +182,7 @@ class _CreateNewPasswordScreenState
                     ),
                   ),
                   filled: true,
-                  fillColor: HeronFitTheme.bgLight,
+                  fillColor: HeronFitTheme.bgSecondary,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty)
@@ -210,6 +220,7 @@ class _CreateNewPasswordScreenState
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
@@ -219,7 +230,7 @@ class _CreateNewPasswordScreenState
                     ),
                   ),
                   filled: true,
-                  fillColor: HeronFitTheme.bgLight,
+                  fillColor: HeronFitTheme.bgSecondary,
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty)
@@ -242,7 +253,9 @@ class _CreateNewPasswordScreenState
                     passwordRecoveryState is PasswordRecoveryLoading
                         ? null
                         : () {
-                          if (_formKey.currentState!.validate()) {
+                          // Add null check for _formKey.currentState
+                          if (_formKey.currentState != null &&
+                              _formKey.currentState!.validate()) {
                             ref
                                 .read(
                                   passwordRecoveryControllerProvider.notifier,
@@ -265,8 +278,8 @@ class _CreateNewPasswordScreenState
                           ),
                         )
                         : Text(
-                          'Confirm Password',
-                          style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          'Set New Password',
+                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                             color: HeronFitTheme.textWhite,
                           ),
                         ),

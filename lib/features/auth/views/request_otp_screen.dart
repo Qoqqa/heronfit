@@ -25,7 +25,7 @@ class RequestOtpScreen extends ConsumerWidget {
                 color: HeronFitTheme.primary,
                 size: 100, // Size remains the same
               ),
-              const SizedBox(height: 24), // Adjusted spacing to match Figma
+              const SizedBox(height: 48), // Adjusted spacing to match Figma
               Text(
                 'Verification Code Sent', // Updated title
                 style: HeronFitTheme.textTheme.titleLarge?.copyWith(
@@ -75,7 +75,10 @@ class RequestOtpScreen extends ConsumerWidget {
               onPressed: () {
                 Navigator.of(dialogContext).pop(); // Close dialog
                 // Navigate to EnterOtpScreen, passing the email
-                context.pushNamed(AppRoutes.enterOtp, extra: email);
+                context.pushNamed(
+                  AppRoutes.enterOtp,
+                  extra: email, // Corrected: Pass email as extra
+                );
               },
             ),
           ],
@@ -93,9 +96,8 @@ class RequestOtpScreen extends ConsumerWidget {
       previous,
       next,
     ) {
-      final currentEmail = emailController.text.trim();
       if (next is PasswordRecoveryOtpSent) {
-        _showCheckEmailDialog(context, currentEmail);
+        _showCheckEmailDialog(context, next.email); // Use email from state
       } else if (next is PasswordRecoveryError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
