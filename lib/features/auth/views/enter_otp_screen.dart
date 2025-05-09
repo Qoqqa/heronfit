@@ -63,33 +63,40 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
     final passwordRecoveryState = ref.watch(passwordRecoveryControllerProvider);
 
     final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 60,
+      width: 48,
+      height: 52,
       textStyle: HeronFitTheme.textTheme.headlineSmall?.copyWith(
         color: HeronFitTheme.textPrimary,
+        fontWeight: FontWeight.bold,
       ),
       decoration: BoxDecoration(
-        color: HeronFitTheme.bgSecondary,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: HeronFitTheme.textMuted.withOpacity(0.5)),
+        color: HeronFitTheme.primary.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: HeronFitTheme.primary.withOpacity(0.2)),
       ),
     );
 
     final focusedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
-        border: Border.all(color: HeronFitTheme.primary, width: 2),
+        border: Border.all(color: HeronFitTheme.primary, width: 1.5),
       ),
     );
 
     final errorPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
-        border: Border.all(color: HeronFitTheme.error, width: 2),
+        border: Border.all(color: HeronFitTheme.error, width: 1.5),
       ),
     );
     final submittedPinTheme = defaultPinTheme.copyWith(
       decoration: defaultPinTheme.decoration!.copyWith(
-        border: Border.all(color: HeronFitTheme.success, width: 2),
+        border: Border.all(color: HeronFitTheme.success, width: 1.5),
       ),
+    );
+
+    Widget illustration = SizedBox(
+      height: 300,
+      width: double.infinity,
+      child: Image.asset('assets/images/enter_code.webp', fit: BoxFit.contain),
     );
 
     return Scaffold(
@@ -103,9 +110,10 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
         ),
         backgroundColor: HeronFitTheme.primary,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            SolarIconsOutline.arrowLeft,
+            SolarIconsOutline.altArrowLeft,
             color: HeronFitTheme.textWhite,
           ),
           onPressed: () => context.pop(),
@@ -119,20 +127,16 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: 20),
-              const Icon(
-                SolarIconsBold.shieldKeyhole,
-                size: 80,
-                color: HeronFitTheme.primary,
-              ),
-              const SizedBox(height: 20),
+              illustration,
+              const SizedBox(height: 30),
               Text(
-                'We\'ve sent a verification code to your email address: ${widget.email}. Please enter the code below.',
+                'Please enter the 6-digit verification code we\'ve sent to ${widget.email}.',
                 style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                   color: HeronFitTheme.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 30),
+              const SizedBox(height: 24),
               Pinput(
                 controller: _otpController,
                 focusNode: _otpFocusNode,
@@ -182,10 +186,7 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
                           }
                         },
                 child:
-                    passwordRecoveryState is PasswordRecoveryLoading &&
-                            (passwordRecoveryState
-                                    as PasswordRecoveryLoading) !=
-                                PasswordRecoveryInitial()
+                    passwordRecoveryState is PasswordRecoveryLoading
                         ? const SizedBox(
                           height: 20,
                           width: 20,
@@ -197,13 +198,14 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
                           ),
                         )
                         : Text(
-                          'Verify',
-                          style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          'Verify Code',
+                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                             color: HeronFitTheme.textWhite,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 4),
               TextButton(
                 onPressed:
                     passwordRecoveryState is PasswordRecoveryLoading
@@ -211,9 +213,9 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
                         : _resendOtp,
                 child: Text(
                   'Resend Code',
-                  style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                  style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                     color: HeronFitTheme.primary,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),

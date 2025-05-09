@@ -20,32 +20,39 @@ class RequestOtpScreen extends ConsumerWidget {
           title: Column(
             children: [
               const Icon(
-                SolarIconsOutline.mailbox,
+                SolarIconsBold
+                    .mailbox, // Icon remains the same as per previous update
                 color: HeronFitTheme.primary,
-                size: 60,
+                size: 100, // Size remains the same
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24), // Adjusted spacing to match Figma
               Text(
-                'Check Your Email',
+                'Verification Code Sent', // Updated title
                 style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold, // Make title bold as in Figma
                   color: HeronFitTheme.textPrimary,
                 ),
                 textAlign: TextAlign.center,
               ),
             ],
           ),
-          content: Text(
-            'A verification code has been sent to $email. Please check your inbox for instructions.',
-            style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-              color: HeronFitTheme.textSecondary,
+          content: Padding(
+            // Added padding for content to prevent text touching edges
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Text(
+              'We\'ve sent a verification code to $email. Please enter it on the next screen.', // Updated content text
+              style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                color: HeronFitTheme.textSecondary,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
           actionsAlignment: MainAxisAlignment.center,
           actionsPadding: const EdgeInsets.only(
-            bottom: 20.0,
-            left: 20.0,
-            right: 20.0,
+            bottom: 24.0, // Adjusted padding
+            left: 24.0, // Adjusted padding
+            right: 24.0, // Adjusted padding
+            top: 16.0, // Added top padding for action button
           ),
           actions: <Widget>[
             ElevatedButton(
@@ -53,13 +60,16 @@ class RequestOtpScreen extends ConsumerWidget {
                 backgroundColor: HeronFitTheme.primary,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(
+                    12.0,
+                  ), // Match button style from main screen
                 ),
               ),
               child: Text(
-                'Okay',
+                'Send Code', // Updated button text to match Figma
                 style: HeronFitTheme.textTheme.labelLarge?.copyWith(
                   color: HeronFitTheme.textWhite,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
               onPressed: () {
