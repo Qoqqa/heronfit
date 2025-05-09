@@ -98,13 +98,12 @@ class RequestOtpScreen extends ConsumerWidget {
 
     final passwordRecoveryState = ref.watch(passwordRecoveryControllerProvider);
 
-    Widget illustration = Container(
-      height: 180,
-      alignment: Alignment.center,
-      child: const Icon(
-        SolarIconsBold.letter,
-        size: 100,
-        color: HeronFitTheme.primary,
+    Widget illustration = SizedBox(
+      height: 300, // Adjusted height for better visual balance
+      width: double.infinity,
+      child: Image.asset(
+        'assets/images/password_recovery.webp', // Use the specified image
+        fit: BoxFit.contain, // Ensure the image fits well
       ),
     );
 
@@ -119,9 +118,10 @@ class RequestOtpScreen extends ConsumerWidget {
         ),
         backgroundColor: HeronFitTheme.primary,
         elevation: 0,
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            SolarIconsOutline.arrowLeft,
+            SolarIconsOutline.altArrowLeft,
             color: HeronFitTheme.textWhite,
           ),
           onPressed: () => Navigator.of(context).pop(),
@@ -136,15 +136,15 @@ class RequestOtpScreen extends ConsumerWidget {
             children: <Widget>[
               const SizedBox(height: 20),
               illustration,
-              const SizedBox(height: 24),
+              const SizedBox(height: 30), // Adjusted spacing
               Text(
-                'Enter your email address below, and we\'ll send you a verification code to reset your password.',
+                'Enter your email, and we\'ll send a code to help you reset your password.', // Updated text
                 style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
                   color: HeronFitTheme.textSecondary,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24), // Adjusted spacing
               TextFormField(
                 controller: emailController,
                 decoration: InputDecoration(
@@ -156,15 +156,11 @@ class RequestOtpScreen extends ConsumerWidget {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(
-                      color: HeronFitTheme.textMuted.withOpacity(0.5),
-                    ),
+                    borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
-                    borderSide: BorderSide(
-                      color: HeronFitTheme.textMuted.withOpacity(0.5),
-                    ),
+                    borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
@@ -174,7 +170,8 @@ class RequestOtpScreen extends ConsumerWidget {
                     ),
                   ),
                   filled: true,
-                  fillColor: HeronFitTheme.bgLight,
+                  fillColor: HeronFitTheme.bgSecondary,
+                  // Light lavender background
                   contentPadding: const EdgeInsets.symmetric(
                     vertical: 16.0,
                     horizontal: 12.0,
@@ -247,13 +244,13 @@ class RequestOtpScreen extends ConsumerWidget {
                           ),
                         )
                         : Text(
-                          'Send Verification Code',
-                          style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                          'Send Code', // Updated button text
+                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                             color: HeronFitTheme.textWhite,
                           ),
                         ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               TextButton(
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
@@ -267,7 +264,7 @@ class RequestOtpScreen extends ConsumerWidget {
                 },
                 child: Text(
                   'Back to Login',
-                  style: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                  style: HeronFitTheme.textTheme.titleMedium?.copyWith(
                     color: HeronFitTheme.primary,
                   ),
                 ),
