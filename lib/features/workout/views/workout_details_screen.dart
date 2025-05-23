@@ -50,9 +50,24 @@ class WorkoutDetailsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(workout.name),
-        backgroundColor: HeronFitTheme.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.chevron_left_rounded,
+            color: HeronFitTheme.primary,
+            size: 30,
+          ),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: Text(
+          workout.name,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: HeronFitTheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -216,10 +231,12 @@ class WorkoutDetailsScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
+                    backgroundColor: HeronFitTheme.primary,
+                    foregroundColor: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 12.0),
-                ElevatedButton(
+                OutlinedButton(
                   onPressed: () {
                     debugPrint('Start Workout button clicked');
                     if (!context.mounted) return;
@@ -232,7 +249,7 @@ class WorkoutDetailsScreen extends ConsumerWidget {
                     'Start Workout',
                     textAlign: TextAlign.center,
                   ),
-                  style: ElevatedButton.styleFrom(
+                  style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       vertical: 16.0,
                       horizontal: 16.0,
@@ -241,6 +258,8 @@ class WorkoutDetailsScreen extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
+                    side: BorderSide(color: HeronFitTheme.primary),
+                    foregroundColor: HeronFitTheme.primary,
                   ),
                 ),
                 const SizedBox(height: 12.0),
