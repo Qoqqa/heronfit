@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/core/utils/string_formatters.dart';
 import 'package:heronfit/features/profile/controllers/profile_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart';
@@ -128,7 +129,10 @@ class ProfileScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 TextSpan(
-                                  text: user.goal ?? 'Not Set',
+                                  text:
+                                      user.goal != null
+                                          ? formatGoalForDisplay(user.goal!)
+                                          : 'Not Set',
                                   style: textTheme.bodyLarge?.copyWith(
                                     fontWeight: FontWeight.w500,
                                     color: colorScheme.onSurface,
