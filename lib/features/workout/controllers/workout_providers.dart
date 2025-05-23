@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heronfit/core/services/workout_storage_service.dart'; // Assuming this exists
 import 'package:heronfit/core/services/workout_recommendation_service.dart'; // Assuming this exists
 import 'package:heronfit/core/services/workout_supabase_service.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart';
@@ -9,11 +8,6 @@ import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/set_data_model.dart'; // Import SetData
 import 'package:uuid/uuid.dart'; // Import Uuid for unique IDs
 import 'package:heronfit/features/auth/controllers/auth_controller.dart'; // For currentUserProvider
-
-// Provider for the WorkoutStorageService (adjust if already defined elsewhere)
-final workoutStorageServiceProvider = Provider(
-  (ref) => WorkoutStorageService(),
-);
 
 // Provider for the WorkoutRecommendationService (adjust if already defined elsewhere)
 final workoutRecommendationServiceProvider = Provider(
@@ -74,10 +68,8 @@ final formatDateProvider = Provider<String Function(DateTime)>((ref) {
 
 // Provider to fetch saved workout templates
 final savedWorkoutsProvider = FutureProvider<List<Workout>>((ref) async {
-  final storageService = ref.watch(workoutStorageServiceProvider);
-  // Fetch all workouts first
-  final allWorkouts = await storageService.getSavedWorkouts();
-  // Sort by createdAt descending (newest first)
+  final workoutService = ref.watch(workoutServiceProvider);
+  final allWorkouts = await workoutService.getWorkoutTemplates();
   allWorkouts.sort((a, b) {
     final dateA = a.createdAt ?? DateTime(1970); // Handle null createdAt
     final dateB = b.createdAt ?? DateTime(1970);

@@ -284,7 +284,7 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                 onPressed: () async {
                   // 1. Save the workout as a template (using completed exercise data)
                   final storageService = ref.read(
-                    workoutStorageServiceProvider,
+                    workoutServiceProvider,
                   ); // Use ref.read
                   bool savedSuccessfully = false;
 
@@ -300,9 +300,7 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                       // Create a new Workout object specifically for saving as a template
                       // Use the actual Exercise objects that were performed
                       final templateToSave = Workout(
-                        id:
-                            UniqueKey()
-                                .toString(), // Generate new ID for template
+                        id: '', // Supabase will generate UUID
                         name:
                             workout
                                 .name, // Use the name from the completed session
@@ -316,7 +314,7 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                             Duration
                                 .zero, // Add required duration, 0 for templates
                       );
-                      await storageService.saveWorkout(
+                      await storageService.saveWorkoutTemplate(
                         templateToSave,
                       ); // Assuming this saves as a template
                       savedSuccessfully = true;
