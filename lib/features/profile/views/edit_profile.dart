@@ -479,22 +479,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       TextFormField(
         controller: _firstNameController,
         decoration: const InputDecoration(labelText: 'First Name'),
-        validator:
-            (value) =>
-                value == null || value.isEmpty
-                    ? 'Please enter your first name'
-                    : null,
+        readOnly: true,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 16),
       TextFormField(
         controller: _lastNameController,
         decoration: const InputDecoration(labelText: 'Last Name'),
-        validator:
-            (value) =>
-                value == null || value.isEmpty
-                    ? 'Please enter your last name'
-                    : null,
+        readOnly: true,
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 16),
@@ -533,20 +525,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         decoration: const InputDecoration(
           labelText: 'Birthday',
           hintText: 'yyyy-MM-dd',
-          suffixIcon: Icon(Icons.calendar_today),
         ),
         readOnly: true,
-        onTap: () => _selectDate(context),
-        validator: (value) {
-          if (value != null && value.isNotEmpty) {
-            try {
-              DateFormat('yyyy-MM-dd').parseStrict(value);
-            } catch (e) {
-              return 'Invalid date format (yyyy-MM-dd)';
-            }
-          }
-          return null;
-        },
         textInputAction: TextInputAction.next,
       ),
       const SizedBox(height: 16),
