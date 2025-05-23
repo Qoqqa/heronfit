@@ -388,19 +388,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                                         'assets/images/heronfit_icon.png',
                                                       )
                                                       as ImageProvider,
-                                          child:
-                                              _pickedImage == null &&
-                                                      (_initialUserData
-                                                                  ?.avatar ==
-                                                              null ||
-                                                          _initialUserData
-                                                                  ?.avatar ==
-                                                              '')
-                                                  ? const Icon(
-                                                    Icons.person,
-                                                    size: 50,
-                                                  )
-                                                  : null,
                                         ),
                                       ),
                                     ),
