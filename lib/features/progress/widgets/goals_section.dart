@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/widgets/loading_indicator.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/core/utils/string_formatters.dart'; // Import the formatter
 
 class GoalsSection extends ConsumerWidget {
   final AsyncValue<String?> goalAsyncValue;
@@ -74,7 +75,10 @@ class GoalsSection extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         Flexible(
-                          child: Text(goal, style: theme.textTheme.bodyMedium),
+                          child: Text(
+                            formatGoalForDisplay(goal),
+                            style: theme.textTheme.bodyMedium,
+                          ),
                         ),
                       ],
                     );

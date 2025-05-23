@@ -108,29 +108,33 @@ class _HomeWidgetState extends State<HomeWidget> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Welcome,',
-                                textAlign: TextAlign.start,
-                                style: textTheme.titleSmall?.copyWith(
-                                  color: colorScheme.onBackground.withOpacity(
-                                    0.7,
+                          Expanded(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Welcome,',
+                                  textAlign: TextAlign.start,
+                                  style: textTheme.titleSmall?.copyWith(
+                                    color: colorScheme.onBackground.withOpacity(
+                                      0.7,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                userName ?? 'Loading...',
-                                textAlign: TextAlign.start,
-                                style: textTheme.headlineSmall?.copyWith(
-                                  color: colorScheme.primary,
-                                  fontWeight: FontWeight.bold,
+                                const SizedBox(height: 2),
+                                Text(
+                                  _getDisplayName(userName),
+                                  textAlign: TextAlign.start,
+                                  style: textTheme.headlineSmall?.copyWith(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           Container(
                             decoration: BoxDecoration(
@@ -174,5 +178,14 @@ class _HomeWidgetState extends State<HomeWidget> {
         ),
       ),
     );
+  }
+
+  String _getDisplayName(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) {
+      return 'User';
+    }
+
+    final nameParts = fullName.trim().split(' ');
+    return nameParts.first;
   }
 }

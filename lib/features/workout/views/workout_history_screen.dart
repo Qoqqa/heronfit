@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:solar_icons/solar_icons.dart';
 import '../../../core/theme.dart';
 import '../controllers/workout_providers.dart'; // Import providers
+import 'package:heronfit/core/router/app_routes.dart';
 
 // Convert to ConsumerWidget
 class WorkoutHistoryScreen extends ConsumerWidget {
@@ -216,74 +217,88 @@ class WorkoutHistoryScreen extends ConsumerWidget {
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12.0),
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: InkWell(
+            onTap: () {
+              if (!context.mounted) return;
+              context.push(AppRoutes.workoutDetails, extra: workout);
+            },
+            borderRadius: BorderRadius.circular(12.0),
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: HeronFitTheme.cardShadow,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          workout.name,
-                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: HeronFitTheme.primary,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              workout.name,
+                              style: HeronFitTheme.textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: HeronFitTheme.primary,
+                                  ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                          const SizedBox(width: 8),
+                          Text(
+                            dateStr,
+                            style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                              color: HeronFitTheme.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(height: 8),
                       Text(
-                        dateStr,
-                        style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                          color: HeronFitTheme.textMuted,
-                        ),
+                        '${workout.exercises.length} exercises • ${formatDuration(workout.duration)}',
+                        style: HeronFitTheme.textTheme.bodyMedium,
                       ),
+                      if (workout.exercises.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        const Divider(),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children:
+                              workout.exercises
+                                  .map(
+                                    (exercise) => Chip(
+                                      label: Text(exercise.name),
+                                      backgroundColor: HeronFitTheme.bgLight,
+                                      side: BorderSide(
+                                        color: HeronFitTheme.primary
+                                            .withOpacity(0.2),
+                                      ),
+                                      labelStyle: const TextStyle(fontSize: 12),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+                      ],
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${workout.exercises.length} exercises • ${formatDuration(workout.duration)}',
-                    style: HeronFitTheme.textTheme.bodyMedium,
-                  ),
-                  if (workout.exercises.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    const Divider(),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children:
-                          workout.exercises
-                              .map(
-                                (exercise) => Chip(
-                                  label: Text(exercise.name),
-                                  backgroundColor: HeronFitTheme.bgLight,
-                                  side: BorderSide(
-                                    color: HeronFitTheme.primary.withOpacity(
-                                      0.2,
-                                    ),
-                                  ),
-                                  labelStyle: const TextStyle(fontSize: 12),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                              )
-                              .toList(),
-                    ),
-                  ],
-                ],
+                ),
               ),
             ),
           ),

@@ -161,19 +161,15 @@ class _EditGoalsWidgetState extends ConsumerState<EditGoalsWidget> {
                         value: _selectedGoalType,
                         items: const [
                           DropdownMenuItem(
-                            value: 'Weight Loss',
+                            value: 'lose_weight',
                             child: Text('Weight Loss'),
                           ),
                           DropdownMenuItem(
-                            value: 'Gain Muscle',
-                            child: Text('Gain Muscle'),
+                            value: 'build_muscle',
+                            child: Text('Build Muscle'),
                           ),
                           DropdownMenuItem(
-                            value: 'Improve Endurance',
-                            child: Text('Improve Endurance'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Overall Fitness',
+                            value: 'general_fitness',
                             child: Text('Overall Fitness'),
                           ),
                         ],
