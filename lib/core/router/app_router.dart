@@ -36,6 +36,7 @@ import 'package:heronfit/features/progress/views/view_progress_photo.dart'; // I
 import 'package:heronfit/features/progress/views/compare_progress_photo.dart'; // Import CompareProgressPhotosWidget
 import 'package:heronfit/features/onboarding/views/onboarding_screen.dart';
 import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; // Import Exercise Details Screen
+import 'package:heronfit/features/workout/views/workout_details_screen.dart';
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
 import 'package:heronfit/features/auth/views/register_getting_to_know_screen.dart';
 import 'package:heronfit/features/auth/views/register_set_goals_screen.dart';
@@ -168,6 +169,21 @@ final routerProvider = Provider<GoRouter>((ref) {
             // Example heroTag, ensure it's unique if needed across screens
             heroTag: 'exercise_image_${exercise.id}',
           );
+        },
+      ),
+      // ADDED: Route for Workout Details Screen
+      GoRoute(
+        path: AppRoutes.workoutDetails,
+        builder: (context, state) {
+          final workout = state.extra as Workout?;
+          if (workout == null) {
+            // Handle error case: navigate back or show an error screen
+            return Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: const Center(child: Text('Error: Workout data missing.')),
+            );
+          }
+          return WorkoutDetailsScreen(workout: workout);
         },
       ),
       GoRoute(

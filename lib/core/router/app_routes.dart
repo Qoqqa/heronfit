@@ -62,5 +62,8 @@ class AppRoutes {
       '/progress/select-photo'; // Example if needed
   static const progressDetails = '/progress/details'; // Add new route
 
+  // ADDED: Route for the Workout Details screen
+  static const String workoutDetails = '/workoutDetails';
+
   // Add other routes as needed
 }

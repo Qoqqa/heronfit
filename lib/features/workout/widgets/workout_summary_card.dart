@@ -11,6 +11,7 @@ class WorkoutSummaryCard extends StatelessWidget {
   final List<Exercise> detailedExercises;
   final String Function(Duration) formatDuration;
   final String formattedDate;
+  final VoidCallback? onTap;
 
   const WorkoutSummaryCard({
     super.key,
@@ -18,6 +19,7 @@ class WorkoutSummaryCard extends StatelessWidget {
     required this.detailedExercises,
     required this.formatDuration,
     required this.formattedDate,
+    this.onTap,
   });
 
   // Helper function to format sets and reps, considering only completed sets
@@ -52,121 +54,129 @@ class WorkoutSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Refactored card design based on desired style and smaller size
     // Using Container with BoxDecoration for specific shadow control
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white, // White background
-        borderRadius: BorderRadius.circular(12.0), // Smaller border radius
-        boxShadow: HeronFitTheme.cardShadow,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16.0,
-          vertical: 12.0,
-        ), // Adjusted padding for smaller size
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    workout.name,
-                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                      color: HeronFitTheme.primary,
-                      fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white, // White background
+          borderRadius: BorderRadius.circular(12.0), // Smaller border radius
+          boxShadow: HeronFitTheme.cardShadow,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16.0,
+            vertical: 12.0,
+          ), // Adjusted padding for smaller size
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      workout.name,
+                      style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                        color: HeronFitTheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   ),
+                  Text(
+                    formattedDate,
+                    style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                      color: HeronFitTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4.0),
+              Text(
+                '${formatDuration(workout.duration)} • ${workout.exercises.length} exercises',
+                style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                  color: HeronFitTheme.textPrimary,
                 ),
+              ),
+              const SizedBox(height: 8.0),
+              // Corrected structure for conditional children
+              if (detailedExercises.isNotEmpty &&
+                  detailedExercises.any(
+                    (ex) => ex.sets.any((s) => s.completed),
+                  ))
+                Column(
+                  // Use column to list exercises if space allows
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Details:', // Added a label for details
+                      style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4.0),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount:
+                          detailedExercises
+                              .where((ex) => ex.sets.any((s) => s.completed))
+                              .length, // Only count performed
+                      itemBuilder: (context, index) {
+                        final exercise =
+                            detailedExercises
+                                .where((ex) => ex.sets.any((s) => s.completed))
+                                .toList()[index];
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 2.0,
+                          ), // Very small vertical padding
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  exercise.name,
+                                  style:
+                                      HeronFitTheme
+                                          .textTheme
+                                          .bodySmall, // Smaller text for details
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _formatSetsAndReps(
+                                  exercise.sets
+                                      .where((s) => s.completed)
+                                      .toList(),
+                                ),
+                                style: HeronFitTheme.textTheme.bodySmall
+                                    ?.copyWith(color: HeronFitTheme.textMuted),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                )
+              else if (detailedExercises.isNotEmpty &&
+                  !detailedExercises.any(
+                    (ex) => ex.sets.any((s) => s.completed),
+                  ))
                 Text(
-                  formattedDate,
+                  'No exercises completed in this session.', // Message if no sets completed
                   style: HeronFitTheme.textTheme.bodySmall?.copyWith(
                     color: HeronFitTheme.textMuted,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4.0),
-            Text(
-              '${formatDuration(workout.duration)} • ${workout.exercises.length} exercises',
-              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                color: HeronFitTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8.0),
-            // Corrected structure for conditional children
-            if (detailedExercises.isNotEmpty &&
-                detailedExercises.any((ex) => ex.sets.any((s) => s.completed)))
-              Column(
-                // Use column to list exercises if space allows
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Details:', // Added a label for details
-                    style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: HeronFitTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4.0),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount:
-                        detailedExercises
-                            .where((ex) => ex.sets.any((s) => s.completed))
-                            .length, // Only count performed
-                    itemBuilder: (context, index) {
-                      final exercise =
-                          detailedExercises
-                              .where((ex) => ex.sets.any((s) => s.completed))
-                              .toList()[index];
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 2.0,
-                        ), // Very small vertical padding
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                exercise.name,
-                                style:
-                                    HeronFitTheme
-                                        .textTheme
-                                        .bodySmall, // Smaller text for details
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _formatSetsAndReps(
-                                exercise.sets
-                                    .where((s) => s.completed)
-                                    .toList(),
-                              ),
-                              style: HeronFitTheme.textTheme.bodySmall
-                                  ?.copyWith(color: HeronFitTheme.textMuted),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              )
-            else if (detailedExercises.isNotEmpty &&
-                !detailedExercises.any((ex) => ex.sets.any((s) => s.completed)))
-              Text(
-                'No exercises completed in this session.', // Message if no sets completed
-                style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                  color: HeronFitTheme.textMuted,
-                ),
-              )
-            else
-              const SizedBox.shrink(), // If no exercises at all
-          ],
+                )
+              else
+                const SizedBox.shrink(), // If no exercises at all
+            ],
+          ),
         ),
       ),
     );

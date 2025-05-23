@@ -132,6 +132,14 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                         detailedExercises: detailedExercises,
                         formatDuration: formatDuration,
                         formattedDate: formattedDate,
+                        onTap: () {
+                          // CHANGED: Implement navigation to WorkoutDetailsScreen
+                          if (!context.mounted) return; // Added mounted check
+                          context.push(
+                            AppRoutes.workoutDetails,
+                            extra: workout, // Pass the workout object
+                          );
+                        },
                       ),
                     ],
                   ),
