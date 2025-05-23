@@ -220,10 +220,7 @@ class WorkoutHistoryScreen extends ConsumerWidget {
           child: InkWell(
             onTap: () {
               if (!context.mounted) return;
-              context.push(
-                AppRoutes.workoutDetails,
-                extra: workout,
-              );
+              context.push(AppRoutes.workoutDetails, extra: workout);
             },
             borderRadius: BorderRadius.circular(12.0),
             child: Card(
@@ -248,10 +245,11 @@ class WorkoutHistoryScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               workout.name,
-                              style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: HeronFitTheme.primary,
-                              ),
+                              style: HeronFitTheme.textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: HeronFitTheme.primary,
+                                  ),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -283,9 +281,8 @@ class WorkoutHistoryScreen extends ConsumerWidget {
                                       label: Text(exercise.name),
                                       backgroundColor: HeronFitTheme.bgLight,
                                       side: BorderSide(
-                                        color: HeronFitTheme.primary.withOpacity(
-                                          0.2,
-                                        ),
+                                        color: HeronFitTheme.primary
+                                            .withOpacity(0.2),
                                       ),
                                       labelStyle: const TextStyle(fontSize: 12),
                                       padding: const EdgeInsets.symmetric(

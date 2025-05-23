@@ -42,6 +42,9 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
                 try {
+                  debugPrint(
+                    'Attempting to delete template with ID: $templateId',
+                  );
                   await workoutService.deleteWorkoutTemplate(templateId);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
