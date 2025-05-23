@@ -105,11 +105,7 @@ class ProfileScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${user.first_name ?? ''} ${user.last_name ?? ''}'
-                                    .trim()
-                                    .isEmpty
-                                ? 'User Name'
-                                : '${user.first_name ?? ''} ${user.last_name ?? ''}',
+                            _getDisplayName(user.first_name),
                             style: textTheme.titleLarge?.copyWith(
                               color: HeronFitTheme.primary,
                               fontWeight: FontWeight.bold,
@@ -117,7 +113,7 @@ class ProfileScreen extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),
-                          const SizedBox(height: 0),
+                          const SizedBox(height: 4),
                           RichText(
                             text: TextSpan(
                               children: [
@@ -150,23 +146,26 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8.0),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.push(AppRoutes.profileEdit);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        backgroundColor: colorScheme.secondary,
-                        foregroundColor: Colors.white,
-                        textStyle: textTheme.labelLarge?.copyWith(
-                          fontWeight: FontWeight.w500,
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          context.push(AppRoutes.profileEdit);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          backgroundColor: colorScheme.secondary,
+                          foregroundColor: Colors.white,
+                          textStyle: textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w500,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
+                        child: const Text('Edit'),
                       ),
-                      child: const Text('Edit'),
                     ),
                   ],
                 ),
@@ -471,6 +470,16 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _getDisplayName(String? fullName) {
+    if (fullName == null || fullName.trim().isEmpty) {
+      return 'User Name';
+    }
+
+    // Split the name into parts and take only the first part
+    final nameParts = fullName.trim().split(' ');
+    return nameParts.first;
   }
 }
 
