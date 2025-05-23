@@ -262,43 +262,6 @@ class WorkoutDetailsScreen extends ConsumerWidget {
                     foregroundColor: HeronFitTheme.primary,
                   ),
                 ),
-                const SizedBox(height: 12.0),
-                OutlinedButton(
-                  onPressed: () async {
-                    debugPrint('Delete Workout button clicked');
-                    try {
-                      await workoutService.deleteWorkoutTemplate(workout.id);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Workout deleted!')),
-                      );
-                      context.pop();
-                      ref.invalidate(savedWorkoutsProvider);
-                      ref.invalidate(workoutHistoryProvider);
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error deleting workout: $e')),
-                      );
-                    }
-                  },
-                  child: const Text(
-                    'Delete Workout',
-                    textAlign: TextAlign.center,
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16.0,
-                      horizontal: 16.0,
-                    ),
-                    textStyle: Theme.of(context).textTheme.titleSmall,
-                    foregroundColor: HeronFitTheme.error,
-                    side: BorderSide(color: HeronFitTheme.error),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                  ),
-                ),
               ],
             ),
           ],
