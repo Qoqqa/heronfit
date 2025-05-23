@@ -9,6 +9,7 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:heronfit/features/workout/controllers/workout_providers.dart'; // Import providers
+import 'package:heronfit/features/workout/widgets/workout_summary_card.dart'; // Import WorkoutSummaryCard
 
 // Convert to ConsumerWidget
 class WorkoutCompleteScreen extends ConsumerWidget {
@@ -126,139 +127,11 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                       const SizedBox(height: 32.0),
 
                       // --- Workout Summary Card ---
-                      Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: HeronFitTheme.bgSecondary,
-                          boxShadow: [
-                            BoxShadow(
-                              blurRadius: 10.0,
-                              color: HeronFitTheme.dropShadow.withAlpha(
-                                (255 * 0.5).round(),
-                              ),
-                              offset: const Offset(0.0, 4.0),
-                            ),
-                          ],
-                          borderRadius: BorderRadius.circular(16.0),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                workout.name,
-                                style: HeronFitTheme.textTheme.titleLarge
-                                    ?.copyWith(
-                                      color: HeronFitTheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const SizedBox(height: 16.0),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Duration: $durationString',
-                                    style: HeronFitTheme.textTheme.bodyMedium
-                                        ?.copyWith(
-                                          color: HeronFitTheme.textPrimary,
-                                        ),
-                                  ),
-                                  Text(
-                                    'Date: $formattedDate',
-                                    style: HeronFitTheme.textTheme.bodyMedium
-                                        ?.copyWith(
-                                          color: HeronFitTheme.textPrimary,
-                                        ),
-                                  ),
-                                ],
-                              ),
-
-                              const SizedBox(height: 20.0),
-                              Text(
-                                'Exercises Performed:',
-                                style: HeronFitTheme.textTheme.titleMedium
-                                    ?.copyWith(
-                                      color: HeronFitTheme.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const SizedBox(height: 12.0),
-                              () {
-                                final performedExercises =
-                                    detailedExercises
-                                        .where(
-                                          (ex) =>
-                                              ex.sets.any((s) => s.completed),
-                                        )
-                                        .toList();
-
-                                if (performedExercises.isEmpty) {
-                                  return Text(
-                                    'No exercises completed.',
-                                    style: HeronFitTheme.textTheme.bodyMedium
-                                        ?.copyWith(
-                                          color: HeronFitTheme.textMuted,
-                                        ),
-                                  );
-                                } else {
-                                  return ListView.builder(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    itemCount: performedExercises.length,
-                                    itemBuilder: (context, index) {
-                                      final exercise =
-                                          performedExercises[index];
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 6.0,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                exercise.name,
-                                                style: HeronFitTheme
-                                                    .textTheme
-                                                    .bodyMedium
-                                                    ?.copyWith(
-                                                      color:
-                                                          HeronFitTheme
-                                                              .textPrimary,
-                                                    ),
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Text(
-                                              _formatSetsAndReps(
-                                                exercise.sets
-                                                    .where((s) => s.completed)
-                                                    .toList(),
-                                              ),
-                                              style: HeronFitTheme
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.copyWith(
-                                                    color:
-                                                        HeronFitTheme.textMuted,
-                                                  ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }
-                              }(),
-                            ],
-                          ),
-                        ),
+                      WorkoutSummaryCard(
+                        workout: workout,
+                        detailedExercises: detailedExercises,
+                        formatDuration: formatDuration,
+                        formattedDate: formattedDate,
                       ),
                     ],
                   ),
