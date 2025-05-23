@@ -56,16 +56,7 @@ class WorkoutSummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white, // White background
         borderRadius: BorderRadius.circular(12.0), // Smaller border radius
-        boxShadow: [
-          // Using the theme's dropShadow color to create the BoxShadow
-          BoxShadow(
-            blurRadius: 10.0, // Match original blur
-            color: HeronFitTheme.dropShadow.withAlpha(
-              (255 * 0.5).round(),
-            ), // Use theme dropShadow with opacity
-            offset: const Offset(0.0, 4.0), // Match original offset
-          ),
-        ],
+        boxShadow: HeronFitTheme.cardShadow,
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(
