@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/services/workout_supabase_service.dart';
 import 'package:heronfit/features/workout/controllers/workout_providers.dart';
+import 'package:solar_icons/solar_icons.dart';
 
 class WorkoutDetailsScreen extends ConsumerWidget {
   final Workout workout;
@@ -15,8 +16,7 @@ class WorkoutDetailsScreen extends ConsumerWidget {
   const WorkoutDetailsScreen({super.key, required this.workout});
 
   String _formatSetsAndReps(List<SetData> sets) {
-    final completedSets =
-        sets.where((s) => s.completed).toList();
+    final completedSets = sets.where((s) => s.completed).toList();
 
     if (completedSets.isEmpty) {
       return 'No sets completed';
@@ -60,15 +60,52 @@ class WorkoutDetailsScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Duration: ${formatDuration(workout.duration)}',
-              style: Theme.of(context).textTheme.bodyMedium,
+              workout.name,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            Text(
-              'Date: ${formatDate(workout.timestamp)}',
-              style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 8.0),
+            Row(
+              children: [
+                Icon(
+                  SolarIconsOutline.clockCircle,
+                  size: 20.0,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
+                const SizedBox(width: 4.0),
+                Text(
+                  'Duration: ${formatDuration(workout.duration)}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ),
+            const SizedBox(height: 4.0),
+            Row(
+              children: [
+                Icon(
+                  SolarIconsOutline.calendarDate,
+                  size: 20.0,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withOpacity(0.6),
+                ),
+                const SizedBox(width: 4.0),
+                Text(
+                  'Date: ${formatDate(workout.timestamp)}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
             ),
             const SizedBox(height: 24.0),
-            Text('Exercises:', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'Exercises:',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8.0),
             Expanded(
               child: ListView.builder(
@@ -77,35 +114,65 @@ class WorkoutDetailsScreen extends ConsumerWidget {
                   final exercise = workout.exercises[index];
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                    elevation: 1.0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            exercise.name,
-                             style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4.0),
-                           if (exercise.sets.isNotEmpty)
-                             Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                 Text('Sets:', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold)),
-                                 const SizedBox(height: 4.0),
-                                 Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: exercise.sets.map((set) => Text(
-                                       'Set ${exercise.sets.indexOf(set) + 1}: ${set.reps} reps${set.kg > 0 ? ' @ ${set.kg}kg' : ''} ${set.completed ? '(Completed)' : '(Not Completed)'}',
-                                        style: Theme.of(context).textTheme.bodySmall,
-                                    )).toList(),
-                                 ),
-                               ],
-                             ) else
-                              Text('No sets recorded', style: Theme.of(context).textTheme.bodySmall?.copyWith(fontStyle: FontStyle.italic)),
-                        ],
+                    elevation: 0.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(8.0),
+                        boxShadow: HeronFitTheme.cardShadow,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              exercise.name,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            const SizedBox(height: 4.0),
+                            if (exercise.sets.isNotEmpty)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Sets:',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4.0),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children:
+                                        exercise.sets
+                                            .map(
+                                              (set) => Text(
+                                                'Set ${exercise.sets.indexOf(set) + 1}: ${set.reps} reps${set.kg > 0 ? ' @ ${set.kg}kg' : ''} ${set.completed ? '(Completed)' : '(Not Completed)'}',
+                                                style:
+                                                    Theme.of(
+                                                      context,
+                                                    ).textTheme.bodySmall,
+                                              ),
+                                            )
+                                            .toList(),
+                                  ),
+                                ],
+                              )
+                            else
+                              Text(
+                                'No sets recorded',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(fontStyle: FontStyle.italic),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -113,79 +180,106 @@ class WorkoutDetailsScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () async {
-                       debugPrint('Save as Template button clicked');
-                       try {
-                         await workoutService.saveWorkoutTemplate(workout);
-                           if (!context.mounted) return;
-                           ScaffoldMessenger.of(context).showSnackBar(
-                             const SnackBar(content: Text('Workout saved as template!')),
-                           );
-                            ref.invalidate(savedWorkoutsProvider);
-                       } catch (e) {
-                           if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error saving template: $e')),
-                            );
-                       }
-                    },
-                    child: const Text('Save as Template', textAlign: TextAlign.center),
-                     style: ElevatedButton.styleFrom(
-                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                        textStyle: Theme.of(context).textTheme.labelLarge,
-                     ),
+                ElevatedButton(
+                  onPressed: () async {
+                    debugPrint('Save as Template button clicked');
+                    try {
+                      await workoutService.saveWorkoutTemplate(workout);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Workout saved as template!'),
+                        ),
+                      );
+                      ref.invalidate(savedWorkoutsProvider);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error saving template: $e')),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Save as Template',
+                    textAlign: TextAlign.center,
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16.0,
+                      horizontal: 16.0,
+                    ),
+                    textStyle: Theme.of(context).textTheme.titleSmall,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12.0),
-                 Expanded(
-                   child: ElevatedButton(
-                    onPressed: () {
-                       debugPrint('Start Workout button clicked');
-                       if (!context.mounted) return;
-                       context.push(AppRoutes.workoutStartFromTemplate, extra: workout);
-                    },
-                    child: const Text('Start Workout', textAlign: TextAlign.center),
-                     style: ElevatedButton.styleFrom(
-                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                        textStyle: Theme.of(context).textTheme.labelLarge,
-                     ),
+                const SizedBox(height: 12.0),
+                ElevatedButton(
+                  onPressed: () {
+                    debugPrint('Start Workout button clicked');
+                    if (!context.mounted) return;
+                    context.push(
+                      AppRoutes.workoutStartFromTemplate,
+                      extra: workout,
+                    );
+                  },
+                  child: const Text(
+                    'Start Workout',
+                    textAlign: TextAlign.center,
                   ),
-                 ),
-                 const SizedBox(width: 12.0),
-                  Expanded(
-                    child: OutlinedButton(
-                     onPressed: () async {
-                       debugPrint('Delete Workout button clicked');
-                        try {
-                          await workoutService.deleteWorkoutTemplate(workout.id);
-                            if (!context.mounted) return;
-                             ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Workout deleted!')),
-                              );
-                             context.pop();
-                             ref.invalidate(savedWorkoutsProvider);
-                             ref.invalidate(workoutHistoryProvider);
-                         } catch (e) {
-                            if (!context.mounted) return;
-                             ScaffoldMessenger.of(context).showSnackBar(
-                               SnackBar(content: Text('Error deleting workout: $e')),
-                            );
-                         }
-                     },
-                     child: const Text('Delete Workout', textAlign: TextAlign.center),
-                      style: OutlinedButton.styleFrom(
-                       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
-                        textStyle: Theme.of(context).textTheme.labelLarge,
-                         foregroundColor: HeronFitTheme.error,
-                         side: BorderSide(color: HeronFitTheme.error),
-                      ),
-                   ),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16.0,
+                      horizontal: 16.0,
+                    ),
+                    textStyle: Theme.of(context).textTheme.titleSmall,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
                   ),
+                ),
+                const SizedBox(height: 12.0),
+                OutlinedButton(
+                  onPressed: () async {
+                    debugPrint('Delete Workout button clicked');
+                    try {
+                      await workoutService.deleteWorkoutTemplate(workout.id);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Workout deleted!')),
+                      );
+                      context.pop();
+                      ref.invalidate(savedWorkoutsProvider);
+                      ref.invalidate(workoutHistoryProvider);
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error deleting workout: $e')),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Delete Workout',
+                    textAlign: TextAlign.center,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16.0,
+                      horizontal: 16.0,
+                    ),
+                    textStyle: Theme.of(context).textTheme.titleSmall,
+                    foregroundColor: HeronFitTheme.error,
+                    side: BorderSide(color: HeronFitTheme.error),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                  ),
+                ),
               ],
             ),
           ],
@@ -193,4 +287,4 @@ class WorkoutDetailsScreen extends ConsumerWidget {
       ),
     );
   }
-} 
+}
