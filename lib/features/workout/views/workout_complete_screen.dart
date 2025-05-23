@@ -55,9 +55,9 @@ class WorkoutCompleteScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final DateFormat dateFormat = DateFormat('MMMM d, yyyy'); // Date formatter
+    final formatDuration = ref.watch(formatDurationProvider);
+    final String durationString = formatDuration(workout.duration);
     final String formattedDate = dateFormat.format(workout.timestamp);
-    final String durationString =
-        '${workout.duration.inMinutes} min ${workout.duration.inSeconds.remainder(60)} sec';
 
     return SafeArea(
       child: Scaffold(
@@ -94,37 +94,36 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                       // --- Image and Congrats Message ---
                       Container(
                         width: double.infinity,
-                        height: 180.0, // Adjusted height
+                        height: 300.0,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(16.0),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8.0),
+                          borderRadius: BorderRadius.circular(16.0),
                           child: Image.asset(
-                            'assets/images/workout_complete.png',
+                            'assets/images/workout_complete.webp',
                             fit: BoxFit.contain,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16.0),
+                      const SizedBox(height: 24.0),
                       Text(
-                        'You\'re One Step Closer to Your Goals!', // Corrected string literal
+                        'You\'re One Step Closer to Your Goals!',
                         style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                          // Slightly larger
                           color: HeronFitTheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 8.0),
+                      const SizedBox(height: 4.0),
                       Text(
-                        'You crushed it today! Keep up the momentum.',
+                        'You crushed it today! Keep up the momentum, and let\'s turn those goals into reality.',
                         textAlign: TextAlign.center,
                         style: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                          // Slightly larger
                           color: HeronFitTheme.textPrimary,
                         ),
                       ),
-                      const SizedBox(height: 24.0),
+                      const SizedBox(height: 32.0),
 
                       // --- Workout Summary Card ---
                       Container(
@@ -133,33 +132,29 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                           color: HeronFitTheme.bgSecondary,
                           boxShadow: [
                             BoxShadow(
-                              blurRadius: 10.0, // Reduced blur
+                              blurRadius: 10.0,
                               color: HeronFitTheme.dropShadow.withAlpha(
                                 (255 * 0.5).round(),
-                              ), // Use withAlpha
-                              offset: const Offset(0.0, 4.0), // Reduced offset
+                              ),
+                              offset: const Offset(0.0, 4.0),
                             ),
                           ],
-                          borderRadius: BorderRadius.circular(
-                            12.0,
-                          ), // More rounded
+                          borderRadius: BorderRadius.circular(16.0),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(
-                            16.0,
-                          ), // Adjusted padding
+                          padding: const EdgeInsets.all(20.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 workout.name,
-                                style: HeronFitTheme.textTheme.titleMedium
+                                style: HeronFitTheme.textTheme.titleLarge
                                     ?.copyWith(
                                       color: HeronFitTheme.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              const SizedBox(height: 12.0),
+                              const SizedBox(height: 16.0),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -181,20 +176,17 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                                 ],
                               ),
 
-                              const SizedBox(height: 16.0),
+                              const SizedBox(height: 20.0),
                               Text(
                                 'Exercises Performed:',
-                                style: HeronFitTheme.textTheme.labelLarge
+                                style: HeronFitTheme.textTheme.titleMedium
                                     ?.copyWith(
                                       color: HeronFitTheme.primary,
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              const SizedBox(height: 8.0),
-                              // Display detailed exercises with sets/reps
-                              // Filter exercises to show only those with completed sets on the summary
+                              const SizedBox(height: 12.0),
                               () {
-                                // Corrected filtering syntax
                                 final performedExercises =
                                     detailedExercises
                                         .where(
@@ -205,7 +197,7 @@ class WorkoutCompleteScreen extends ConsumerWidget {
 
                                 if (performedExercises.isEmpty) {
                                   return Text(
-                                    'No exercises completed.', // Updated message
+                                    'No exercises completed.',
                                     style: HeronFitTheme.textTheme.bodyMedium
                                         ?.copyWith(
                                           color: HeronFitTheme.textMuted,
@@ -215,23 +207,20 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                                   return ListView.builder(
                                     shrinkWrap: true,
                                     physics:
-                                        const NeverScrollableScrollPhysics(), // Disable inner scroll
-                                    itemCount:
-                                        performedExercises
-                                            .length, // Use filtered list
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: performedExercises.length,
                                     itemBuilder: (context, index) {
                                       final exercise =
-                                          performedExercises[index]; // Use filtered list
+                                          performedExercises[index];
                                       return Padding(
                                         padding: const EdgeInsets.symmetric(
-                                          vertical: 4.0,
+                                          vertical: 6.0,
                                         ),
                                         child: Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Expanded(
-                                              // Allow text wrapping
                                               child: Text(
                                                 exercise.name,
                                                 style: HeronFitTheme
@@ -247,8 +236,6 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                                             ),
                                             const SizedBox(width: 16),
                                             Text(
-                                              // Pass only completed sets to the formatter
-                                              // Note: _formatSetsAndReps IS used here, analyzer error might be stale
                                               _formatSetsAndReps(
                                                 exercise.sets
                                                     .where((s) => s.completed)
@@ -268,7 +255,7 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                                     },
                                   );
                                 }
-                              }(), // Immediately invoke the builder function
+                              }(),
                             ],
                           ),
                         ),
@@ -279,54 +266,36 @@ class WorkoutCompleteScreen extends ConsumerWidget {
               ),
 
               // --- Action Buttons ---
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 32.0),
               ElevatedButton(
                 onPressed: () async {
-                  // 1. Save the workout as a template (using completed exercise data)
-                  final storageService = ref.read(
-                    workoutServiceProvider,
-                  ); // Use ref.read
+                  final storageService = ref.read(workoutServiceProvider);
                   bool savedSuccessfully = false;
 
-                  // Filter exercises again for the template, ensuring we only save names of performed exercises
                   final performedExercises =
                       detailedExercises
                           .where((ex) => ex.sets.any((s) => s.completed))
                           .toList();
 
-                  // Only attempt to save if at least one exercise was performed
                   if (performedExercises.isNotEmpty) {
                     try {
-                      // Create a new Workout object specifically for saving as a template
-                      // Use the actual Exercise objects that were performed
                       final templateToSave = Workout(
-                        id: '', // Supabase will generate UUID
-                        name:
-                            workout
-                                .name, // Use the name from the completed session
-                        exercises:
-                            performedExercises, // Pass the List<Exercise> of performed exercises
-                        createdAt:
-                            DateTime.now(), // Set the creation timestamp for sorting templates
-                        timestamp:
-                            DateTime.now(), // Added timestamp for template creation
-                        duration:
-                            Duration
-                                .zero, // Add required duration, 0 for templates
+                        id: '',
+                        name: workout.name,
+                        exercises: performedExercises,
+                        createdAt: DateTime.now(),
+                        timestamp: DateTime.now(),
+                        duration: Duration.zero,
                       );
-                      await storageService.saveWorkoutTemplate(
-                        templateToSave,
-                      ); // Assuming this saves as a template
+                      await storageService.saveWorkoutTemplate(templateToSave);
                       savedSuccessfully = true;
                     } catch (e) {
-                      // Show error message immediately if save fails
-                      if (!context.mounted) return; // Add mounted check
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Error saving template: $e')),
                       );
                     }
                   } else {
-                    // Optionally inform the user nothing was saved as no exercises were completed
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -337,62 +306,54 @@ class WorkoutCompleteScreen extends ConsumerWidget {
                     );
                   }
 
-                  // Show success message only if saved successfully
                   if (savedSuccessfully) {
-                    if (!context.mounted) return; // Add mounted check
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Workout saved as template!'),
                       ),
                     );
-                    // Invalidate the provider to refresh the list on the workout screen
                     ref.invalidate(savedWorkoutsProvider);
                   }
 
-                  // 2. Navigate home regardless of save success/failure
-                  if (!context.mounted) return; // Add mounted check
+                  if (!context.mounted) return;
                   context.go(AppRoutes.home);
                 },
                 style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48.0),
+                  minimumSize: const Size(double.infinity, 56.0),
                   backgroundColor: HeronFitTheme.primary,
-                  foregroundColor: Colors.white, // Text color
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      12.0,
-                    ), // Match card rounding
+                    borderRadius: BorderRadius.circular(12.0),
                   ),
-                  textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
+                  textStyle: HeronFitTheme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: const Text('Save as Template & Go Home'), // Updated text
+                child: const Text('Save Workout & Go Home'),
               ),
-              const SizedBox(height: 12.0), // Space between buttons
+              const SizedBox(height: 8.0),
               OutlinedButton(
-                // Use OutlinedButton for secondary action
                 onPressed: () {
-                  // Simply navigate home without saving
                   context.go(AppRoutes.home);
                 },
                 style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48.0),
-                  foregroundColor: HeronFitTheme.primary, // Text color
-                  side: BorderSide(
+                  minimumSize: const Size(double.infinity, 56.0),
+                  foregroundColor: HeronFitTheme.primary,
+                  side: const BorderSide(
                     color: HeronFitTheme.primary,
-                  ), // Border color
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                      12.0,
-                    ), // Match card rounding
+                    width: 2.0,
                   ),
-                  textStyle: HeronFitTheme.textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w600,
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  textStyle: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                child: const Text('Go Home'), // New button
+                child: const Text('Go Home'),
               ),
             ],
           ),
