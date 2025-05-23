@@ -198,81 +198,93 @@ class MyWorkoutTemplatesScreen extends ConsumerWidget {
                     },
                     borderRadius: BorderRadius.circular(12.0),
                     child: Card(
-                      elevation: 2,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    template.name,
-                                    style: HeronFitTheme.textTheme.titleMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: HeronFitTheme.primary,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(12.0),
+                          boxShadow: HeronFitTheme.cardShadow,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      template.name,
+                                      style: HeronFitTheme.textTheme.titleMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: HeronFitTheme.primary,
+                                          ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      SolarIconsOutline.trashBinMinimalistic,
+                                    ),
+                                    color: HeronFitTheme.error,
+                                    tooltip: 'Delete Template',
+                                    onPressed:
+                                        () => deleteConfirmationDialog(
+                                          template.id,
                                         ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    SolarIconsOutline.trashBinMinimalistic,
-                                  ),
-                                  color: HeronFitTheme.error,
-                                  tooltip: 'Delete Template',
-                                  onPressed:
-                                      () =>
-                                          deleteConfirmationDialog(template.id),
+                                ],
+                              ),
+                              const SizedBox(height: 8.0),
+                              Text(
+                                '${template.exercises.length} exercises',
+                                style: HeronFitTheme.textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: HeronFitTheme.textPrimary,
+                                    ),
+                              ),
+                              if (template.exercises.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                const Divider(),
+                                const SizedBox(height: 4),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  children:
+                                      template.exercises
+                                          .map(
+                                            (exercise) => Chip(
+                                              label: Text(exercise.name),
+                                              backgroundColor:
+                                                  HeronFitTheme.bgLight,
+                                              side: BorderSide(
+                                                color: HeronFitTheme.primary
+                                                    .withOpacity(0.2),
+                                              ),
+                                              labelStyle: const TextStyle(
+                                                fontSize: 12,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                          )
+                                          .toList(),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 8.0),
-                            Text(
-                              '${template.exercises.length} exercises',
-                              style: HeronFitTheme.textTheme.bodyMedium
-                                  ?.copyWith(color: HeronFitTheme.textPrimary),
-                            ),
-                            if (template.exercises.isNotEmpty) ...[
-                              const SizedBox(height: 12),
-                              const Divider(),
-                              const SizedBox(height: 4),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 4,
-                                children:
-                                    template.exercises
-                                        .map(
-                                          (exercise) => Chip(
-                                            label: Text(exercise.name),
-                                            backgroundColor:
-                                                HeronFitTheme.bgLight,
-                                            side: BorderSide(
-                                              color: HeronFitTheme.primary
-                                                  .withOpacity(0.2),
-                                            ),
-                                            labelStyle: const TextStyle(
-                                              fontSize: 12,
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
-                                            ),
-                                            materialTapTargetSize:
-                                                MaterialTapTargetSize
-                                                    .shrinkWrap,
-                                          ),
-                                        )
-                                        .toList(),
-                              ),
                             ],
-                          ],
+                          ),
                         ),
                       ),
                     ),
