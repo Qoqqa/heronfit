@@ -148,6 +148,9 @@ class StartNewWorkoutScreen extends ConsumerWidget {
                           extra: exercise,
                         );
                       },
+                      onRemoveExercise: () {
+                        workoutNotifier.removeExercise(exercise);
+                      },
                     );
                   },
                 ),

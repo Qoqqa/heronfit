@@ -147,6 +147,9 @@ class StartWorkoutFromTemplateScreen extends ConsumerWidget {
                           extra: exercise,
                         );
                       },
+                      onRemoveExercise: () {
+                        workoutNotifier.removeExercise(exercise);
+                      },
                     );
                   },
                 ),
