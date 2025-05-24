@@ -3,25 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:solar_icons/solar_icons.dart';
 // ADDED: Import notifications controller and any necessary models
-import 'package:heronfit/features/notifications/controllers/notifications_controller.dart';
+// MODIFIED: Added prefix to import for notifications controller to avoid name conflict
+import 'package:heronfit/features/notifications/controllers/notifications_controller.dart'
+    as controller;
 // ADDED: Import for timeago package (assuming it's used or will be added)
 // import 'package:timeago/timeago.dart' as timeago;
+// ADDED: Import for GoRouter
+import 'package:go_router/go_router.dart';
+// ADDED: Import for AppRoutes
+import 'package:heronfit/core/router/app_routes.dart';
 
 class NotificationListItem extends ConsumerWidget {
   const NotificationListItem({super.key, required this.notification});
 
-  final Map<String, dynamic> notification;
+  final controller.Notification notification;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
     // Assuming 'title', 'body', 'created_at', and 'is_read' keys exist
-    final title = notification['title'] ?? 'No Title';
-    final body = notification['body'] ?? ''; // Body can be empty
-    final timestamp = notification['created_at'];
-    final isRead =
-        notification['is_read'] ?? true; // Default to true if not specified
+    final title = notification.title;
+    final body = notification.body;
+    final timestamp = notification.createdAt;
+    final isRead = notification.isRead;
 
     // Determine icon based on notification type or other data (TODO: refine this)
     IconData leadingIcon = SolarIconsBold.bell;
@@ -73,19 +78,16 @@ class NotificationListItem extends ConsumerWidget {
           icon: const Icon(Icons.more_vert),
           onSelected: (String value) {
             // TODO: Implement controller calls for actions
+            final notificationsNotifier = ref.read(
+              controller.notificationsProvider.notifier,
+            );
+
             if (value == 'read') {
-              print(
-                'Mark as Read tapped for: $title (id: ${notification['id']})',
-              );
-              // ref.read(notificationsProvider.notifier).markAsRead(notification['id']);
+              notificationsNotifier.markAsRead(notification.id);
             } else if (value == 'delete') {
-              print('Delete tapped for: $title (id: ${notification['id']})');
-              // ref.read(notificationsProvider.notifier).deleteNotification(notification['id']);
+              notificationsNotifier.deleteNotification(notification.id);
             } else if (value == 'view_details') {
-              print(
-                'View Details tapped for: $title (id: ${notification['id']})',
-              );
-              // TODO: Implement navigation to detail screen, potentially passing notification id or relevant data
+              context.push('${AppRoutes.notifications}/${notification.id}');
             }
           },
           itemBuilder: (BuildContext context) {
@@ -117,7 +119,7 @@ class NotificationListItem extends ConsumerWidget {
 
     try {
       // Assuming timestamp is a String that can be parsed
-      final DateTime dateTime = DateTime.parse(timestamp.toString());
+      final DateTime dateTime = timestamp;
       // TODO: Implement proper relative date formatting (e.g., using timeago package)
       // For now, a simple representation:
       final Duration diff = DateTime.now().difference(dateTime);

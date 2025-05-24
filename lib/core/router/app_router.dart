@@ -45,6 +45,7 @@ import 'package:heronfit/features/auth/views/request_otp_screen.dart'; // New im
 import 'package:heronfit/features/auth/views/enter_otp_screen.dart'; // New import
 import 'package:heronfit/features/auth/views/create_new_password_screen.dart'; // New import
 import 'package:heronfit/features/notifications/views/notifications_screen.dart';
+import 'package:heronfit/features/notifications/views/notification_details_screen.dart';
 
 import 'app_routes.dart';
 
@@ -252,6 +253,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.notifications,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+      // ADDED: Route for Notification Details Screen
+      GoRoute(
+        path: AppRoutes.notificationDetails,
+        builder:
+            (context, state) => NotificationDetailsScreen(
+              notificationId: state.pathParameters['id']!,
+            ),
       ),
       GoRoute(
         path: AppRoutes.profileEdit,

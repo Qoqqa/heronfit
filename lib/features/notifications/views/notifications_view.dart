@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/features/notifications/controllers/notifications_controller.dart';
 
 class NotificationsView extends ConsumerWidget {
-  const NotificationsView({Key? key}) : super(key: key);
+  const NotificationsView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,9 +28,9 @@ class NotificationsView extends ConsumerWidget {
               final notification = notifications[index];
               // Display notification title and body
               return ListTile(
-                title: Text(notification['title']),
-                subtitle: Text(notification['body']),
-                // TODO: Add functionality to mark as read and potentially navigate on tap
+                title: Text(notification.title),
+                subtitle: Text(notification.body),
+                // The logic for mark as read and navigation is handled in NotificationListItem
               );
             },
           );

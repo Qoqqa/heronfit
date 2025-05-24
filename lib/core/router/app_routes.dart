@@ -69,4 +69,6 @@ class AppRoutes {
 
   // ADDED: Route for the notifications screen
   static const String notifications = '/notifications';
+  // ADDED: Route for the notification details screen
+  static const String notificationDetails = '/notifications/:id';
 }

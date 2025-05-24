@@ -6,7 +6,9 @@ import 'package:solar_icons/solar_icons.dart';
 import 'package:heronfit/features/notifications/widgets/notification_list_item.dart';
 
 // ADDED: Import notifications provider
-import 'package:heronfit/features/notifications/controllers/notifications_controller.dart';
+// MODIFIED: Added prefix to import for notifications controller to avoid name conflict
+import 'package:heronfit/features/notifications/controllers/notifications_controller.dart'
+    as controller;
 // ADDED: Import for timeago package (assuming it's used or will be added)
 // import 'package:timeago/timeago.dart' as timeago;
 
@@ -16,7 +18,7 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final notificationsAsyncValue = ref.watch(notificationsProvider);
+    final notificationsAsyncValue = ref.watch(controller.notificationsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -76,7 +78,6 @@ class NotificationsScreen extends ConsumerWidget {
               itemCount: notifications.length,
               itemBuilder: (context, index) {
                 final notification = notifications[index];
-                // Using the extracted widget for each notification item
                 return NotificationListItem(notification: notification);
               },
             );
