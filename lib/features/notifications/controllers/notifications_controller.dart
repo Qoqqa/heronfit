@@ -121,6 +121,8 @@ class NotificationsNotifier
 
   // ADDED: Method to delete a notification
   Future<void> deleteNotification(String notificationId) async {
+    print('Attempting to delete notification with ID: $notificationId');
+
     // Optimistically update the state
     if (state is AsyncData) {
       final currentNotifications = state.asData!.value;
