@@ -48,13 +48,7 @@ class RecommendedWorkoutsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final workoutsAsync = ref.watch(recommendedWorkoutsByCategoryProvider);
-    final categories = [
-      'For You',
-      'Community',
-      'Gain Muscle',
-      'Lose Weight',
-      'Overall Fitness',
-    ];
+    final categories = ['For You', 'Community'];
 
     return SafeArea(
       child: Scaffold(
