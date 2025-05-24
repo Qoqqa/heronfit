@@ -11,6 +11,7 @@ typedef UpdateSetDataCallback =
     void Function(int setIndex, {int? kg, int? reps, bool? completed});
 typedef RemoveSetCallback = void Function(int setIndex);
 typedef ShowDetailsCallback = void Function(); // New callback type
+typedef RemoveExerciseCallback = void Function(); // New callback type
 
 class ExerciseCard extends StatefulWidget {
   final Exercise exercise;
@@ -19,6 +20,8 @@ class ExerciseCard extends StatefulWidget {
   final UpdateSetDataCallback onUpdateSetData; // Callback for updating set data
   final RemoveSetCallback onRemoveSet; // Callback for removing a set
   final ShowDetailsCallback onShowDetails; // New callback for showing details
+  final RemoveExerciseCallback
+  onRemoveExercise; // New callback for removing exercise
 
   const ExerciseCard({
     super.key, // Use super parameter
@@ -28,6 +31,7 @@ class ExerciseCard extends StatefulWidget {
     required this.onUpdateSetData, // Require callback
     required this.onRemoveSet, // Require callback
     required this.onShowDetails, // Require new callback
+    required this.onRemoveExercise, // Require new callback
   });
 
   @override
@@ -96,33 +100,55 @@ class ExerciseCardState extends State<ExerciseCard> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Row(
-              mainAxisSize: MainAxisSize.max,
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceBetween, // Space out items
               crossAxisAlignment:
                   CrossAxisAlignment.center, // Align items vertically
               children: [
+                // Group Exercise Name and View Details Icon
                 Expanded(
-                  child: Text(
-                    widget.exercise.name,
-                    textAlign: TextAlign.start,
-                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                      color: HeronFitTheme.primary,
-                      fontWeight: FontWeight.bold, // Make title bold
-                    ),
-                    maxLines: 2, // Allow wrapping
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.exercise.name,
+                          textAlign: TextAlign.start,
+                          style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                            color: HeronFitTheme.primary,
+                            fontWeight: FontWeight.bold, // Make title bold
+                          ),
+                          maxLines: 2, // Allow wrapping
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 8), // Add spacing before the icon
-                IconButton(
+                // Options Menu
+                PopupMenuButton<String>(
                   icon: const Icon(
-                    SolarIconsOutline.questionCircle,
-                    color: HeronFitTheme.primary, // Use a muted color
-                    size: 20, // Adjust size as needed
+                    Icons.more_vert,
+                    color: HeronFitTheme.primary,
                   ),
-                  padding: EdgeInsets.zero, // Remove default padding
-                  constraints: const BoxConstraints(), // Remove constraints
-                  tooltip: 'View Exercise Details', // Add tooltip
-                  onPressed: widget.onShowDetails, // Call the new callback
+                  onSelected: (String result) {
+                    if (result == 'details') {
+                      widget.onShowDetails();
+                    } else if (result == 'remove') {
+                      widget.onRemoveExercise();
+                    }
+                  },
+                  itemBuilder:
+                      (BuildContext context) => <PopupMenuEntry<String>>[
+                        const PopupMenuItem<String>(
+                          value: 'details',
+                          child: Text('View Exercise Details'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'remove',
+                          child: Text('Remove Exercise'),
+                        ),
+                      ],
                 ),
               ],
             ),
