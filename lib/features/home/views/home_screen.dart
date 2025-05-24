@@ -5,6 +5,8 @@ import '../widgets/gym_availability_card.dart';
 import '../widgets/upcoming_session_card.dart';
 import '../widgets/recent_activity_card.dart';
 import 'package:heronfit/features/booking/views/booking_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
 
 class HomeWidget extends StatefulWidget {
   const HomeWidget({super.key});
@@ -156,7 +158,7 @@ class _HomeWidgetState extends State<HomeWidget> {
                               ),
                               onPressed: () {
                                 // TODO: Navigate to Notification screen
-                                print('Notification Tapped');
+                                context.push(AppRoutes.notifications);
                               },
                               tooltip: 'Notifications',
                             ),

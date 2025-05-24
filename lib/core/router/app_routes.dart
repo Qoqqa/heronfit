@@ -66,4 +66,7 @@ class AppRoutes {
   static const String workoutDetails = '/workoutDetails';
 
   // Add other routes as needed
+
+  // ADDED: Route for the notifications screen
+  static const String notifications = '/notifications';
 }
