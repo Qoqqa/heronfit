@@ -17,17 +17,22 @@ final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
 class SelectSessionScreen extends ConsumerWidget {
   final UserTicket? activatedTicket; // Made nullable
-  final bool noTicketMode;          // Added flag
+  final bool noTicketMode; // Added flag
 
   const SelectSessionScreen({
-    super.key, 
-    this.activatedTicket, 
+    super.key,
+    this.activatedTicket,
     this.noTicketMode = false, // Default to false
   });
 
-  void _showJoinWaitlistDialog(BuildContext context, WidgetRef ref, Session session) { // Added WidgetRef
+  void _showJoinWaitlistDialog(
+    BuildContext context,
+    WidgetRef ref,
+    Session session,
+  ) {
+    // Added WidgetRef
     // To handle loading state within the dialog or on the button
-    // We can use a local state variable if the dialog rebuilds, 
+    // We can use a local state variable if the dialog rebuilds,
     // or manage it via the notifier's state if the dialog is simple.
     // For now, let's keep it simple and show feedback via Snackbars after pop.
 
@@ -35,8 +40,13 @@ class SelectSessionScreen extends ConsumerWidget {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: Text('Join Waitlist?', style: Theme.of(context).textTheme.titleLarge),
-          content: Text('This session (${session.startTime.format(dialogContext)}) is currently full. Would you like to join the waitlist?'),
+          title: Text(
+            'Join Waitlist?',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          content: Text(
+            'This session (${session.startTime.format(dialogContext)}) is currently full. Would you like to join the waitlist?',
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('Find Another Session'),
@@ -44,30 +54,62 @@ class SelectSessionScreen extends ConsumerWidget {
                 Navigator.of(dialogContext).pop(); // Close the dialog
               },
             ),
-            Consumer( // Use Consumer to access ref for the ElevatedButton
+            Consumer(
+              // Use Consumer to access ref for the ElevatedButton
               builder: (context, innerRef, child) {
-                final joinWaitlistState = innerRef.watch(joinWaitlistNotifierProvider);
-                return ElevatedButton(
-                  child: joinWaitlistState.isLoading 
-                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Yes, Join Waitlist'),
-                  onPressed: joinWaitlistState.isLoading ? null : () async {
-                    try {
-                      await innerRef.read(joinWaitlistNotifierProvider.notifier).join(session.id, activatedTicket?.id);
-                      Navigator.of(dialogContext).pop(); // Close the dialog on success
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Successfully joined the waitlist for ${session.startTime.format(dialogContext)}.')),
-                      );
-                    } catch (e) {
-                      Navigator.of(dialogContext).pop(); // Close the dialog on error too
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to join waitlist: ${e.toString()}'), backgroundColor: Colors.red),
-                      );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: HeronFitTheme.primary, foregroundColor: Colors.white),
+                final joinWaitlistState = innerRef.watch(
+                  joinWaitlistNotifierProvider,
                 );
-              }
+                return ElevatedButton(
+                  child:
+                      joinWaitlistState.isLoading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                          : const Text('Yes, Join Waitlist'),
+                  onPressed:
+                      joinWaitlistState.isLoading
+                          ? null
+                          : () async {
+                            try {
+                              await innerRef
+                                  .read(joinWaitlistNotifierProvider.notifier)
+                                  .join(session.id, activatedTicket?.id);
+                              Navigator.of(
+                                dialogContext,
+                              ).pop(); // Close the dialog on success
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Successfully joined the waitlist for ${session.startTime.format(dialogContext)}.',
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              Navigator.of(
+                                dialogContext,
+                              ).pop(); // Close the dialog on error too
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Failed to join waitlist: ${e.toString()}',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: HeronFitTheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                );
+              },
             ),
           ],
         );
@@ -79,8 +121,12 @@ class SelectSessionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final DateTime selectedDay = ref.watch(selectedDayProvider);
     final DateTime focusedDay = ref.watch(focusedDayProvider);
-    final AsyncValue<List<Session>> sessionsAsync = ref.watch(fetchSessionsProvider(selectedDay));
-    final DateFormat titleDateFormat = DateFormat('MMMM d, yyyy'); // e.g., October 8, 2023
+    final AsyncValue<List<Session>> sessionsAsync = ref.watch(
+      fetchSessionsProvider(selectedDay),
+    );
+    final DateFormat titleDateFormat = DateFormat(
+      'MMMM d, yyyy',
+    ); // e.g., October 8, 2023
     final colorScheme = Theme.of(context).colorScheme;
 
     // Common card styling
@@ -106,9 +152,9 @@ class SelectSessionScreen extends ConsumerWidget {
         title: Text(
           'Book a Session', // Title from previous iteration
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: HeronFitTheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+            color: HeronFitTheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -117,20 +163,12 @@ class SelectSessionScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 8), // Added some top spacing
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                'Location: University of Makati HPSB 11th Floor Gym',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: HeronFitTheme.textSecondary, // Or another appropriate color
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
+
             Container(
               margin: const EdgeInsets.only(bottom: 16.0, top: 8.0),
-              decoration: cardDecoration.copyWith(color: colorScheme.surface), // Use surface color from theme
+              decoration: cardDecoration.copyWith(
+                color: colorScheme.surface,
+              ), // Use surface color from theme
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TableCalendar(
@@ -140,24 +178,42 @@ class SelectSessionScreen extends ConsumerWidget {
                   focusedDay: focusedDay,
                   selectedDayPredicate: (day) => isSameDay(selectedDay, day),
                   calendarFormat: CalendarFormat.week, // Changed to week view
-                  availableCalendarFormats: const {CalendarFormat.week: 'Week'}, // Only allow week view
+                  availableCalendarFormats: const {
+                    CalendarFormat.week: 'Week',
+                  }, // Only allow week view
                   onDaySelected: (newSelectedDay, newFocusedDay) {
-                    ref.read(selectedDayProvider.notifier).state = newSelectedDay;
-                    ref.read(focusedDayProvider.notifier).state = newFocusedDay; // Update focusedDay as well
+                    ref.read(selectedDayProvider.notifier).state =
+                        newSelectedDay;
+                    ref.read(focusedDayProvider.notifier).state =
+                        newFocusedDay; // Update focusedDay as well
                   },
                   onPageChanged: (newFocusedDay) {
                     ref.read(focusedDayProvider.notifier).state = newFocusedDay;
                   },
                   headerStyle: HeaderStyle(
                     titleCentered: true,
-                    formatButtonVisible: false, // Hide format button as we only want week view
-                    titleTextStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold, color: HeronFitTheme.primary), // Use titleMedium
-                    leftChevronIcon: const Icon(Icons.chevron_left, color: HeronFitTheme.primary),
-                    rightChevronIcon: const Icon(Icons.chevron_right, color: HeronFitTheme.primary),
+                    formatButtonVisible:
+                        false, // Hide format button as we only want week view
+                    titleTextStyle: Theme.of(
+                      context,
+                    ).textTheme.titleMedium!.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: HeronFitTheme.primary,
+                    ), // Use titleMedium
+                    leftChevronIcon: const Icon(
+                      Icons.chevron_left,
+                      color: HeronFitTheme.primary,
+                    ),
+                    rightChevronIcon: const Icon(
+                      Icons.chevron_right,
+                      color: HeronFitTheme.primary,
+                    ),
                   ),
                   calendarStyle: CalendarStyle(
                     todayDecoration: BoxDecoration(
-                      color: HeronFitTheme.primaryDark.withOpacity(0.5), // Corrected: Was secondaryColor
+                      color: HeronFitTheme.primaryDark.withOpacity(
+                        0.5,
+                      ), // Corrected: Was secondaryColor
                       shape: BoxShape.circle,
                     ),
                     selectedDecoration: BoxDecoration(
@@ -167,11 +223,17 @@ class SelectSessionScreen extends ConsumerWidget {
                     // Add styling for weekend days if needed
                     weekendTextStyle: TextStyle(color: Colors.grey[600]),
                     // Styling for days outside the current month (less relevant for week view but good practice)
-                    outsideDaysVisible: false, 
+                    outsideDaysVisible: false,
                   ),
                   daysOfWeekStyle: DaysOfWeekStyle(
-                    weekdayStyle: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500), // Style for Mon-Fri
-                    weekendStyle: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w500),   // Style for Sat-Sun
+                    weekdayStyle: TextStyle(
+                      color: Colors.grey[700],
+                      fontWeight: FontWeight.w500,
+                    ), // Style for Mon-Fri
+                    weekendStyle: TextStyle(
+                      color: Colors.grey[500],
+                      fontWeight: FontWeight.w500,
+                    ), // Style for Sat-Sun
                   ),
                 ),
               ),
@@ -179,7 +241,10 @@ class SelectSessionScreen extends ConsumerWidget {
             const SizedBox(height: 20),
             Text(
               'Available Sessions - ${titleDateFormat.format(selectedDay)}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: HeronFitTheme.textPrimary), // Corrected: Was primaryText
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: HeronFitTheme.textPrimary,
+              ), // Corrected: Was primaryText
             ),
             const SizedBox(height: 10),
             Expanded(
@@ -189,7 +254,11 @@ class SelectSessionScreen extends ConsumerWidget {
                     return const Center(
                       child: Text(
                         'No sessions available for this day.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Poppins'),
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey,
+                          fontFamily: 'Poppins',
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -201,7 +270,9 @@ class SelectSessionScreen extends ConsumerWidget {
                       return Card(
                         elevation: 2.0,
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
@@ -213,22 +284,51 @@ class SelectSessionScreen extends ConsumerWidget {
                                   children: [
                                     Row(
                                       children: [
-                                        Icon(SolarIconsOutline.clockCircle, size: 20, color: HeronFitTheme.primary),
+                                        Icon(
+                                          SolarIconsOutline.clockCircle,
+                                          size: 20,
+                                          color: HeronFitTheme.primary,
+                                        ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          session.timeRangeShort, // Using the getter from Session model
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                                          session
+                                              .timeRangeShort, // Using the getter from Session model
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        Icon(SolarIconsOutline.usersGroupRounded, size: 18, color: (session.bookedSlots >= session.capacity) ? Colors.redAccent : Colors.green),
+                                        Icon(
+                                          SolarIconsOutline.usersGroupRounded,
+                                          size: 18,
+                                          color:
+                                              (session.bookedSlots >=
+                                                      session.capacity)
+                                                  ? Colors.redAccent
+                                                  : Colors.green,
+                                        ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          (session.bookedSlots >= session.capacity) ? 'Full' : '${session.capacity - session.bookedSlots}/${session.capacity} spots',
-                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: (session.bookedSlots >= session.capacity) ? Colors.redAccent : Colors.green, fontWeight: FontWeight.w500),
+                                          (session.bookedSlots >=
+                                                  session.capacity)
+                                              ? 'Full'
+                                              : '${session.capacity - session.bookedSlots}/${session.capacity} spots',
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.bodyMedium?.copyWith(
+                                            color:
+                                                (session.bookedSlots >=
+                                                        session.capacity)
+                                                    ? Colors.redAccent
+                                                    : Colors.green,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -239,17 +339,24 @@ class SelectSessionScreen extends ConsumerWidget {
                               ElevatedButton(
                                 onPressed: () {
                                   // Updated logic: remove facultyOnly check, use bookedSlots >= capacity for isFull
-                                  if ((session.bookedSlots >= session.capacity)) {
-                                    _showJoinWaitlistDialog(context, ref, session); // Pass ref
+                                  if ((session.bookedSlots >=
+                                      session.capacity)) {
+                                    _showJoinWaitlistDialog(
+                                      context,
+                                      ref,
+                                      session,
+                                    ); // Pass ref
                                   } else {
                                     // Navigate to Review Booking Screen
                                     context.pushNamed(
                                       AppRoutes.reviewBooking,
                                       extra: {
-                                        'session': session, 
+                                        'session': session,
                                         'selectedDay': selectedDay,
-                                        'activatedTicket': activatedTicket, // Pass the potentially null ticket
-                                        'noTicketMode': noTicketMode,     // Pass the flag
+                                        'activatedTicket':
+                                            activatedTicket, // Pass the potentially null ticket
+                                        'noTicketMode':
+                                            noTicketMode, // Pass the flag
                                       },
                                     );
                                   }
@@ -257,10 +364,23 @@ class SelectSessionScreen extends ConsumerWidget {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: HeronFitTheme.primary,
                                   foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
                                 ),
-                                child: Text('Book', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                                child: Text(
+                                  'Book',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.labelLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -270,16 +390,20 @@ class SelectSessionScreen extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Error loading sessions: ${error.toString()}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red, fontFamily: 'Poppins'),
+                error:
+                    (error, stackTrace) => Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          'Error loading sessions: ${error.toString()}',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontFamily: 'Poppins',
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
               ),
             ),
           ],
