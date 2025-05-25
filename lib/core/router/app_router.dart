@@ -18,6 +18,7 @@ import 'package:heronfit/features/workout/views/workout_history_screen.dart'; //
 import 'package:heronfit/features/profile/views/contact_us_screen.dart';
 import 'package:heronfit/features/profile/views/privacy_policy_screen.dart';
 import 'package:heronfit/features/booking/views/activate_gym_pass_screen.dart';
+import 'package:heronfit/features/booking/views/select_session_screen.dart'; // Add this import
 import 'package:heronfit/features/booking/views/booking_success_summary.dart';
 import 'package:heronfit/features/booking/views/confirm_booking.dart';
 import 'package:heronfit/features/booking/views/confirm_details.dart';
@@ -282,16 +283,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profilePrivacy,
         builder: (context, state) => const PrivacyPolicyWidget(),
       ),
-      // New Booking Flow
+      // Booking Flow Routes
       GoRoute(
         path: AppRoutes.activateGymPass,
         builder: (context, state) => const ActivateGymPassScreen(),
       ),
       GoRoute(
         path: AppRoutes.selectSession,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Select Session Screen - Coming Soon')),
-        ),
+        builder: (context, state) => const SelectSessionScreen(), // Use the new screen
       ),
       GoRoute(
         path: AppRoutes.reviewBooking,
