@@ -74,8 +74,8 @@ class Booking {
 
   Map<String, dynamic> toJson() {
     return {
-      // 'id': id, // Usually not sent for inserts/updates if DB generates it
-      // 'created_at': createdAt.toIso8601String(), // Usually not sent
+      'id': id, // Include for passing object state
+      'created_at': createdAt.toIso8601String(), // Include for passing object state
       'user_id': userId,
       'session_id': sessionId,
       'user_ticket_id': userTicketId,

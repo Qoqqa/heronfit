@@ -6,6 +6,7 @@ import 'package:heronfit/features/booking/models/booking_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:heronfit/core/router/app_routes.dart';
 
 final myBookingsProvider = FutureProvider<List<Booking>>((ref) async {
   final user = Supabase.instance.client.auth.currentUser;
@@ -100,20 +101,18 @@ class MyBookingsWidget extends ConsumerWidget {
                         final String ticketIdDisplay = booking.userTicketId ?? 'N/A';
                         final String bookingTimeDisplay = DateFormat('MMM d, yyyy, h:mm a').format(booking.bookingTime.toLocal());
 
-                        return Card(
-                          elevation: 2.0,
-                          margin: const EdgeInsets.only(bottom: 16.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12.0),
-                            onTap: () {
-                              // Navigate to BookingDetailsScreen with the Booking object
-                              // Ensure AppRouter is set up to handle Booking object for this route if needed
-                              // For now, assuming direct navigation or that MyBookings is the final detail view for these cards
-                              // context.push(AppRoutes.bookingDetails, extra: booking); // Example if you want to navigate
-                            },
+                        return InkWell(
+                          onTap: () {
+                            // Navigate to BookingDetailsScreen, passing the booking object
+                            // The router expects a Map<String, dynamic> for the 'extra' parameter
+                            context.go(AppRoutes.bookingDetails, extra: booking.toJson());
+                          },
+                          child: Card(
+                            elevation: 2.0,
+                            margin: const EdgeInsets.only(bottom: 16.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
                             child: Padding(
                               padding: const EdgeInsets.all(16.0),
                               child: Column(
