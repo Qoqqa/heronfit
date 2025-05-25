@@ -18,15 +18,15 @@ import 'package:heronfit/features/workout/views/workout_history_screen.dart'; //
 import 'package:heronfit/features/profile/views/contact_us_screen.dart';
 import 'package:heronfit/features/profile/views/privacy_policy_screen.dart';
 import 'package:heronfit/features/booking/views/activate_gym_pass_screen.dart';
-import 'package:heronfit/features/booking/views/select_session_screen.dart'; // Add this import
-import 'package:heronfit/features/booking/views/booking_success_summary.dart';
-import 'package:heronfit/features/booking/views/confirm_booking.dart';
-import 'package:heronfit/features/booking/views/confirm_details.dart';
-import 'package:heronfit/features/booking/views/my_bookings.dart'; // Added import
+import 'package:heronfit/features/booking/models/session_model.dart'; // New import for Session model
+import 'package:heronfit/features/booking/views/booking_details_screen.dart'; // New import
+import 'package:heronfit/features/booking/views/review_booking_screen.dart'; // New import
+import 'package:heronfit/features/booking/views/select_session_screen.dart'; // Ensure this is the only import for select_session_screen
+import 'package:heronfit/features/booking/views/my_bookings.dart'; 
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise model
 import 'package:heronfit/features/workout/views/workout_complete_screen.dart'; // Added import
-import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Corrected import path
+import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Restoring import
 import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
 import 'package:heronfit/features/workout/views/start_workout_from_template_screen.dart'; // Added import
 import 'package:heronfit/features/workout/views/my_workout_templates_screen.dart'; // Import the new screen
@@ -154,7 +154,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           return StartWorkoutFromTemplateScreen(workout: template!);
         },
       ),
-      GoRoute(
+      GoRoute( // Restoring route
         path: AppRoutes.workoutAddExercise,
         builder: (context, state) => const AddExerciseScreen(),
       ),
@@ -290,25 +290,30 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.selectSession,
-        builder: (context, state) => const SelectSessionScreen(), // Use the new screen
+        name: AppRoutes.selectSession,
+        builder: (context, state) => const SelectSessionScreen(),
       ),
       GoRoute(
         path: AppRoutes.reviewBooking,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Review Booking Screen - Coming Soon')),
-        ),
-      ),
-      GoRoute(
-        path: AppRoutes.bookingSuccess,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Booking Success Screen - Coming Soon')),
-        ),
+        name: AppRoutes.reviewBooking,
+        builder: (context, state) {
+          // Extract arguments. In a real app, handle potential nulls/errors robustly.
+          final Map<String, dynamic> args = state.extra as Map<String, dynamic>;
+          final Session session = args['session'] as Session;
+          final DateTime selectedDay = args['selectedDay'] as DateTime;
+          return ReviewBookingScreen(session: session, selectedDay: selectedDay);
+        },
       ),
       GoRoute(
         path: AppRoutes.bookingDetails,
-        builder: (context, state) => const Scaffold(
-          body: Center(child: Text('Booking Details Screen - Coming Soon')),
-        ),
+        name: AppRoutes.bookingDetails,
+        builder: (context, state) {
+          // Extract arguments. Handle potential nulls/errors robustly.
+          final Map<String, dynamic> args = state.extra as Map<String, dynamic>;
+          final Session session = args['session'] as Session;
+          final DateTime selectedDay = args['selectedDay'] as DateTime;
+          return BookingDetailsScreen(session: session, selectedDay: selectedDay);
+        },
       ),
       // Legacy booking routes (to be removed after migration)
       GoRoute(

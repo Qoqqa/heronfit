@@ -31,9 +31,8 @@ class AppRoutes {
   static const bookings = '/bookings';
   static const activateGymPass = '/booking/activate';
   static const selectSession = '/booking/select-session';
-  static const reviewBooking = '/booking/review';
-  static const bookingSuccess = '/booking/success';
-  static const bookingDetails = '/booking/details';
+  static const reviewBooking = '/booking/review-booking'; // New route
+  static const bookingDetails = '/booking/booking-details'; // New route
 
   // Workout Routes
   static const workout = '/workout'; // Maybe a base screen
@@ -76,4 +75,8 @@ class AppRoutes {
   static const String notifications = '/notifications';
   // ADDED: Route for the notification details screen
   static const String notificationDetails = '/notifications/:id';
+
+  // Legacy booking routes (to be removed after migration)
+  static const String legacyBookings = '/legacy/bookings';
+  static const String legacyBookingDetails = '/legacy/booking-details';
 }

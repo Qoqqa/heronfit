@@ -1,25 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
+import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:solar_icons/solar_icons.dart';
-import 'package:heronfit/core/theme.dart'; // Assuming your theme is here
 import 'package:intl/intl.dart'; // For date formatting
-
-// Mock data for sessions - replace with actual data fetching later
-class Session {
-  final String time;
-  final int availableSlots;
-  final int totalSlots;
-  final bool isFull;
-  final bool facultyOnly;
-
-  Session({
-    required this.time,
-    required this.availableSlots,
-    required this.totalSlots,
-    this.facultyOnly = false,
-  }) : isFull = availableSlots == 0;
-}
 
 // Provider for selected day
 final selectedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
@@ -38,11 +25,11 @@ final sessionsForDateProvider = Provider.family<List<Session>, DateTime>((ref, d
   // Example: Different sessions or availability based on the day of the week or specific date
   // For simplicity, returning a fixed list for any valid weekday for now.
   return [
-    Session(time: '8:00 AM - 10:00 AM', availableSlots: 10, totalSlots: 15),
-    Session(time: '10:00 AM - 12:00 PM', availableSlots: 0, totalSlots: 15),
-    Session(time: '12:00 PM - 2:00 PM', availableSlots: 5, totalSlots: 15),
-    Session(time: '2:00 PM - 4:00 PM', availableSlots: 15, totalSlots: 15),
-    Session(time: '4:00 PM - 6:30 PM', availableSlots: 8, totalSlots: 10, facultyOnly: true),
+    Session(id: 's1', name: 'Morning Energizer', time: const SessionTime(start: TimeOfDay(hour: 8, minute: 0), end: TimeOfDay(hour: 10, minute: 0)), totalSlots: 15, bookedSlots: 5),
+    Session(id: 's2', name: 'Mid-day Power Hour', time: const SessionTime(start: TimeOfDay(hour: 10, minute: 0), end: TimeOfDay(hour: 12, minute: 0)), totalSlots: 15, bookedSlots: 15),
+    Session(id: 's3', name: 'Lunchtime Express', time: const SessionTime(start: TimeOfDay(hour: 12, minute: 0), end: TimeOfDay(hour: 14, minute: 0)), totalSlots: 15, bookedSlots: 10),
+    Session(id: 's4', name: 'Afternoon Recharge', time: const SessionTime(start: TimeOfDay(hour: 14, minute: 0), end: TimeOfDay(hour: 16, minute: 0)), totalSlots: 15, bookedSlots: 0),
+    Session(id: 's5', name: 'Evening Wind-down (Faculty)', time: const SessionTime(start: TimeOfDay(hour: 16, minute: 0), end: TimeOfDay(hour: 18, minute: 30)), totalSlots: 10, bookedSlots: 2, facultyOnly: true),
   ];
 });
 
@@ -75,7 +62,7 @@ class SelectSessionScreen extends ConsumerWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('Join Waitlist?', style: Theme.of(context).textTheme.titleLarge),
-          content: Text('This session (${session.time}) is currently full. Would you like to join the waitlist?'),
+          content: Text('This session (${session.time.getDisplayTime(dialogContext)}) is currently full. Would you like to join the waitlist?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Find Another Session'),
@@ -90,7 +77,7 @@ class SelectSessionScreen extends ConsumerWidget {
                 Navigator.of(dialogContext).pop(); // Close the dialog
                 // Show a confirmation (e.g., SnackBar)
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('You have been added to the waitlist for ${session.time}.')),
+                  SnackBar(content: Text('You have been added to the waitlist for ${session.time.getDisplayTime(dialogContext)}.')),
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: HeronFitTheme.primary, foregroundColor: Colors.white),
@@ -143,6 +130,18 @@ class SelectSessionScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 8), // Added some top spacing
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Text(
+                'Location: University of Makati HPSB 11th Floor Gym',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: HeronFitTheme.textSecondary, // Or another appropriate color
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
             Container(
               margin: const EdgeInsets.only(bottom: 16.0, top: 8.0),
               decoration: cardDecoration,
@@ -229,7 +228,7 @@ class SelectSessionScreen extends ConsumerWidget {
                                     const Icon(SolarIconsOutline.clockCircle, size: 18, color: HeronFitTheme.textSecondary),
                                     const SizedBox(width: 8),
                                     Text(
-                                      session.time,
+                                      session.time.getDisplayTime(context),
                                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                                     ),
                                   ],
@@ -257,7 +256,10 @@ class SelectSessionScreen extends ConsumerWidget {
                                 _showJoinWaitlistDialog(context, session);
                               } else {
                                 // Navigate to Review Booking Screen
-                                // context.push(AppRoutes.reviewBooking, extra: sessionDetails);
+                                context.pushNamed(
+                                  AppRoutes.reviewBooking,
+                                  extra: {'session': session, 'selectedDay': selectedDay},
+                                );
                               }
                             },
                             style: ElevatedButton.styleFrom(
