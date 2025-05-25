@@ -4,7 +4,8 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heronfit/features/home/home_providers.dart';
+// import 'package:heronfit/features/home/home_providers.dart'; // Unused import
+import 'package:heronfit/features/booking/controllers/booking_providers.dart'; // Import for userActiveBookingProvider
 
 class MainScreenWrapper extends ConsumerWidget {
   final Widget child;
@@ -37,41 +38,8 @@ class MainScreenWrapper extends ConsumerWidget {
         context.go(AppRoutes.home);
         break;
       case 1:
-        final upcomingSessionData =
-            await ref.read(upcomingSessionProvider.future);
-        bool hasActiveBooking = false;
-
-        if (upcomingSessionData != null) {
-          final dynamic sessionDateActualDynamic = upcomingSessionData['session_date_actual'];
-          final dynamic endTimeStrDynamic = upcomingSessionData['session_end_time'];
-
-          if (sessionDateActualDynamic is DateTime && endTimeStrDynamic is String) {
-            final DateTime sessionDate = sessionDateActualDynamic;
-            final String endTimeStr = endTimeStrDynamic;
-            final now = DateTime.now();
-
-            try {
-              final endTimeParts = endTimeStr.split(':');
-              final DateTime sessionEndDateTime = DateTime(
-                sessionDate.year,
-                sessionDate.month,
-                sessionDate.day,
-                int.parse(endTimeParts[0]),
-                int.parse(endTimeParts[1]),
-                endTimeParts.length > 2 ? int.parse(endTimeParts[2]) : 0,
-              );
-              if (sessionEndDateTime.isAfter(now)) {
-                hasActiveBooking = true;
-              }
-            } catch (e) {
-              print('[MainScreenWrapper] Error parsing session end time for active booking check: $e');
-            }
-          } else {
-            print('[MainScreenWrapper] Debug: session_date_actual is not DateTime or session_end_time is not String.');
-            print('[MainScreenWrapper] Debug: session_date_actual type: ${sessionDateActualDynamic?.runtimeType}, value: $sessionDateActualDynamic');
-            print('[MainScreenWrapper] Debug: session_end_time type: ${endTimeStrDynamic?.runtimeType}, value: $endTimeStrDynamic');
-          }
-        }
+        final activeBooking = await ref.read(userActiveBookingProvider.future);
+        bool hasActiveBooking = activeBooking != null;
 
         if (hasActiveBooking) {
           if (context.mounted) {
@@ -105,7 +73,7 @@ class MainScreenWrapper extends ConsumerWidget {
             );
           }
         } else {
-          context.go(AppRoutes.booking);
+          context.go(AppRoutes.booking); // Navigate to booking flow / activate pass screen
         }
         break;
       case 2:

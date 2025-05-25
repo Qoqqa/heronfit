@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart'
     hide Session; // For SupabaseClient
 import 'package:heronfit/features/booking/models/active_booking_exists_exception.dart'; // Import custom exception
 import 'package:heronfit/features/home/home_providers.dart'; // Import home_providers
+import 'package:intl/intl.dart'; // For date formatting
+import 'package:heronfit/features/booking/models/booking_model.dart';
 
 // Assuming a supabaseClientProvider exists, e.g., in lib/core/providers/supabase_providers.dart
 // For this example, let's define a simple one if it's not globally available.
@@ -28,6 +30,66 @@ final fetchSessionsProvider = FutureProvider.family<List<Session>, DateTime>((
 ) async {
   final bookingService = ref.watch(bookingSupabaseServiceProvider);
   return bookingService.getSessionsForDate(date);
+});
+
+// Provider to fetch the current user's active (confirmed and not ended) booking
+final userActiveBookingProvider = FutureProvider<Booking?>((ref) async {
+  final supabase = Supabase.instance.client;
+  final userId = supabase.auth.currentUser?.id;
+
+  if (userId == null) {
+    return null; // Or throw an exception if user must be logged in
+  }
+
+  final now = DateTime.now();
+  final todayDateString = DateFormat('yyyy-MM-dd').format(now);
+  // final currentTimeString = DateFormat('HH:mm:ss').format(now); // Not directly usable with Supabase string time
+
+  try {
+    final response = await supabase
+        .from('bookings')
+        .select()
+        .eq('user_id', userId)
+        .eq('status', BookingStatus.confirmed.name)
+        .gte('session_date', todayDateString) // Session is today or in the future
+        .order('session_date', ascending: true)
+        .order('session_start_time', ascending: true)
+        .limit(1)
+        .maybeSingle();
+
+    if (response == null) {
+      return null;
+    }
+
+    final booking = Booking.fromJson(response);
+
+    // Combine session_date and session_end_time to check if it has passed
+    try {
+      final sessionEndTimeParts = booking.sessionEndTime.split(':');
+      final sessionEndDateTime = DateTime(
+        booking.sessionDate.year,
+        booking.sessionDate.month,
+        booking.sessionDate.day,
+        int.parse(sessionEndTimeParts[0]),
+        int.parse(sessionEndTimeParts[1]),
+        sessionEndTimeParts.length > 2 ? int.parse(sessionEndTimeParts[2]) : 0,
+      );
+
+      if (sessionEndDateTime.isAfter(now)) {
+        return booking; // Active booking found
+      }
+    } catch (e) {
+      // Handle parsing error for sessionEndTime, maybe log it
+      print('Error parsing sessionEndTime for booking ${booking.id}: $e');
+      return null; // Treat as non-active if time is invalid
+    }
+
+    return null; // Booking found but session has ended
+  } catch (e) {
+    print('Error fetching active booking: $e');
+    // Optionally, rethrow or handle specific Supabase exceptions
+    return null; // Or throw an error to be caught by the UI
+  }
 });
 
 // --- Join Waitlist Notifier ---

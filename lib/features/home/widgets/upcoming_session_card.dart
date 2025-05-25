@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart'; 
 import 'home_info_row.dart'; 
 import '../../../core/theme.dart'; 
+import 'package:heronfit/features/booking/controllers/booking_providers.dart';
 
 class UpcomingSessionCard extends ConsumerWidget { 
   const UpcomingSessionCard({super.key});
@@ -50,8 +51,41 @@ class UpcomingSessionCard extends ConsumerWidget {
                   focusColor: Colors.transparent,
                   hoverColor: Colors.transparent,
                   highlightColor: Colors.transparent,
-                  onTap: () {
-                    context.go(AppRoutes.booking);
+                  onTap: () async {
+                    // Check for active booking before navigating
+                    final activeBooking = await ref.read(userActiveBookingProvider.future);
+                    if (activeBooking != null) {
+                      if (context.mounted) {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext dialogContext) {
+                            return AlertDialog(
+                              title: const Text('Active Booking Found'),
+                              content: const Text(
+                                'You already have an upcoming session. Please cancel it or wait for it to complete before booking a new one.',
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  child: const Text('View My Bookings'),
+                                  onPressed: () {
+                                    Navigator.of(dialogContext).pop();
+                                    context.go(AppRoutes.bookings); // Navigate to user's bookings list
+                                  },
+                                ),
+                                TextButton(
+                                  child: const Text('OK'),
+                                  onPressed: () {
+                                    Navigator.of(dialogContext).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    } else {
+                      context.go(AppRoutes.booking); // Proceed to booking if no active booking
+                    }
                   },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
