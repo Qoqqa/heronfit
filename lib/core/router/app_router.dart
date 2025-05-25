@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/features/booking/views/booking_screen.dart';
+import 'package:heronfit/features/booking/views/my_bookings.dart';
+import 'package:heronfit/features/workout/views/workout_screen.dart';
 
 // Import necessary screen/widget files
 import 'package:heronfit/features/splash/views/splash_screen.dart'; // Import Splash Screen
@@ -14,10 +17,11 @@ import 'package:heronfit/features/profile/views/edit_profile.dart';
 import 'package:heronfit/features/workout/views/workout_history_screen.dart'; // Added import
 import 'package:heronfit/features/profile/views/contact_us_screen.dart';
 import 'package:heronfit/features/profile/views/privacy_policy_screen.dart';
-import 'package:heronfit/features/profile/views/terms_of_use_screen.dart';
-import 'package:heronfit/features/booking/views/my_bookings.dart';
-import 'package:heronfit/features/booking/views/booking_screen.dart';
-import 'package:heronfit/features/workout/views/workout_screen.dart'; // Added import
+import 'package:heronfit/features/booking/views/activate_gym_pass_screen.dart';
+import 'package:heronfit/features/booking/views/booking_success_summary.dart';
+import 'package:heronfit/features/booking/views/confirm_booking.dart';
+import 'package:heronfit/features/booking/views/confirm_details.dart';
+import 'package:heronfit/features/booking/views/my_bookings.dart'; // Added import
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise model
 import 'package:heronfit/features/workout/views/workout_complete_screen.dart'; // Added import
@@ -259,8 +263,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.notificationDetails,
         builder:
             (context, state) => NotificationDetailsScreen(
-              notificationId: state.pathParameters['id']!,
-            ),
+          notificationId: state.pathParameters['id']!,
+        ),
       ),
       GoRoute(
         path: AppRoutes.profileEdit,
@@ -278,9 +282,39 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profilePrivacy,
         builder: (context, state) => const PrivacyPolicyWidget(),
       ),
+      // New Booking Flow
       GoRoute(
-        path: AppRoutes.profileTerms,
-        builder: (context, state) => const TermsOfUseWidget(),
+        path: AppRoutes.activateGymPass,
+        builder: (context, state) => const ActivateGymPassScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.selectSession,
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Select Session Screen - Coming Soon')),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.reviewBooking,
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Review Booking Screen - Coming Soon')),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.bookingSuccess,
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Booking Success Screen - Coming Soon')),
+        ),
+      ),
+      GoRoute(
+        path: AppRoutes.bookingDetails,
+        builder: (context, state) => const Scaffold(
+          body: Center(child: Text('Booking Details Screen - Coming Soon')),
+        ),
+      ),
+      // Legacy booking routes (to be removed after migration)
+      GoRoute(
+        path: AppRoutes.booking,
+        builder: (context, state) => const BookingScreen(),
       ),
       GoRoute(
         path: AppRoutes.bookings,

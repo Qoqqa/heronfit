@@ -1,11 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
-import 'home_info_row.dart'; // Import the reusable row widget
-import '../../../core/theme.dart'; // Import HeronFitTheme
-import 'package:heronfit/features/booking/views/booking_screen.dart'; // Import for session count function
-import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:intl/intl.dart';
+import 'home_info_row.dart';
+import '../../../core/theme.dart';
+import 'package:go_router/go_router.dart';
+
+/// A simple data class to represent a gym session
+class Session {
+  final String time;
+  final DateTime date;
+
+  Session({required this.time, required this.date});
+
+  factory Session.fromJson(Map<String, dynamic> json) {
+    return Session(
+      time: json['time'] as String? ?? '',
+      date: DateTime.parse(json['date'] as String? ?? DateTime.now().toIso8601String()),
+    );
+  }
+}
+
+// Initialize an empty list of sessions
+final List<Session> allSessions = [];
 
 class GymAvailabilityCard extends StatelessWidget {
   final List<String> sessions = const [
@@ -22,26 +39,48 @@ class GymAvailabilityCard extends StatelessWidget {
 
   const GymAvailabilityCard({super.key});
 
-  String getUpcomingSession() {
+  String _getNextAvailableSession() {
     final now = DateTime.now();
     final dateFormat = DateFormat('h:mm a');
 
     for (final session in sessions) {
-      final startTime = dateFormat.parse(session.split(' - ')[0]);
-      final adjustedStartTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        startTime.hour,
-        startTime.minute,
-      );
+      try {
+        final startTime = dateFormat.parse(session.split(' - ')[0]);
+        final adjustedStartTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          startTime.hour,
+          startTime.minute,
+        );
 
-      if (now.isBefore(adjustedStartTime)) {
+        if (now.isBefore(adjustedStartTime)) {
+          return session;
+        }
+      } catch (e) {
+        debugPrint('Error parsing session time: $e');
         return session;
       }
     }
 
-    return sessions.first; // Default to the first session if none are upcoming
+    return sessions.isNotEmpty ? sessions.first : 'No sessions available';
+  }
+
+  // Get the number of bookings for a specific session
+  int getSessionCount(String sessionTime) {
+    if (allSessions.isEmpty) return 0;
+    
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    
+    return allSessions.where((session) {
+      final sessionDate = DateTime(
+        session.date.year,
+        session.date.month,
+        session.date.day,
+      );
+      return session.time == sessionTime && sessionDate.isAtSameMomentAs(today);
+    }).length;
   }
 
   @override
@@ -52,12 +91,8 @@ class GymAvailabilityCard extends StatelessWidget {
 
     final today = DateTime.now();
     final formattedDate = DateFormat('EEEE, MMMM d').format(today);
-    final upcomingSession = getUpcomingSession();
-    final sessionCount = filterSessionsByTime(
-      allSessions,
-      upcomingSession,
-      DateTime.now(),
-    );
+    final nextSession = _getNextAvailableSession();
+    final sessionCount = getSessionCount(nextSession);
 
     return Container(
       width: double.infinity,
@@ -106,7 +141,7 @@ class GymAvailabilityCard extends StatelessWidget {
             const SizedBox(height: 8),
             HomeInfoRow(
               icon: SolarIconsOutline.clockCircle,
-              text: upcomingSession,
+              text: nextSession,
             ),
             const SizedBox(height: 8),
             Row(
@@ -146,27 +181,5 @@ class GymAvailabilityCard extends StatelessWidget {
     );
   }
 
-  int? filterSessionsByTime(
-    List<SessionsRow>? sessions,
-    String? sessionTime,
-    DateTime? selectedDate,
-  ) {
-    if (sessions == null || sessionTime == null || selectedDate == null) {
-      return 0; // Return 0 if any parameter is null
-    }
 
-    final normalizedSessionTime = sessionTime.trim().toLowerCase();
-
-    final filteredSessions = sessions.where((session) {
-      final normalizedTime = session.time?.trim().toLowerCase() ?? '';
-      final matchesTime = normalizedTime == normalizedSessionTime;
-      final matchesDate = session.date?.toIso8601String().split('T').first ==
-          selectedDate.toIso8601String().split('T').first;
-      debugPrint('Session: ${session.time}, Date: ${session.date}');
-      debugPrint('Matches Time: $matchesTime, Matches Date: $matchesDate');
-      return matchesTime && matchesDate;
-    }).toList();
-
-    return filteredSessions.length;
-  }
 }

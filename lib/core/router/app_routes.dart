@@ -17,7 +17,7 @@ class AppRoutes {
 
   static const home =
       '/home'; // Base for main app features often using ShellRoute
-  static const booking = '/booking'; // Route for the main booking tab
+  static const booking = '/booking'; // Route for the main booking tab (legacy)
 
   // Profile Routes
   static const profile = '/profile';
@@ -27,8 +27,13 @@ class AppRoutes {
   static const profilePrivacy = '/profile/privacy';
   static const profileTerms = '/profile/terms';
 
-  // Booking Routes
+  // Booking Flow Routes
   static const bookings = '/bookings';
+  static const activateGymPass = '/booking/activate';
+  static const selectSession = '/booking/select-session';
+  static const reviewBooking = '/booking/review';
+  static const bookingSuccess = '/booking/success';
+  static const bookingDetails = '/booking/details';
 
   // Workout Routes
   static const workout = '/workout'; // Maybe a base screen
