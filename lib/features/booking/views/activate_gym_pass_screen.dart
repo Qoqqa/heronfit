@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:intl/intl.dart';
 import '../providers/activate_gym_pass_providers.dart';
 import '../models/user_ticket_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
+import 'package:heronfit/features/booking/providers/booking_providers.dart';
+import 'package:heronfit/features/booking/models/booking_model.dart';
 
 class ActivateGymPassScreen extends ConsumerStatefulWidget {
   const ActivateGymPassScreen({super.key});
@@ -17,6 +20,79 @@ class ActivateGymPassScreen extends ConsumerStatefulWidget {
 class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
   final TextEditingController _ticketCodeController = TextEditingController();
   bool _noTicketMode = false;
+  bool _isLoadingCheck = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkActiveBooking();
+    });
+  }
+
+  Future<void> _checkActiveBooking() async {
+    setState(() {
+      _isLoadingCheck = true;
+    });
+    try {
+      final activeBooking = await ref.read(activeBookingCheckProvider.future);
+      if (mounted && activeBooking != null) {
+        _showActiveBookingDialog(activeBooking);
+      } else {
+        setState(() {
+          _isLoadingCheck = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingCheck = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not verify active bookings: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  void _showActiveBookingDialog(Booking activeBooking) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Active Booking Found'),
+          content: Text(
+            'You already have an active booking for ${activeBooking.sessionCategory} on ${DateFormat('MMM d, yyyy').format(activeBooking.sessionDate)} at ${activeBooking.sessionTimeRangeShort}.\n\nWould you like to view it or go home?',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Go Home'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.go(AppRoutes.home);
+              },
+            ),
+            FilledButton(
+              child: const Text('View My Booking'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.push(AppRoutes.bookingDetails, extra: activeBooking);
+              },
+            ),
+          ],
+        );
+      },
+    ).then((_) {
+      if (mounted && ref.read(activeBookingCheckProvider).valueOrNull != null) {
+        if (GoRouter.of(context).canPop()) {
+          GoRouter.of(context).pop();
+        } else {
+          context.go(AppRoutes.home);
+        }
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -26,6 +102,21 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoadingCheck) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Checking for active bookings...'),
+            ],
+          ),
+        ),
+      );
+    }
+
     final activateState = ref.watch(activateGymPassStateProvider);
     final activateNotifier = ref.read(activateGymPassStateProvider.notifier);
 
@@ -33,8 +124,6 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
       previous,
       next,
     ) {
-      // Ensure we only react to successful data states and not on rebuilds
-      // Also, ensure we are not in _noTicketMode, as navigation is handled differently then
       if (!_noTicketMode && next is AsyncData && next.value != null) {
         final ticket = next.value!;
         if (ticket.status == TicketStatus.pending_booking) {
@@ -47,7 +136,6 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            // Pass the validated ticket to the next screen
             GoRouter.of(context).push('/booking/select-session', extra: ticket);
           }
         }
@@ -75,15 +163,12 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
             size: 30,
           ),
           onPressed: () async {
-            // Only revert if not in noTicketMode and a ticket might have been processed
             if (!_noTicketMode &&
                 ref.read(activateGymPassStateProvider).value?.status ==
                     TicketStatus.pending_booking) {
               try {
                 await activateNotifier.revertTicketToActive();
-              } catch (e) {
-                // Optionally show a snackbar or dialog if reverting fails critically
-              }
+              } catch (e) {}
             }
             if (GoRouter.of(context).canPop()) {
               GoRouter.of(context).pop();
@@ -93,7 +178,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
           },
         ),
         title: Text(
-          'Activate Gym Pass', // Updated title
+          'Activate Gym Pass',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.bold,
@@ -101,32 +186,31 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0), // Adjusted vertical padding
-        // Removed Center widget to allow left alignment
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: SingleChildScrollView(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.start, // Changed to start
-            crossAxisAlignment: CrossAxisAlignment.start, // Changed to start
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(SolarIconsBold.ticket, size: 48, color: Theme.of(context).colorScheme.primary), // Adjusted size
-              const SizedBox(height: 20), // Adjusted spacing
+              Icon(SolarIconsBold.ticket, size: 48, color: Theme.of(context).colorScheme.primary),
+              const SizedBox(height: 20),
               Text(
                 'Enter Your Gym Pass ID',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onBackground,
                     ),
-                textAlign: TextAlign.start, // Explicitly set to start
+                textAlign: TextAlign.start,
               ),
-              const SizedBox(height: 10), // Adjusted spacing
+              const SizedBox(height: 10),
               Text(
                 'Please enter your 7-digit Ticket ID to book your session at the UMak HPSB 11th Floor Gym.',
-                textAlign: TextAlign.start, // Explicitly set to start
+                textAlign: TextAlign.start,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
               ),
-              const SizedBox(height: 28), // Adjusted spacing
+              const SizedBox(height: 28),
               CheckboxListTile(
                 title: Text(
                   "Proceed without Ticket ID (Test Mode)",
@@ -140,9 +224,9 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 },
                 controlAffinity: ListTileControlAffinity.leading,
                 activeColor: Theme.of(context).colorScheme.primary,
-                contentPadding: EdgeInsets.zero, // Adjust padding for CheckboxListTile if needed
+                contentPadding: EdgeInsets.zero,
               ),
-              const SizedBox(height: 20), // Adjusted spacing
+              const SizedBox(height: 20),
               if (!_noTicketMode)
                 TextFormField(
                   controller: _ticketCodeController,
@@ -156,16 +240,16 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                       ),
                     ),
                   ),
-                  textAlign: TextAlign.start, // Changed to start
+                  textAlign: TextAlign.start,
                   keyboardType: TextInputType.text,
                   maxLength: 7,
                   buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
                 ),
-              if (!_noTicketMode) const SizedBox(height: 28), // Adjusted spacing
+              if (!_noTicketMode) const SizedBox(height: 28),
               activateState.isLoading
-                  ? const Center(child: CircularProgressIndicator()) // Keep CircularProgressIndicator centered
-                  : SizedBox( // Wrap button in SizedBox to control width if CrossAxisAlignment.start shrinks it
-                      width: double.infinity, // Make button take full width
+                  ? const Center(child: CircularProgressIndicator())
+                  : SizedBox(
+                      width: double.infinity,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).colorScheme.primary,
@@ -174,9 +258,8 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8.0),
                           ),
-                          textStyle: Theme.of(context).textTheme.titleMedium?.copyWith( // Updated text style
+                          textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                // color: Theme.of(context).colorScheme.onPrimary, // Already set by foregroundColor
                               ),
                         ),
                         onPressed: () {

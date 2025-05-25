@@ -119,7 +119,32 @@ class Booking {
     );
   }
 
-   @override
+  // Getter for a short, formatted time range (e.g., "10:00 AM - 11:00 AM")
+  String get sessionTimeRangeShort {
+    try {
+      // Parse start time
+      final startTimeParts = sessionStartTime.split(':');
+      final startHour = int.parse(startTimeParts[0]);
+      final startMinute = int.parse(startTimeParts[1]);
+      final startDateTime = DateTime(sessionDate.year, sessionDate.month, sessionDate.day, startHour, startMinute);
+      final formattedStartTime = DateFormat.jm().format(startDateTime);
+
+      // Parse end time
+      final endTimeParts = sessionEndTime.split(':');
+      final endHour = int.parse(endTimeParts[0]);
+      final endMinute = int.parse(endTimeParts[1]);
+      final endDateTime = DateTime(sessionDate.year, sessionDate.month, sessionDate.day, endHour, endMinute);
+      final formattedEndTime = DateFormat.jm().format(endDateTime);
+
+      return '$formattedStartTime - $formattedEndTime';
+    } catch (e) {
+      // Fallback in case of parsing errors
+      print('Error formatting session time range: $e');
+      return '$sessionStartTime - $sessionEndTime';
+    }
+  }
+
+  @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
