@@ -308,8 +308,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.bookingDetails,
         name: AppRoutes.bookingDetails,
         builder: (context, state) {
-          // Extract arguments. Handle potential nulls/errors robustly.
+          // --- Debugging Start ---
+          print('Navigating to BookingDetailsScreen. state.extra: ${state.extra}');
+          if (state.extra == null) {
+            print('Error: state.extra is null!');
+            // Return an error screen or handle appropriately
+            return Scaffold(appBar: AppBar(title: Text('Error')), body: Center(child: Text('Error: Navigation data missing.')));
+          }
+          if (state.extra is! Map<String, dynamic>) {
+            print('Error: state.extra is not a Map<String, dynamic>! It is: ${state.extra.runtimeType}');
+            return Scaffold(appBar: AppBar(title: Text('Error')), body: Center(child: Text('Error: Invalid navigation data format.')));
+          }
+          // --- Debugging End ---
+
           final Map<String, dynamic> args = state.extra as Map<String, dynamic>;
+
+          // --- Debugging Start ---
+          print('BookingDetailsScreen args: $args');
+          if (!args.containsKey('session')) {
+            print('Error: args does not contain key "session"!');
+          }
+          if (!args.containsKey('selectedDay')) {
+            print('Error: args does not contain key "selectedDay"!');
+          }
+          print('Session from args: ${args['session']}');
+          print('SelectedDay from args: ${args['selectedDay']}');
+          // --- Debugging End ---
+
           final Session session = args['session'] as Session;
           final DateTime selectedDay = args['selectedDay'] as DateTime;
           return BookingDetailsScreen(session: session, selectedDay: selectedDay);

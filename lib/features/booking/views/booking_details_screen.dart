@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:intl/intl.dart';
+import 'package:solar_icons/solar_icons.dart'; 
+import 'package:heronfit/core/router/app_routes.dart'; 
+import 'package:go_router/go_router.dart'; 
 
 class BookingDetailsScreen extends StatelessWidget {
   final Session session;
@@ -13,20 +16,89 @@ class BookingDetailsScreen extends StatelessWidget {
     required this.selectedDay,
   });
 
+  Widget _buildDetailRow(BuildContext context, {required IconData icon, required String label, required String value}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: HeronFitTheme.primary, size: 24),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Poppins',
+                        color: HeronFitTheme.textSecondary,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontFamily: 'Poppins',
+                        color: HeronFitTheme.textPrimary,
+                        fontWeight: FontWeight.w600
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+ Widget _buildInstructionRow(BuildContext context, {required IconData icon, required String text}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: HeronFitTheme.primary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontFamily: 'Poppins',
+                    color: HeronFitTheme.textSecondary,
+                    height: 1.5
+                  ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final DateFormat dateFormat = DateFormat('EEEE, MMMM d, yyyy');
+    final String formattedDate = dateFormat.format(selectedDay);
+    final String sessionTime = session.time.getDisplayTime(context); 
+    // Mock data for now
+    const String mockBookingRefId = "HERONFIT-20250526-ABCD";
+    const String mockTicketId = "ARNO2025123"; 
+    const String gymLocation = "University of Makati HPSB 11th Floor Gym";
+    const String cancellationHours = "2";
+
     return Scaffold(
+      backgroundColor: HeronFitTheme.bgLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            Icons.chevron_left_rounded,
+            SolarIconsOutline.altArrowLeft, 
             color: HeronFitTheme.primary,
-            size: 30,
+            size: 28,
           ),
-          onPressed: () => Navigator.of(context).pop(), 
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Your Booking Details',
@@ -36,31 +108,110 @@ class BookingDetailsScreen extends StatelessWidget {
               ),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Session: ${session.name}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Date: ${DateFormat('EEEE, MMMM d, yyyy').format(selectedDay)}',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Time: ${session.time.getDisplayTime(context)}',
-              style: Theme.of(context).textTheme.bodyLarge,
+            // Booking Summary Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+              color: Colors.white,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: HeronFitTheme.cardShadow,
+                ),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Booking Confirmed',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.primary
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                     Text(
+                      'Session: ${session.name}', 
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Poppins',
+                        color: HeronFitTheme.textSecondary,
+                      ),
+                    ),
+                    const Divider(height: 24, thickness: 1),
+                    _buildDetailRow(context, icon: SolarIconsOutline.calendar, label: 'Date', value: formattedDate),
+                    _buildDetailRow(context, icon: SolarIconsOutline.clockCircle, label: 'Time', value: sessionTime),
+                    _buildDetailRow(context, icon: SolarIconsOutline.mapPoint, label: 'Location', value: gymLocation),
+                    _buildDetailRow(context, icon: SolarIconsOutline.document, label: 'Booking Reference ID', value: mockBookingRefId),
+                    _buildDetailRow(context, icon: SolarIconsOutline.ticket, label: 'Ticket ID Used', value: mockTicketId),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 24),
-            const Text(
-              'This is the Booking Details Screen. \n\nFull implementation with all details (Booking Reference ID, Ticket ID Used, Instructions, Add to Calendar, View My Bookings buttons) will be added here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
+
+            // Important Instructions Card
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+              color: Colors.white,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: HeronFitTheme.cardShadow,
+                ),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Important Instructions',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.bold,
+                        color: HeronFitTheme.textPrimary
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInstructionRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Show this booking confirmation (or your UMak ID) to the front desk upon arrival.'),
+                    _buildInstructionRow(context, icon: SolarIconsOutline.alarm, text: 'Please arrive at least 10 minutes before your session to check in.'),
+                    _buildInstructionRow(context, icon: SolarIconsOutline.dangerCircle, text: 'You can view or cancel this booking in \'My Bookings\' up to $cancellationHours hours before your session. Please check our cancellation policy for details.'),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(height: 32),
+
+            // Action Button
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(SolarIconsOutline.notebook, size: 20),
+                label: const Text('View My Bookings'),
+                onPressed: () {
+                  context.go(AppRoutes.bookings); 
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: HeronFitTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                  textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                        color: Colors.white,
+                      ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
           ],
         ),
       ),
