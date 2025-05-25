@@ -2,36 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/features/booking/models/booking_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-final myBookingsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final myBookingsProvider = FutureProvider<List<Booking>>((ref) async {
   final user = Supabase.instance.client.auth.currentUser;
 
   if (user == null) {
     throw Exception('User not authenticated');
   }
 
-  final userId = user.id; // Use user.id (UUID)
+  final userId = user.id;
 
-  // Fetch from 'bookings' table and join with 'sessions' table
-  // Select all columns from bookings and all columns from the joined sessions
   final response = await Supabase.instance.client
       .from('bookings')
-      .select('*, sessions(*)') // Join with sessions table
-      .eq('user_id', userId)    // Filter by the current user's ID
-      .order('booking_time', ascending: false); // Order by booking time, newest first
+      .select('*, sessions(*)')
+      .eq('user_id', userId)
+      .order('booking_time', ascending: false);
 
-  // The 'response' here is already a List<Map<String, dynamic>> if successful
-  // and not empty, or an empty list if no records found.
-  // Supabase client handles the case where response might be null internally for .select()
-  // and returns an empty list if the query executes but finds no data.
-  // An error/exception is thrown for actual query failures.
-  
-  // print('MyBookings Response: $response'); // For debugging
-
-  return response; // Directly return the response
+  final bookings = response.map((item) => Booking.fromJson(item)).toList();
+  return bookings;
 });
 
 class MyBookingsWidget extends ConsumerWidget {
@@ -90,153 +82,111 @@ class MyBookingsWidget extends ConsumerWidget {
                       itemCount: bookings.length,
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        // Access session details from the nested 'sessions' map
-                        final sessionData = booking['sessions'] as Map<String, dynamic>?;
 
-                        if (sessionData == null) {
-                          // Handle case where session data might be missing (e.g., session deleted)
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 16.0),
-                            child: ListTile(
-                              title: Text('Booking ID: ${booking['id']}'),
-                              subtitle: const Text('Session details unavailable. The session may have been removed.'),
-                              leading: const Icon(Icons.error_outline, color: Colors.red),
-                            ),
-                          );
-                        }
+                        final DateFormat dateFormat = DateFormat('MMM d, yyyy');
 
-                        // Parse session start and end times
-                        TimeOfDay? startTime, endTime;
-                        DateTime? sessionDate;
-
-                        if (sessionData['start_time'] != null) {
-                          final timeParts = (sessionData['start_time'] as String).split(':');
-                          startTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
-                        }
-                        if (sessionData['end_time'] != null) {
-                          final timeParts = (sessionData['end_time'] as String).split(':');
-                          endTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
-                        }
-
-                        // Determine the session date: use override_date if available, otherwise infer from booking_time or day_of_week
-                        // For simplicity in display, we'll use the booking_time's date component if override_date is not present.
-                        // A more robust solution would involve reconstructing the actual session occurrence date based on recurring rules.
-                        if (sessionData['override_date'] != null) {
-                          sessionDate = DateTime.parse(sessionData['override_date'] as String);
-                        } else if (booking['booking_time'] != null) {
-                          sessionDate = DateTime.parse(booking['booking_time'] as String);
-                        }
+                        final String formattedSessionDate = dateFormat.format(booking.sessionDate);
 
                         String formattedTimeRange = 'N/A';
-                        if (startTime != null && endTime != null) {
-                          final now = DateTime.now();
-                          final startDt = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
-                          final endDt = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
-                          formattedTimeRange = '${DateFormat('h:mm a').format(startDt)} - ${DateFormat('h:mm a').format(endDt)}';
+                        try {
+                          final startTime = TimeOfDay(hour: int.parse(booking.sessionStartTime.split(':')[0]), minute: int.parse(booking.sessionStartTime.split(':')[1]));
+                          final endTime = TimeOfDay(hour: int.parse(booking.sessionEndTime.split(':')[0]), minute: int.parse(booking.sessionEndTime.split(':')[1]));
+                          formattedTimeRange = '${startTime.format(context)} - ${endTime.format(context)}';
+                        } catch (e) {
+                          // Handle parsing error, keep 'N/A' or log error
+                          // print('Error parsing session time: $e');
                         }
 
-                        String formattedSessionDate = sessionDate != null 
-                            ? DateFormat('MMMM d, yyyy').format(sessionDate) 
-                            : 'Date N/A';
+                        final String ticketIdDisplay = booking.userTicketId ?? 'N/A';
+                        final String bookingTimeDisplay = DateFormat('MMM d, yyyy, h:mm a').format(booking.bookingTime.toLocal());
 
-                        // Get session category (example, adjust if your model is different)
-                        final String sessionCategory = sessionData['category'] as String? ?? 'General';
-
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
+                        return Card(
+                          elevation: 2.0,
+                          margin: const EdgeInsets.only(bottom: 16.0),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
                           child: InkWell(
-                            splashColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
+                            borderRadius: BorderRadius.circular(12.0),
                             onTap: () {
-                              // Handle booking tap
+                              // Navigate to BookingDetailsScreen with the Booking object
+                              // Ensure AppRouter is set up to handle Booking object for this route if needed
+                              // For now, assuming direct navigation or that MyBookings is the final detail view for these cards
+                              // context.push(AppRoutes.bookingDetails, extra: booking); // Example if you want to navigate
                             },
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: HeronFitTheme.bgSecondary,
-                                boxShadow: [
-                                  BoxShadow(
-                                    blurRadius: 40,
-                                    color: HeronFitTheme.textMuted.withOpacity(0.1),
-                                    offset: const Offset(0, 10),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    booking.sessionCategory,
+                                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.0,
+                                      color: HeronFitTheme.primaryDark,
+                                    ),
                                   ),
-                                ],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                  const SizedBox(height: 8.0),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.qr_code, color: HeronFitTheme.textSecondary, size: 16),
+                                      const SizedBox(width: 8.0),
+                                      Expanded(
+                                        child: Text(
+                                          'Ref: ${booking.bookingReferenceId ?? "N/A"}',
+                                          style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                            letterSpacing: 0.0,
+                                            color: HeronFitTheme.textSecondary,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 20.0),
+                                  IntrinsicHeight(
+                                    child: Row(
                                       children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.max,
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            const Icon(
-                                              Icons.calendar_today,
-                                              color: HeronFitTheme.primary,
-                                              size: 32,
+                                            Text(
+                                              'Ticket ID: $ticketIdDisplay',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textSecondary,
+                                              ),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  // Use session category and name if available
-                                                  // For now, using a generic title or session category
-                                                  sessionCategory, // Example: 'Morning Yoga'
-                                                  style: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                                                    letterSpacing: 0.0,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: HeronFitTheme.textPrimary,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  'Ticket ID: ${booking['ticket_id']}',
-                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                    letterSpacing: 0.0,
-                                                    color: HeronFitTheme.textSecondary,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Date: $formattedSessionDate',
-                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                    letterSpacing: 0.0,
-                                                    color: HeronFitTheme.textSecondary,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Time: $formattedTimeRange',
-                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                    letterSpacing: 0.0,
-                                                    color: HeronFitTheme.textSecondary,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Booked on: ${DateFormat('MMM d, yyyy, h:mm a').format(DateTime.parse(booking['booking_time']))}',
-                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                    fontSize: 10,
-                                                    letterSpacing: 0.0,
-                                                    color: HeronFitTheme.textMuted,
-                                                  ),
-                                                ),
-                                              ],
+                                            Text(
+                                              'Date: $formattedSessionDate',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textSecondary,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Time: $formattedTimeRange',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textSecondary,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Booked on: $bookingTimeDisplay',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                fontSize: 10,
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textMuted,
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

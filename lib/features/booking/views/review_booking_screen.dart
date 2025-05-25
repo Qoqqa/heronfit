@@ -58,7 +58,7 @@ class ReviewBookingScreen extends ConsumerWidget {
         data: (bookingDetails) {
           if (bookingDetails != null) {
             // Booking was successful (notifier holds the booking details)
-            _showSessionConfirmedModal(context);
+            _showSessionConfirmedModal(context, bookingDetails); // Pass bookingDetails
             // Optionally, reset the notifier state if you want it to be ready for another booking attempt
             // without navigating away, though typically navigation occurs.
             // ref.read(confirmBookingNotifierProvider.notifier).resetState(); // You'd need to add resetState method
@@ -224,7 +224,11 @@ class ReviewBookingScreen extends ConsumerWidget {
     );
   }
 
-  void _showSessionConfirmedModal(BuildContext context) {
+  void _showSessionConfirmedModal(BuildContext context, Map<String, dynamic> bookingDetails) { // Added bookingDetails param
+    // Parse details from the bookingDetails map for display in the modal if needed
+    // For example, if you want to show the specific booking reference ID in the modal.
+    // final confirmedBooking = Booking.fromJson(bookingDetails); // If you need Booking object here
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -258,7 +262,7 @@ class ReviewBookingScreen extends ConsumerWidget {
                   Navigator.of(dialogContext).pop();
                   context.pushNamed(
                     AppRoutes.bookingDetails,
-                    extra: {'session': session, 'selectedDay': selectedDay},
+                    extra: bookingDetails, // Pass the actual bookingDetails map
                   );
                 },
               ),

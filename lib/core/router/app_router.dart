@@ -19,6 +19,7 @@ import 'package:heronfit/features/profile/views/contact_us_screen.dart';
 import 'package:heronfit/features/profile/views/privacy_policy_screen.dart';
 import 'package:heronfit/features/booking/views/activate_gym_pass_screen.dart';
 import 'package:heronfit/features/booking/models/session_model.dart'; // New import for Session model
+import 'package:heronfit/features/booking/models/booking_model.dart'; // Adding this import to fix 'Undefined name Booking'
 import 'package:heronfit/features/booking/views/booking_details_screen.dart'; // New import
 import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import UserTicket model
 import 'package:heronfit/features/booking/views/review_booking_screen.dart'; // New import
@@ -378,54 +379,29 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.bookingDetails,
         name: AppRoutes.bookingDetails,
         builder: (context, state) {
-          // --- Debugging Start ---
-          print(
-            'Navigating to BookingDetailsScreen. state.extra: ${state.extra}',
-          );
-          if (state.extra == null) {
-            print('Error: state.extra is null!');
-            // Return an error screen or handle appropriately
-            return Scaffold(
-              appBar: AppBar(title: Text('Error')),
-              body: Center(child: Text('Error: Navigation data missing.')),
-            );
-          }
-          if (state.extra is! Map<String, dynamic>) {
+          if (state.extra == null || state.extra is! Map<String, dynamic>) {
             print(
-              'Error: state.extra is not a Map<String, dynamic>! It is: ${state.extra.runtimeType}',
+              'Error: Navigated to BookingDetailsScreen with invalid or missing extra data. Expected Map<String, dynamic>. Got: ${state.extra?.runtimeType}',
             );
             return Scaffold(
-              appBar: AppBar(title: Text('Error')),
-              body: Center(
-                child: Text('Error: Invalid navigation data format.'),
-              ),
+              appBar: AppBar(title: const Text('Error')),
+              body: const Center(child: Text('Booking details are missing or invalid.')),
             );
           }
-          // --- Debugging End ---
 
-          final Map<String, dynamic> args = state.extra as Map<String, dynamic>;
-
-          // --- Debugging Start ---
-          print('BookingDetailsScreen args: $args');
-          if (!args.containsKey('session')) {
-            print('Error: args does not contain key "session"!');
+          final bookingDetailsMap = state.extra as Map<String, dynamic>;
+          try {
+            final booking = Booking.fromJson(bookingDetailsMap);
+            return BookingDetailsScreen(booking: booking); // Pass Booking object
+          } catch (e, s) {
+            print('Error parsing bookingDetailsMap in AppRouter: $e\n$s');
+            return Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: Center(child: Text('Error displaying booking details: $e')),
+            );
           }
-          if (!args.containsKey('selectedDay')) {
-            print('Error: args does not contain key "selectedDay"!');
-          }
-          print('Session from args: ${args['session']}');
-          print('SelectedDay from args: ${args['selectedDay']}');
-          // --- Debugging End ---
-
-          final Session session = args['session'] as Session;
-          final DateTime selectedDay = args['selectedDay'] as DateTime;
-          return BookingDetailsScreen(
-            session: session,
-            selectedDay: selectedDay,
-          );
         },
       ),
-      // Legacy booking routes (to be removed after migration)
       GoRoute(
         path: AppRoutes.booking,
         builder: (context, state) => const BookingScreen(),

@@ -1,19 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:heronfit/core/theme.dart';
-import 'package:heronfit/features/booking/models/session_model.dart';
+import 'package:heronfit/features/booking/models/booking_model.dart';
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart'; 
 import 'package:heronfit/core/router/app_routes.dart'; 
 import 'package:go_router/go_router.dart'; 
 
 class BookingDetailsScreen extends StatelessWidget {
-  final Session session;
-  final DateTime selectedDay;
+  final Booking booking;
 
   const BookingDetailsScreen({
     super.key,
-    required this.session,
-    required this.selectedDay,
+    required this.booking,
   });
 
   Widget _buildDetailRow(BuildContext context, {required IconData icon, required String label, required String value}) {
@@ -52,7 +50,7 @@ class BookingDetailsScreen extends StatelessWidget {
     );
   }
 
- Widget _buildInstructionRow(BuildContext context, {required IconData icon, required String text}) {
+  Widget _buildInstructionRow(BuildContext context, {required IconData icon, required String text}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
@@ -78,11 +76,25 @@ class BookingDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DateFormat dateFormat = DateFormat('EEEE, MMMM d, yyyy');
-    final String formattedDate = dateFormat.format(selectedDay);
-    final String sessionTime = '${session.startTime.format(context)} - ${session.endTime.format(context)}'; 
-    // Mock data for now
-    const String mockBookingRefId = "HERONFIT-20250526-ABCD";
-    const String mockTicketId = "ARNO2025123"; 
+    final String formattedDate = dateFormat.format(booking.sessionDate);
+    
+    // Helper to format time string (HH:mm:ss) to a more readable format (e.g., h:mm a)
+    String formatSessionTime(String timeString) {
+      try {
+        final parts = timeString.split(':');
+        final hour = int.parse(parts[0]);
+        final minute = int.parse(parts[1]);
+        final timeOfDay = TimeOfDay(hour: hour, minute: minute);
+        return timeOfDay.format(context);
+      } catch (e) {
+        return timeString; // Fallback to original string if parsing fails
+      }
+    }
+
+    final String sessionTime = '${formatSessionTime(booking.sessionStartTime)} - ${formatSessionTime(booking.sessionEndTime)}'; 
+    
+    final String ticketIdDisplay = booking.userTicketId ?? 'N/A';
+    final String bookingRefIdDisplay = booking.bookingReferenceId ?? 'N/A';
     const String gymLocation = "University of Makati HPSB 11th Floor Gym";
     const String cancellationHours = "2";
 
@@ -138,7 +150,7 @@ class BookingDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                      Text(
-                      'Session: ${session.category}', 
+                      'Session: ${booking.sessionCategory}', 
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'Poppins',
                         color: HeronFitTheme.textSecondary,
@@ -148,8 +160,8 @@ class BookingDetailsScreen extends StatelessWidget {
                     _buildDetailRow(context, icon: SolarIconsOutline.calendar, label: 'Date', value: formattedDate),
                     _buildDetailRow(context, icon: SolarIconsOutline.clockCircle, label: 'Time', value: sessionTime),
                     _buildDetailRow(context, icon: SolarIconsOutline.mapPoint, label: 'Location', value: gymLocation),
-                    _buildDetailRow(context, icon: SolarIconsOutline.document, label: 'Booking Reference ID', value: mockBookingRefId),
-                    _buildDetailRow(context, icon: SolarIconsOutline.ticket, label: 'Ticket ID Used', value: mockTicketId),
+                    _buildDetailRow(context, icon: SolarIconsOutline.document, label: 'Booking Reference ID', value: bookingRefIdDisplay),
+                    _buildDetailRow(context, icon: SolarIconsOutline.ticket, label: 'Ticket ID Used', value: ticketIdDisplay),
                   ],
                 ),
               ),
