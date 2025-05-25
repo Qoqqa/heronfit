@@ -3,6 +3,8 @@ import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:heronfit/features/booking/services/booking_supabase_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
     hide Session; // For SupabaseClient
+import 'package:heronfit/features/booking/models/active_booking_exists_exception.dart'; // Import custom exception
+import 'package:heronfit/features/home/home_providers.dart'; // Import home_providers
 
 // Assuming a supabaseClientProvider exists, e.g., in lib/core/providers/supabase_providers.dart
 // For this example, let's define a simple one if it's not globally available.
@@ -63,9 +65,10 @@ final joinWaitlistNotifierProvider = StateNotifierProvider.autoDispose<JoinWaitl
 class ConfirmBookingNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   final BookingSupabaseService _bookingService;
   final String _userId;
+  final StateNotifierProviderRef _ref;
 
-  ConfirmBookingNotifier(this._bookingService, this._userId)
-      : super(const AsyncValue.data(null)); // Initial state is null, no booking attempted yet
+  ConfirmBookingNotifier(this._bookingService, this._userId, this._ref)
+      : super(const AsyncValue.data(null));
 
   Future<void> bookSession({
     required String sessionId,
@@ -88,20 +91,26 @@ class ConfirmBookingNotifier extends StateNotifier<AsyncValue<Map<String, dynami
       );
       state = AsyncValue.data(bookingDetails);
       print('[ConfirmBookingNotifier] Successfully booked session: ${bookingDetails['id']}');
+
+      _ref.invalidate(upcomingSessionProvider);
+
+    } on ActiveBookingExistsException catch (e, s) {
+      print('[ConfirmBookingNotifier] Error booking session: ActiveBookingExistsException: ${e.message}\n$s');
+      state = AsyncValue.error(e.message, s);
     } catch (e, s) {
       print('[ConfirmBookingNotifier] Error booking session: $e\n$s');
       state = AsyncValue.error(e, s);
-      rethrow; // Rethrow to allow UI to catch specific errors if needed
+      rethrow;
     }
   }
 }
 
-final confirmBookingNotifierProvider = StateNotifierProvider.autoDispose<ConfirmBookingNotifier, AsyncValue<Map<String, dynamic>?>>((ref) {
+final confirmBookingNotifierProvider = StateNotifierProvider.autoDispose<
+    ConfirmBookingNotifier, AsyncValue<Map<String, dynamic>?>>((ref) {
   final bookingService = ref.watch(bookingSupabaseServiceProvider);
   final supabaseUser = Supabase.instance.client.auth.currentUser;
   if (supabaseUser == null) {
-    // This case should ideally be handled before trying to book, but as a safeguard:
     throw Exception('User not authenticated. Cannot confirm booking.');
   }
-  return ConfirmBookingNotifier(bookingService, supabaseUser.id);
+  return ConfirmBookingNotifier(bookingService, supabaseUser.id, ref);
 });

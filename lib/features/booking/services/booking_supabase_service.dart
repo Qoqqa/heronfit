@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide Session; // Hide Su
 import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:heronfit/features/booking/models/user_ticket_model.dart';
 import 'package:heronfit/features/booking/models/booking_status.dart'; // Added import
+import 'package:heronfit/features/booking/models/active_booking_exists_exception.dart'; // Import custom exception
 import 'package:intl/intl.dart';      // Added import for DateFormat
 
 class BookingSupabaseService {
@@ -201,12 +202,57 @@ class BookingSupabaseService {
     required String sessionId,
     required String userId,
     String? activatedTicketId,
-    required String sessionDate,
-    required String sessionStartTime,
-    required String sessionEndTime,
+    required String sessionDate,       // Expected format: 'yyyy-MM-dd'
+    required String sessionStartTime,  // Expected format: 'HH:mm:ss' or 'HH:mm'
+    required String sessionEndTime,    // Expected format: 'HH:mm:ss' or 'HH:mm'
     required String sessionCategory,
   }) async {
-    print('[BookingSupabaseService] Attempting to book session. SessionID: $sessionId, UserID: $userId, TicketID: $activatedTicketId');
+    print('[BookingSupabaseService] Attempting to book session. UserID: $userId, SessionID: $sessionId, Date: $sessionDate, Start: $sessionStartTime, End: $sessionEndTime, Category: $sessionCategory, TicketID: $activatedTicketId');
+
+    // 1. Check for existing active bookings
+    try {
+      print('[BookingSupabaseService] Checking for existing active bookings for user $userId...');
+      final now = DateTime.now();
+      final existingBookingsResponse = await _supabaseClient
+          .from('bookings')
+          .select('id, session_date, session_end_time, status') // Select necessary fields
+          .eq('user_id', userId)
+          .eq('status', BookingStatus.confirmed.name);
+
+      print('[BookingSupabaseService] Found potential existing bookings: $existingBookingsResponse');
+
+      if (existingBookingsResponse.isNotEmpty) {
+        for (var bookingData in existingBookingsResponse) {
+          final String bookingDateStr = bookingData['session_date'] as String;
+          final String bookingEndTimeStr = bookingData['session_end_time'] as String;
+          
+          // Combine date and time strings and parse. Ensure robust parsing.
+          // Assuming session_date is 'YYYY-MM-DD' and session_end_time is 'HH:mm:ss' or 'HH:mm'
+          try {
+            final bookingEndDateTime = DateFormat("yyyy-MM-dd HH:mm:ss").parse("$bookingDateStr $bookingEndTimeStr");
+            if (bookingEndDateTime.isAfter(now)) {
+              print('[BookingSupabaseService] ERROR: User $userId already has an active booking (ID: ${bookingData['id']}) that ends at $bookingEndDateTime.');
+              throw ActiveBookingExistsException();
+            }
+          } catch (e) {
+            print('[BookingSupabaseService] WARN: Could not parse date/time for existing booking ${bookingData['id']}: $bookingDateStr $bookingEndTimeStr. Error: $e. Skipping this check for this booking.');
+            // Decide if this should be a critical error or if we proceed cautiously.
+            // For now, we'll log and skip, meaning a malformed existing booking might not block a new one.
+          }
+        }
+      }
+      print('[BookingSupabaseService] No conflicting active bookings found for user $userId.');
+    } on ActiveBookingExistsException {
+      rethrow; // Rethrow the specific exception to be caught by the notifier
+    } catch (e, s) {
+      print('[BookingSupabaseService] Error during active booking check: ${e.toString()}');
+      print('[BookingSupabaseService] Stack Trace: $s');
+      // Optionally, rethrow as a generic booking exception or handle as a critical failure
+      throw Exception('Failed to verify existing bookings: ${e.toString()}');
+    }
+
+    // 2. Proceed with booking if no active booking found
+    print('[BookingSupabaseService] Proceeding with booking logic...');
     try {
       // Start a transaction
       // Note: True database transactions across multiple operations like this are best handled by a database function (RPC).
@@ -256,6 +302,12 @@ class BookingSupabaseService {
             .update({'status': TicketStatus.used.name, 'used_at': DateTime.now().toIso8601String()})
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name); // Ensure it was pending
+        
+        // Optional: Check if the update affected any row, for more robust logging or error handling
+        // For example, if (updateResponse == null || (updateResponse is List && updateResponse.isEmpty)) { ... }
+        // Supabase update typically returns null on success with default PostgrestFilterBuilder settings, 
+        // or an empty list if .select() was chained and no rows matched.
+        // For simplicity, we'll assume success if no exception is thrown.
         print('[BookingSupabaseService] Ticket $activatedTicketId status updated to used.');
       } else {
         print('[BookingSupabaseService] No ticket ID provided, skipping ticket update.');
