@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
+import 'package:heronfit/features/booking/controllers/booking_providers.dart'; // Import new providers
 import 'package:table_calendar/table_calendar.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:intl/intl.dart'; // For date formatting
@@ -13,48 +14,8 @@ final selectedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 // Provider for focused day (for calendar controls)
 final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-// Updated mockSessionsProvider to reflect new logic
-final sessionsForDateProvider = Provider.family<List<Session>, DateTime>((ref, date) {
-  // Simulate fetching sessions for a specific date
-  // Gym operates Mon-Fri. This is partially handled by calendar's enabledDayPredicate.
-  // For mock purposes, we'll return sessions if it's a weekday.
-  if (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday) {
-    return []; // No sessions on weekends
-  }
-
-  // Example: Different sessions or availability based on the day of the week or specific date
-  // For simplicity, returning a fixed list for any valid weekday for now.
-  return [
-    Session(id: 's1', name: 'Morning Energizer', time: const SessionTime(start: TimeOfDay(hour: 8, minute: 0), end: TimeOfDay(hour: 10, minute: 0)), totalSlots: 15, bookedSlots: 5),
-    Session(id: 's2', name: 'Mid-day Power Hour', time: const SessionTime(start: TimeOfDay(hour: 10, minute: 0), end: TimeOfDay(hour: 12, minute: 0)), totalSlots: 15, bookedSlots: 15),
-    Session(id: 's3', name: 'Lunchtime Express', time: const SessionTime(start: TimeOfDay(hour: 12, minute: 0), end: TimeOfDay(hour: 14, minute: 0)), totalSlots: 15, bookedSlots: 10),
-    Session(id: 's4', name: 'Afternoon Recharge', time: const SessionTime(start: TimeOfDay(hour: 14, minute: 0), end: TimeOfDay(hour: 16, minute: 0)), totalSlots: 15, bookedSlots: 0),
-    Session(id: 's5', name: 'Evening Wind-down (Faculty)', time: const SessionTime(start: TimeOfDay(hour: 16, minute: 0), end: TimeOfDay(hour: 18, minute: 30)), totalSlots: 10, bookedSlots: 2, facultyOnly: true),
-  ];
-});
-
 class SelectSessionScreen extends ConsumerWidget {
   const SelectSessionScreen({super.key});
-
-  void _showFacultyOnlyDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text('Session Restricted', style: Theme.of(context).textTheme.titleLarge),
-          content: const Text('This session is exclusively for UMak employees and faculty. Please select another session if you are not an employee or faculty member.'),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('OK'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showJoinWaitlistDialog(BuildContext context, Session session) {
     showDialog(
@@ -62,7 +23,7 @@ class SelectSessionScreen extends ConsumerWidget {
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('Join Waitlist?', style: Theme.of(context).textTheme.titleLarge),
-          content: Text('This session (${session.time.getDisplayTime(dialogContext)}) is currently full. Would you like to join the waitlist?'),
+          content: Text('This session (${session.startTime.format(context)}) is currently full. Would you like to join the waitlist?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Find Another Session'),
@@ -77,7 +38,7 @@ class SelectSessionScreen extends ConsumerWidget {
                 Navigator.of(dialogContext).pop(); // Close the dialog
                 // Show a confirmation (e.g., SnackBar)
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('You have been added to the waitlist for ${session.time.getDisplayTime(dialogContext)}.')),
+                  SnackBar(content: Text('You have been added to the waitlist for ${session.startTime.format(context)}.')),
                 );
               },
               style: ElevatedButton.styleFrom(backgroundColor: HeronFitTheme.primary, foregroundColor: Colors.white),
@@ -90,10 +51,9 @@ class SelectSessionScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedDay = ref.watch(selectedDayProvider);
-    final focusedDay = ref.watch(focusedDayProvider);
-    // Fetch sessions for the currently selected day
-    final sessions = ref.watch(sessionsForDateProvider(selectedDay));
+    final DateTime selectedDay = ref.watch(selectedDayProvider);
+    final DateTime focusedDay = ref.watch(focusedDayProvider);
+    final AsyncValue<List<Session>> sessionsAsync = ref.watch(fetchSessionsProvider(selectedDay));
     final DateFormat titleDateFormat = DateFormat('MMMM d, yyyy'); // e.g., October 8, 2023
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -199,82 +159,102 @@ class SelectSessionScreen extends ConsumerWidget {
               ),
             ),
             Expanded(
-              child: sessions.isEmpty
-                  ? Center(
+              child: sessionsAsync.when(
+                data: (sessions) {
+                  if (sessions.isEmpty) {
+                    return const Center(
                       child: Text(
-                        selectedDay.weekday == DateTime.saturday || selectedDay.weekday == DateTime.sunday
-                          ? 'Gym is closed on weekends.'
-                          : 'No sessions available for this day.',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                        'No sessions available for this day.',
+                        style: TextStyle(fontSize: 16, color: HeronFitTheme.textSecondary, fontFamily: 'Poppins'),
+                        textAlign: TextAlign.center,
                       ),
-                    )
-                  : ListView.builder(
-                itemCount: sessions.length,
-                itemBuilder: (context, index) {
-                  final session = sessions[index];
-                  return Container(
-                    margin: const EdgeInsets.symmetric(vertical: 8.0),
-                    decoration: cardDecoration,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: sessions.length,
+                    itemBuilder: (context, index) {
+                      final session = sessions[index];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8.0),
+                        decoration: cardDecoration,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(SolarIconsOutline.clockCircle, size: 18, color: HeronFitTheme.textSecondary),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      session.time.getDisplayTime(context),
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                                    Row(
+                                      children: [
+                                        const Icon(SolarIconsOutline.clockCircle, size: 18, color: HeronFitTheme.textSecondary),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          // Format start and end times
+                                          '${session.startTime.format(context)} - ${session.endTime.format(context)}',
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text( // Display category
+                                      session.category,
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: HeronFitTheme.textSecondary, fontStyle: FontStyle.italic),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        Icon(SolarIconsOutline.usersGroupRounded, size: 18, color: (session.bookedSlots >= session.capacity) ? Colors.redAccent : Colors.green),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          (session.bookedSlots >= session.capacity) ? 'Full' : '${session.capacity - session.bookedSlots}/${session.capacity} spots',
+                                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: (session.bookedSlots >= session.capacity) ? Colors.redAccent : Colors.green, fontWeight: FontWeight.w500),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Icon(SolarIconsOutline.usersGroupRounded, size: 18, color: session.isFull ? Colors.redAccent : Colors.green),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      session.isFull ? 'Full' : '${session.availableSlots}/${session.totalSlots} spots',
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: session.isFull ? Colors.redAccent : Colors.green, fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
+                              ),
+                              const SizedBox(width: 16),
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Updated logic: remove facultyOnly check, use bookedSlots >= capacity for isFull
+                                  if ((session.bookedSlots >= session.capacity)) {
+                                    _showJoinWaitlistDialog(context, session);
+                                  } else {
+                                    // Navigate to Review Booking Screen
+                                    context.pushNamed(
+                                      AppRoutes.reviewBooking,
+                                      extra: {'session': session, 'selectedDay': selectedDay},
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: HeronFitTheme.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                 ),
-                              ],
-                            ),
+                                child: Text('Book', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              if (session.facultyOnly) {
-                                _showFacultyOnlyDialog(context);
-                              } else if (session.isFull) {
-                                _showJoinWaitlistDialog(context, session);
-                              } else {
-                                // Navigate to Review Booking Screen
-                                context.pushNamed(
-                                  AppRoutes.reviewBooking,
-                                  extra: {'session': session, 'selectedDay': selectedDay},
-                                );
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: HeronFitTheme.primary,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                            ),
-                            child: Text('Book', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
+                      );
+                    },
                   );
                 },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      'Error loading sessions: ${error.toString()}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red, fontFamily: 'Poppins'),
+                    ),
+                  ),
+                ),
               ),
             ),
           ],

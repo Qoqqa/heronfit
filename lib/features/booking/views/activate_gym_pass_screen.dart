@@ -1,160 +1,120 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/activate_gym_pass_providers.dart';
+import '../models/user_ticket_model.dart';
 import 'package:go_router/go_router.dart';
-import 'package:heronfit/core/router/app_routes.dart';
-import 'package:heronfit/features/booking/controllers/booking_controller.dart';
-import 'package:heronfit/core/theme.dart';
 
-class ActivateGymPassScreen extends ConsumerStatefulWidget {
-  const ActivateGymPassScreen({super.key});
+class ActivateGymPassScreen extends ConsumerWidget {
+  final TextEditingController _ticketCodeController = TextEditingController();
 
-  @override
-  ConsumerState<ActivateGymPassScreen> createState() => _ActivateGymPassScreenState();
-}
-
-class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _ticketIdController = TextEditingController();
-  bool _isLoading = false;
+  ActivateGymPassScreen({super.key});
 
   @override
-  void dispose() {
-    _ticketIdController.dispose();
-    super.dispose();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activateState = ref.watch(activateGymPassStateProvider);
 
-  Future<void> _onActivatePressed() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() => _isLoading = true);
-      final fullTicketId = 'ARNO2025${_ticketIdController.text.trim()}';
-
-      try {
-        final success = await ref
-            .read(bookingControllerProvider.notifier)
-            .validateTicket(fullTicketId);
-
-        if (mounted) {
-          if (success) {
-            context.push(AppRoutes.selectSession);
-          } else {
-            // Read the state of the booking controller *after* validateTicket returned false
-            final bookingStateOnError = ref.read(bookingControllerProvider);
-            String? actualErrorMessage;
-
-            // Extract error message from AsyncError state
-            bookingStateOnError.whenOrNull(
-              error: (err, stackTrace) { // stackTrace might not be needed for display
-                actualErrorMessage = err.toString();
-                // Attempt to make the error message more user-friendly if it's a generic Exception string
-                if (actualErrorMessage != null && actualErrorMessage!.startsWith("Exception: ")) {
-                  actualErrorMessage = actualErrorMessage!.substring("Exception: ".length);
-                }
-              }
-            );
-
+    ref.listen<AsyncValue<UserTicket?>>(activateGymPassStateProvider, (
+      _,
+      next,
+    ) {
+      next.whenOrNull(
+        data: (ticket) {
+          if (ticket != null && ticket.status == TicketStatus.pending_booking) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(actualErrorMessage ?? 'Ticket activation failed. Please try again.')),
+              SnackBar(
+                content: Text(
+                  'Ticket ${ticket.ticketCode} validated. Proceed to select a session.',
+                ),
+                backgroundColor: Colors.green,
+              ),
             );
+            print(
+              "SUCCESS: Navigate to SelectSessionScreen with ticket: ${ticket.toJson()}",
+            );
+            GoRouter.of(context).push('/booking/select-session', extra: ticket);
           }
-        }
-      } catch (e) {
-        if (mounted) {
+        },
+        error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('An unexpected error occurred: ${e.toString()}')),
+            SnackBar(
+              content: Text(error.toString()),
+              backgroundColor: Colors.red,
+            ),
           );
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-      }
-    }
-  }
+        },
+      );
+    });
 
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.chevron_left_rounded,
-            color: HeronFitTheme.primary,
-            size: 30,
-          ),
-          onPressed: () => Navigator.of(context).maybePop(),
-        ),
-        title: Text(
-          'Activate Your Gym Pass', // Specific title for this screen
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: HeronFitTheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+        title: const Text('Activate Your Gym Pass'),
+        leading: BackButton(
+          onPressed: () {
+            ref
+                .read(activateGymPassStateProvider.notifier)
+                .revertTicketToActive();
+            Navigator.of(context).pop();
+          },
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 24),
-                Text(
+                const Text(
                   'Activate Your Gym Pass',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                Text(
+                const Text(
                   'To book your single gym session at the University of Makati HPSB 11th Floor Gym, please enter your valid Ticket ID.',
-                  style: Theme.of(context).textTheme.bodyLarge,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16),
                 ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  controller: _ticketIdController,
-                  keyboardType: TextInputType.number, // Set keyboard to numeric
-                  maxLength: 7, // Enforce 7 digits max input
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _ticketCodeController,
                   decoration: const InputDecoration(
-                    labelText: 'Ticket Number (7 Digits)', // Updated label
-                    hintText: 'XXXXXXX', // Updated hint text
+                    labelText: 'Ticket ID',
+                    hintText: 'e.g., XXXX-XXXX-XXXX-XXXX',
                     border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.confirmation_number_outlined),
-                    counterText: "", // Hide the default counter text from maxLength
+                    helperText:
+                        'Find your Ticket ID on your purchase confirmation email or receipt.',
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your 7-digit ticket number';
-                    }
-                    // Validation for exactly 7 digits
-                    final regex = RegExp(r'^\d{7}$');
-                    if (!regex.hasMatch(value.trim())) {
-                      return 'Enter a valid 7-digit ticket number';
-                    }
-                    return null;
-                  },
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _onActivatePressed,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
+                const SizedBox(height: 24),
+                activateState.isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        textStyle: const TextStyle(fontSize: 18),
+                      ),
+                      onPressed: () {
+                        final ticketCode = _ticketCodeController.text.trim();
+                        if (ticketCode.isNotEmpty) {
+                          FocusScope.of(context).unfocus();
+                          ref
+                              .read(activateGymPassStateProvider.notifier)
+                              .activateAndFindSessions(ticketCode);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter a Ticket ID.'),
+                              backgroundColor: Colors.orangeAccent,
                             ),
-                          )
-                        : const Text('Activate & Find Sessions'),
-                  ),
-                ),
+                          );
+                        }
+                      },
+                      child: const Text('Activate & Find Sessions'),
+                    ),
+                const SizedBox(height: 20),
               ],
             ),
           ),

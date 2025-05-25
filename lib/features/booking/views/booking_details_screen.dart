@@ -79,7 +79,7 @@ class BookingDetailsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final DateFormat dateFormat = DateFormat('EEEE, MMMM d, yyyy');
     final String formattedDate = dateFormat.format(selectedDay);
-    final String sessionTime = session.time.getDisplayTime(context); 
+    final String sessionTime = '${session.startTime.format(context)} - ${session.endTime.format(context)}'; 
     // Mock data for now
     const String mockBookingRefId = "HERONFIT-20250526-ABCD";
     const String mockTicketId = "ARNO2025123"; 
@@ -138,7 +138,7 @@ class BookingDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                      Text(
-                      'Session: ${session.name}', 
+                      'Session: ${session.category}', 
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontFamily: 'Poppins',
                         color: HeronFitTheme.textSecondary,

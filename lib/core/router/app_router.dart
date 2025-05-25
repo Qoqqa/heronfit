@@ -286,7 +286,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Booking Flow Routes
       GoRoute(
         path: AppRoutes.activateGymPass,
-        builder: (context, state) => const ActivateGymPassScreen(),
+        builder: (context, state) => ActivateGymPassScreen(), // Removed const
       ),
       GoRoute(
         path: AppRoutes.selectSession,

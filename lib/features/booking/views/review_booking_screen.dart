@@ -41,8 +41,8 @@ class ReviewBookingScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final DateFormat dateFormat = DateFormat('EEEE - MMMM d, yyyy');
     final String formattedDate = dateFormat.format(selectedDay);
-    final String sessionTime = session.time.getDisplayTime(context);
-    final int availableSlots = session.totalSlots - session.bookedSlots;
+    final String sessionTime = '${session.startTime.format(context)} - ${session.endTime.format(context)}';
+    final int availableSlots = session.capacity - session.bookedSlots;
 
     const String mockTicketId = "AR20241008";
 
@@ -109,7 +109,7 @@ class ReviewBookingScreen extends StatelessWidget {
                     _buildSummaryRow(context, icon: SolarIconsOutline.ticket, text: 'Ticket ID: $mockTicketId'),
                     _buildSummaryRow(context, icon: SolarIconsOutline.calendar, text: 'Date: $formattedDate'),
                     _buildSummaryRow(context, icon: SolarIconsOutline.clockCircle, text: 'Time: $sessionTime'),
-                    _buildSummaryRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Capacity: $availableSlots/${session.totalSlots} spots left'),
+                    _buildSummaryRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Capacity: $availableSlots/${session.capacity} spots left'),
                   ],
                 ),
               ),
@@ -174,7 +174,7 @@ class ReviewBookingScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge?.copyWith(fontFamily: 'Poppins', color: HeronFitTheme.primary, fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Your gym session is booked for ${DateFormat('MMMM d, yyyy').format(selectedDay)} at ${session.time.getDisplayTime(dialogContext)}!',
+            'Your gym session is booked for ${DateFormat('MMMM d, yyyy').format(selectedDay)} at ${session.startTime.format(context)} - ${session.endTime.format(context)}!',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins'),
           ),
