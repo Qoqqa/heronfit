@@ -24,7 +24,6 @@ import 'package:heronfit/features/booking/views/booking_details_screen.dart'; //
 import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import UserTicket model
 import 'package:heronfit/features/booking/views/review_booking_screen.dart'; // New import
 import 'package:heronfit/features/booking/views/select_session_screen.dart'; // Ensure this is the only import for select_session_screen
-import 'package:heronfit/features/booking/views/my_bookings.dart';
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise model
 import 'package:heronfit/features/workout/views/workout_complete_screen.dart'; // Added import

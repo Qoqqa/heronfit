@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/activate_gym_pass_providers.dart';
 import '../models/user_ticket_model.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
 
 class ActivateGymPassScreen extends ConsumerStatefulWidget {
   const ActivateGymPassScreen({super.key});
@@ -73,10 +74,19 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
             if (!_noTicketMode &&
                 ref.read(activateGymPassStateProvider).value?.status ==
                     TicketStatus.pending_booking) {
-              await activateNotifier.revertTicketToActive();
+              try {
+                await activateNotifier.revertTicketToActive();
+              } catch (e) {
+                print('Error reverting ticket: $e');
+                // Optionally show a snackbar or dialog if reverting fails critically
+              }
             }
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              // If it can't pop, perhaps it's the first screen in a stack or a deep link.
+              // Navigate to a safe fallback, like the home screen.
+              context.go(AppRoutes.home);
             }
           },
         ),

@@ -69,8 +69,79 @@ class GymAvailabilityCard extends ConsumerWidget {
               focusColor: Colors.transparent,
               hoverColor: Colors.transparent,
               highlightColor: Colors.transparent,
-              onTap: () {
-                context.go(AppRoutes.booking);
+              onTap: () async {
+                // Check for active upcoming session first
+                final upcomingSessionData = await ref.read(upcomingSessionProvider.future);
+                bool hasActiveBooking = false;
+
+                if (upcomingSessionData != null) {
+                  final dynamic sessionDateActualDynamic = upcomingSessionData['session_date_actual'];
+                  final dynamic endTimeStrDynamic = upcomingSessionData['session_end_time'];
+
+                  if (sessionDateActualDynamic is DateTime && endTimeStrDynamic is String) {
+                    final DateTime sessionDate = sessionDateActualDynamic;
+                    final String endTimeStr = endTimeStrDynamic;
+                    final now = DateTime.now();
+
+                    // Parse end time
+                    try {
+                      final endTimeParts = endTimeStr.split(':');
+                      final DateTime sessionEndDateTime = DateTime(
+                        sessionDate.year,
+                        sessionDate.month,
+                        sessionDate.day,
+                        int.parse(endTimeParts[0]),
+                        int.parse(endTimeParts[1]),
+                        // Assuming seconds are not always present, default to 0
+                        endTimeParts.length > 2 ? int.parse(endTimeParts[2]) : 0,
+                      );
+
+                      if (sessionEndDateTime.isAfter(now)) {
+                        hasActiveBooking = true;
+                      }
+                    } catch (e) {
+                      print('Error parsing session end time for active booking check: $e');
+                      // Potentially treat as no active booking or handle error differently
+                    }
+                  } else {
+                    print('Debug: session_date_actual is not DateTime or session_end_time is not String.');
+                    print('Debug: session_date_actual type: ${sessionDateActualDynamic?.runtimeType}, value: $sessionDateActualDynamic');
+                    print('Debug: session_end_time type: ${endTimeStrDynamic?.runtimeType}, value: $endTimeStrDynamic');
+                  }
+                }
+
+                if (hasActiveBooking) {
+                  if (context.mounted) { // Check if widget is still in the tree
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return AlertDialog(
+                          title: const Text('Active Booking Found'),
+                          content: const Text(
+                            'You already have an upcoming session. Please cancel it or wait for it to complete before booking a new one.',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('View My Bookings'),
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop(); // Close dialog
+                                context.go(AppRoutes.bookings); // Navigate to my bookings
+                              },
+                            ),
+                            TextButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop(); // Close dialog
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                } else {
+                  context.go(AppRoutes.booking);
+                }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,

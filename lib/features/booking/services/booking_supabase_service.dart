@@ -213,6 +213,8 @@ class BookingSupabaseService {
     try {
       print('[BookingSupabaseService] Checking for existing active bookings for user $userId...');
       final now = DateTime.now();
+      print('[BookingSupabaseService] Current time (now): $now');
+
       final existingBookingsResponse = await _supabaseClient
           .from('bookings')
           .select('id, session_date, session_end_time, status') // Select necessary fields
@@ -224,18 +226,35 @@ class BookingSupabaseService {
       if (existingBookingsResponse.isNotEmpty) {
         for (var bookingData in existingBookingsResponse) {
           final String bookingDateStr = bookingData['session_date'] as String;
-          final String bookingEndTimeStr = bookingData['session_end_time'] as String;
-          
+          String bookingEndTimeStr = bookingData['session_end_time'] as String;
+          final String bookingId = bookingData['id'].toString(); // Get booking ID for logging
+
+          print('[BookingSupabaseService] Evaluating existing booking ID: $bookingId, Date: $bookingDateStr, Original EndTime: ${bookingData['session_end_time']}');
+
+          // Ensure bookingEndTimeStr is in HH:mm:ss format for parsing
+          if (bookingEndTimeStr.split(':').length == 2) { // It's HH:mm
+            bookingEndTimeStr = '$bookingEndTimeStr:00'; // Append seconds
+            print('[BookingSupabaseService] Booking ID: $bookingId, Formatted EndTime: $bookingEndTimeStr');
+          }
+
           // Combine date and time strings and parse. Ensure robust parsing.
-          // Assuming session_date is 'YYYY-MM-DD' and session_end_time is 'HH:mm:ss' or 'HH:mm'
+          // Assuming session_date is 'YYYY-MM-DD' and session_end_time is now 'HH:mm:ss'
           try {
             final bookingEndDateTime = DateFormat("yyyy-MM-dd HH:mm:ss").parse("$bookingDateStr $bookingEndTimeStr");
-            if (bookingEndDateTime.isAfter(now)) {
-              print('[BookingSupabaseService] ERROR: User $userId already has an active booking (ID: ${bookingData['id']}) that ends at $bookingEndDateTime.');
+            print('[BookingSupabaseService] Booking ID: $bookingId, Parsed EndDateTime: $bookingEndDateTime');
+            final bool isActive = bookingEndDateTime.isAfter(now);
+            print('[BookingSupabaseService] Booking ID: $bookingId, IsActive (ends after now?): $isActive');
+
+            if (isActive) {
+              print('[BookingSupabaseService] ERROR: User $userId already has an active booking (ID: $bookingId) that ends at $bookingEndDateTime.');
               throw ActiveBookingExistsException();
             }
           } catch (e) {
-            print('[BookingSupabaseService] WARN: Could not parse date/time for existing booking ${bookingData['id']}: $bookingDateStr $bookingEndTimeStr. Error: $e. Skipping this check for this booking.');
+            if (e is ActiveBookingExistsException) { 
+              rethrow; 
+            }
+            // If it's any other error, it's likely a parsing issue
+            print('[BookingSupabaseService] WARN: Could not parse date/time for existing booking $bookingId: $bookingDateStr $bookingEndTimeStr. Error: $e. Skipping this check for this booking.');
             // Decide if this should be a critical error or if we proceed cautiously.
             // For now, we'll log and skip, meaning a malformed existing booking might not block a new one.
           }

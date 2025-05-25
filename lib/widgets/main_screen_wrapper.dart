@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/features/home/home_providers.dart';
 
-class MainScreenWrapper extends StatelessWidget {
+class MainScreenWrapper extends ConsumerWidget {
   final Widget child;
 
   const MainScreenWrapper({super.key, required this.child});
@@ -29,13 +31,82 @@ class MainScreenWrapper extends StatelessWidget {
     return 0;
   }
 
-  void _onItemTapped(int index, BuildContext context) {
+  void _onItemTapped(int index, BuildContext context, WidgetRef ref) async {
     switch (index) {
       case 0:
         context.go(AppRoutes.home);
         break;
       case 1:
-        context.go(AppRoutes.booking);
+        final upcomingSessionData =
+            await ref.read(upcomingSessionProvider.future);
+        bool hasActiveBooking = false;
+
+        if (upcomingSessionData != null) {
+          final dynamic sessionDateActualDynamic = upcomingSessionData['session_date_actual'];
+          final dynamic endTimeStrDynamic = upcomingSessionData['session_end_time'];
+
+          if (sessionDateActualDynamic is DateTime && endTimeStrDynamic is String) {
+            final DateTime sessionDate = sessionDateActualDynamic;
+            final String endTimeStr = endTimeStrDynamic;
+            final now = DateTime.now();
+
+            try {
+              final endTimeParts = endTimeStr.split(':');
+              final DateTime sessionEndDateTime = DateTime(
+                sessionDate.year,
+                sessionDate.month,
+                sessionDate.day,
+                int.parse(endTimeParts[0]),
+                int.parse(endTimeParts[1]),
+                endTimeParts.length > 2 ? int.parse(endTimeParts[2]) : 0,
+              );
+              if (sessionEndDateTime.isAfter(now)) {
+                hasActiveBooking = true;
+              }
+            } catch (e) {
+              print('[MainScreenWrapper] Error parsing session end time for active booking check: $e');
+            }
+          } else {
+            print('[MainScreenWrapper] Debug: session_date_actual is not DateTime or session_end_time is not String.');
+            print('[MainScreenWrapper] Debug: session_date_actual type: ${sessionDateActualDynamic?.runtimeType}, value: $sessionDateActualDynamic');
+            print('[MainScreenWrapper] Debug: session_end_time type: ${endTimeStrDynamic?.runtimeType}, value: $endTimeStrDynamic');
+          }
+        }
+
+        if (hasActiveBooking) {
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext dialogContext) {
+                return AlertDialog(
+                  title: const Text('Active Booking Found'),
+                  content: const Text(
+                    'You already have an upcoming session. Please cancel it or wait for it to complete before booking a new one.',
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('View My Bookings'),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        context.go(AppRoutes.bookings);
+                      },
+                    ),
+                    TextButton(
+                      child: const Text('OK'),
+                      onPressed: () {
+                        Navigator.of(dialogContext).pop();
+                        // Optionally, navigate to home or do nothing
+                        // context.go(AppRoutes.home);
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        } else {
+          context.go(AppRoutes.booking);
+        }
         break;
       case 2:
         context.go(AppRoutes.workout);
@@ -50,12 +121,12 @@ class MainScreenWrapper extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: child,
       bottomNavigationBar: BottomNavBar(
         currentIndex: _calculateSelectedIndex(context),
-        onTap: (index) => _onItemTapped(index, context),
+        onTap: (index) => _onItemTapped(index, context, ref),
       ),
     );
   }
