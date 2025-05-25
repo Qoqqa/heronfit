@@ -313,29 +313,32 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
                         ),
                   ),
                 ),
-              )
-            else 
-               SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: const Icon(SolarIconsOutline.home, size: 20), 
-                  label: const Text('Back to Home'), 
-                  onPressed: () {
-                    context.go(AppRoutes.home); 
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: HeronFitTheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                    textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Poppins',
-                          color: Colors.white,
-                        ),
-                  ),
+              ),
+            // Add spacing if both buttons are potentially visible
+            if (_isCancellable()) const SizedBox(height: 12),
+
+            // Always visible Back to Home button
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: const Icon(SolarIconsOutline.home, size: 20), 
+                label: const Text('Back to Home'), 
+                onPressed: () {
+                  context.go(AppRoutes.home); 
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: HeronFitTheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                  textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                        color: Colors.white,
+                      ),
                 ),
               ),
+            ),
 
             const SizedBox(height: 20),
           ],

@@ -267,122 +267,131 @@ class SelectSessionScreen extends ConsumerWidget {
                     itemCount: sessions.length,
                     itemBuilder: (context, index) {
                       final session = sessions[index];
-                      return Card(
-                        elevation: 2.0,
-                        margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8.0), // Original Card margin
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor, // Use theme's card color for background
+                          borderRadius: BorderRadius.circular(12.0), // Match Card's shape
+                          boxShadow: HeronFitTheme.cardShadow, // Apply custom shadow
                         ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          SolarIconsOutline.clockCircle,
-                                          size: 20,
-                                          color: HeronFitTheme.primary,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          session
-                                              .timeRangeShort, // Using the getter from Session model
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium?.copyWith(
-                                            fontWeight: FontWeight.w600,
+                        child: Card(
+                          elevation: 0, // Set elevation to 0 as shadow is handled by Container
+                          margin: EdgeInsets.zero, // Margin handled by Container
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          color: Colors.transparent, // Card is transparent, Container provides background
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            SolarIconsOutline.clockCircle,
+                                            size: 20,
+                                            color: HeronFitTheme.primary,
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          SolarIconsOutline.usersGroupRounded,
-                                          size: 18,
-                                          color:
-                                              (session.bookedSlots >=
-                                                      session.capacity)
-                                                  ? Colors.redAccent
-                                                  : Colors.green,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          (session.bookedSlots >=
-                                                  session.capacity)
-                                              ? 'Full'
-                                              : '${session.capacity - session.bookedSlots}/${session.capacity} spots',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium?.copyWith(
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            session
+                                                .timeRangeShort, // Using the getter from Session model
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            SolarIconsOutline.usersGroupRounded,
+                                            size: 18,
                                             color:
                                                 (session.bookedSlots >=
                                                         session.capacity)
                                                     ? Colors.redAccent
                                                     : Colors.green,
-                                            fontWeight: FontWeight.w500,
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            (session.bookedSlots >=
+                                                    session.capacity)
+                                                ? 'Full'
+                                                : '${session.capacity - session.bookedSlots}/${session.capacity} spots',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.copyWith(
+                                              color:
+                                                  (session.bookedSlots >=
+                                                          session.capacity)
+                                                      ? Colors.redAccent
+                                                      : Colors.green,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Updated logic: remove facultyOnly check, use bookedSlots >= capacity for isFull
+                                    if ((session.bookedSlots >=
+                                        session.capacity)) {
+                                      _showJoinWaitlistDialog(
+                                        context,
+                                        ref,
+                                        session,
+                                      ); // Pass ref
+                                    } else {
+                                      // Navigate to Review Booking Screen
+                                      context.pushNamed(
+                                        AppRoutes.reviewBooking,
+                                        extra: {
+                                          'session': session,
+                                          'selectedDay': selectedDay,
+                                          'activatedTicket':
+                                              activatedTicket, // Pass the potentially null ticket
+                                          'noTicketMode':
+                                              noTicketMode, // Pass the flag
+                                        },
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: HeronFitTheme.primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  // Updated logic: remove facultyOnly check, use bookedSlots >= capacity for isFull
-                                  if ((session.bookedSlots >=
-                                      session.capacity)) {
-                                    _showJoinWaitlistDialog(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Book',
+                                    style: Theme.of(
                                       context,
-                                      ref,
-                                      session,
-                                    ); // Pass ref
-                                  } else {
-                                    // Navigate to Review Booking Screen
-                                    context.pushNamed(
-                                      AppRoutes.reviewBooking,
-                                      extra: {
-                                        'session': session,
-                                        'selectedDay': selectedDay,
-                                        'activatedTicket':
-                                            activatedTicket, // Pass the potentially null ticket
-                                        'noTicketMode':
-                                            noTicketMode, // Pass the flag
-                                      },
-                                    );
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: HeronFitTheme.primary,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10.0),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
+                                    ).textTheme.labelLarge?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
-                                child: Text(
-                                  'Book',
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.labelLarge?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
                       );

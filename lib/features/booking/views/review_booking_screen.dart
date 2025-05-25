@@ -24,7 +24,11 @@ class ReviewBookingScreen extends ConsumerWidget {
     this.noTicketMode = false,
   });
 
-  Widget _buildSummaryRow(BuildContext context, {required IconData icon, required String text}) {
+  Widget _buildSummaryRow(
+    BuildContext context, {
+    required IconData icon,
+    required String text,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
@@ -35,9 +39,9 @@ class ReviewBookingScreen extends ConsumerWidget {
             child: Text(
               text,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontFamily: 'Poppins',
-                    color: HeronFitTheme.textPrimary,
-                  ),
+                fontFamily: 'Poppins',
+                color: HeronFitTheme.textPrimary,
+              ),
             ),
           ),
         ],
@@ -49,16 +53,22 @@ class ReviewBookingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final DateFormat dateFormat = DateFormat('EEEE - MMMM d, yyyy');
     final String formattedDate = dateFormat.format(selectedDay);
-    final String sessionTime = '${session.startTime.format(context)} - ${session.endTime.format(context)}';
+    final String sessionTime =
+        '${session.startTime.format(context)} - ${session.endTime.format(context)}';
     final int availableSlots = session.capacity - session.bookedSlots;
 
     // Listen to the confirmBookingNotifierProvider for state changes (e.g., success/error)
-    ref.listen<AsyncValue<Map<String, dynamic>?>>(confirmBookingNotifierProvider, (_, state) {
+    ref.listen<
+      AsyncValue<Map<String, dynamic>?>
+    >(confirmBookingNotifierProvider, (_, state) {
       state.when(
         data: (bookingDetails) {
           if (bookingDetails != null) {
             // Booking was successful (notifier holds the booking details)
-            _showSessionConfirmedModal(context, bookingDetails); // Pass bookingDetails
+            _showSessionConfirmedModal(
+              context,
+              bookingDetails,
+            ); // Pass bookingDetails
             // Optionally, reset the notifier state if you want it to be ready for another booking attempt
             // without navigating away, though typically navigation occurs.
             // ref.read(confirmBookingNotifierProvider.notifier).resetState(); // You'd need to add resetState method
@@ -70,7 +80,10 @@ class ReviewBookingScreen extends ConsumerWidget {
         },
         error: (error, stackTrace) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Booking failed: ${error.toString()}'), backgroundColor: Colors.red),
+            SnackBar(
+              content: Text('Booking failed: ${error.toString()}'),
+              backgroundColor: Colors.red,
+            ),
           );
         },
       );
@@ -84,19 +97,18 @@ class ReviewBookingScreen extends ConsumerWidget {
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            SolarIconsOutline.altArrowLeft,
+            Icons.chevron_left_rounded,
             color: HeronFitTheme.primary,
-            size: 28,
+            size: 30,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Review Booking Details',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: HeronFitTheme.primary,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
+            color: HeronFitTheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -107,18 +119,15 @@ class ReviewBookingScreen extends ConsumerWidget {
             Text(
               'Please review your booking details below before confirming. Make sure all the information is correct.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: HeronFitTheme.textSecondary,
-                    fontFamily: 'Poppins',
-                  ),
+                color: HeronFitTheme.textSecondary,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
               'Booking Summary',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontFamily: 'Poppins',
-                    color: HeronFitTheme.textPrimary,
-                  ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: HeronFitTheme.textPrimary,
+              ),
             ),
             const SizedBox(height: 12),
             Card(
@@ -136,10 +145,28 @@ class ReviewBookingScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    _buildSummaryRow(context, icon: SolarIconsOutline.ticket, text: 'Ticket ID: ${activatedTicket?.ticketCode ?? 'N/A'}'),
-                    _buildSummaryRow(context, icon: SolarIconsOutline.calendar, text: 'Date: $formattedDate'),
-                    _buildSummaryRow(context, icon: SolarIconsOutline.clockCircle, text: 'Time: $sessionTime'),
-                    _buildSummaryRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Capacity: $availableSlots/${session.capacity} spots left'),
+                    _buildSummaryRow(
+                      context,
+                      icon: SolarIconsOutline.ticket,
+                      text:
+                          'Ticket ID: ${activatedTicket?.ticketCode ?? 'N/A'}',
+                    ),
+                    _buildSummaryRow(
+                      context,
+                      icon: SolarIconsOutline.calendar,
+                      text: 'Date: $formattedDate',
+                    ),
+                    _buildSummaryRow(
+                      context,
+                      icon: SolarIconsOutline.clockCircle,
+                      text: 'Time: $sessionTime',
+                    ),
+                    _buildSummaryRow(
+                      context,
+                      icon: SolarIconsOutline.usersGroupRounded,
+                      text:
+                          'Capacity: $availableSlots/${session.capacity} spots left',
+                    ),
                   ],
                 ),
               ),
@@ -148,53 +175,92 @@ class ReviewBookingScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: Consumer( // Use Consumer to get specific ref for the button
+              child: Consumer(
+                // Use Consumer to get specific ref for the button
                 builder: (context, buttonRef, child) {
-                  final confirmBookingState = buttonRef.watch(confirmBookingNotifierProvider);
+                  final confirmBookingState = buttonRef.watch(
+                    confirmBookingNotifierProvider,
+                  );
                   return FilledButton(
-                    onPressed: confirmBookingState.isLoading ? null : () async {
-                      final userId = Supabase.instance.client.auth.currentUser?.id;
-                      if (userId == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Error: User not authenticated.')),
-                        );
-                        return;
-                      }
+                    onPressed:
+                        confirmBookingState.isLoading
+                            ? null
+                            : () async {
+                              final userId =
+                                  Supabase.instance.client.auth.currentUser?.id;
+                              if (userId == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Error: User not authenticated.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
 
-                      final String formattedSessionDate = DateFormat('yyyy-MM-dd').format(selectedDay);
-                      final String formattedStartTime = DateFormat('HH:mm:ss').format(
-                        DateTime(selectedDay.year, selectedDay.month, selectedDay.day, session.startTime.hour, session.startTime.minute)
-                      ); 
-                      final String formattedEndTime = DateFormat('HH:mm:ss').format(
-                        DateTime(selectedDay.year, selectedDay.month, selectedDay.day, session.endTime.hour, session.endTime.minute)
-                      );
+                              final String formattedSessionDate = DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(selectedDay);
+                              final String formattedStartTime = DateFormat(
+                                'HH:mm:ss',
+                              ).format(
+                                DateTime(
+                                  selectedDay.year,
+                                  selectedDay.month,
+                                  selectedDay.day,
+                                  session.startTime.hour,
+                                  session.startTime.minute,
+                                ),
+                              );
+                              final String formattedEndTime = DateFormat(
+                                'HH:mm:ss',
+                              ).format(
+                                DateTime(
+                                  selectedDay.year,
+                                  selectedDay.month,
+                                  selectedDay.day,
+                                  session.endTime.hour,
+                                  session.endTime.minute,
+                                ),
+                              );
 
-                      // Call the notifier to book the session
-                      await buttonRef.read(confirmBookingNotifierProvider.notifier).bookSession(
-                        sessionId: session.id,
-                        activatedTicketId: activatedTicket?.id, 
-                        sessionDate: formattedSessionDate,
-                        sessionStartTime: formattedStartTime,
-                        sessionEndTime: formattedEndTime,
-                        sessionCategory: session.category,
-                      );
-                      // Success/error is handled by the ref.listen above
-                    },
+                              // Call the notifier to book the session
+                              await buttonRef
+                                  .read(confirmBookingNotifierProvider.notifier)
+                                  .bookSession(
+                                    sessionId: session.id,
+                                    activatedTicketId: activatedTicket?.id,
+                                    sessionDate: formattedSessionDate,
+                                    sessionStartTime: formattedStartTime,
+                                    sessionEndTime: formattedEndTime,
+                                    sessionCategory: session.category,
+                                  );
+                              // Success/error is handled by the ref.listen above
+                            },
                     style: FilledButton.styleFrom(
                       backgroundColor: HeronFitTheme.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                      textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Poppins',
-                            color: Colors.white,
-                          ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.0),
+                      ),
+                      textStyle: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(color: Colors.white),
                     ),
-                    child: confirmBookingState.isLoading 
-                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
-                        : const Text('Confirm Booking'),
+                    child:
+                        confirmBookingState.isLoading
+                            ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 3,
+                                color: Colors.white,
+                              ),
+                            )
+                            : const Text('Confirm Booking'),
                   );
-                }
+                },
               ),
             ),
             const SizedBox(height: 12),
@@ -206,13 +272,16 @@ class ReviewBookingScreen extends ConsumerWidget {
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: HeronFitTheme.primary, width: 1.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                  side: const BorderSide(
+                    color: HeronFitTheme.primary,
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
                   textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins',
-                        color: HeronFitTheme.primary,
-                      ),
+                    color: HeronFitTheme.primary,
+                  ),
                 ),
                 child: const Text('Change Session'),
               ),
@@ -224,7 +293,11 @@ class ReviewBookingScreen extends ConsumerWidget {
     );
   }
 
-  void _showSessionConfirmedModal(BuildContext context, Map<String, dynamic> bookingDetails) { // Added bookingDetails param
+  void _showSessionConfirmedModal(
+    BuildContext context,
+    Map<String, dynamic> bookingDetails,
+  ) {
+    // Added bookingDetails param
     // Parse details from the bookingDetails map for display in the modal if needed
     // For example, if you want to show the specific booking reference ID in the modal.
     // final confirmedBooking = Booking.fromJson(bookingDetails); // If you need Booking object here
@@ -234,16 +307,24 @@ class ReviewBookingScreen extends ConsumerWidget {
       barrierDismissible: false,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+          ),
           title: Text(
             'Session Confirmed!',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontFamily: 'Poppins', color: HeronFitTheme.primary, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontFamily: 'Poppins',
+              color: HeronFitTheme.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           content: Text(
             'Your gym session is booked for ${DateFormat('MMMM d, yyyy').format(selectedDay)} at ${session.timeRangeShort}!',
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins'),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins'),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actions: <Widget>[
@@ -252,11 +333,17 @@ class ReviewBookingScreen extends ConsumerWidget {
               child: FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: HeronFitTheme.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
                 ),
                 child: Text(
                   'View Booking Details',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins', color: Colors.white, fontWeight: FontWeight.w600),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontFamily: 'Poppins',
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 onPressed: () {
                   Navigator.of(dialogContext).pop();
