@@ -97,7 +97,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Booking cancelled successfully.')),
           );
-          context.pop(); // Go back to the previous screen
+          context.go(AppRoutes.home); // Changed from context.pop()
         }
       } catch (e) {
         if (mounted) {
@@ -314,14 +314,14 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
                   ),
                 ),
               )
-            else if (widget.booking.status != BookingStatus.cancelled_by_user && widget.booking.status != BookingStatus.cancelled_by_admin) // Check against both cancelled statuses
+            else 
                SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
-                  icon: const Icon(SolarIconsOutline.notebook, size: 20),
-                  label: const Text('View My Bookings'),
+                  icon: const Icon(SolarIconsOutline.home, size: 20), 
+                  label: const Text('Back to Home'), 
                   onPressed: () {
-                    context.go(AppRoutes.bookings); 
+                    context.go(AppRoutes.home); 
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: HeronFitTheme.primary,

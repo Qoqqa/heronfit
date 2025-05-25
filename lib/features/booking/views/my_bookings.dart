@@ -105,7 +105,7 @@ class MyBookingsWidget extends ConsumerWidget {
                           onTap: () {
                             // Navigate to BookingDetailsScreen, passing the booking object
                             // The router expects a Map<String, dynamic> for the 'extra' parameter
-                            context.go(AppRoutes.bookingDetails, extra: booking.toJson());
+                            context.push(AppRoutes.bookingDetails, extra: booking.toJson()); // Changed to context.push()
                           },
                           child: Card(
                             elevation: 2.0,
