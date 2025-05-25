@@ -1,19 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
+import 'package:heronfit/features/booking/models/user_ticket_model.dart';
+import 'package:heronfit/features/booking/controllers/booking_providers.dart';
 import 'package:intl/intl.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:solar_icons/solar_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Session;
 
-class ReviewBookingScreen extends StatelessWidget {
+class ReviewBookingScreen extends ConsumerWidget {
   final Session session;
   final DateTime selectedDay;
+  final UserTicket? activatedTicket;
+  final bool noTicketMode;
 
   const ReviewBookingScreen({
     super.key,
     required this.session,
     required this.selectedDay,
+    this.activatedTicket,
+    this.noTicketMode = false,
   });
 
   Widget _buildSummaryRow(BuildContext context, {required IconData icon, required String text}) {
@@ -38,13 +46,35 @@ class ReviewBookingScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final DateFormat dateFormat = DateFormat('EEEE - MMMM d, yyyy');
     final String formattedDate = dateFormat.format(selectedDay);
     final String sessionTime = '${session.startTime.format(context)} - ${session.endTime.format(context)}';
     final int availableSlots = session.capacity - session.bookedSlots;
 
-    const String mockTicketId = "AR20241008";
+    // Listen to the confirmBookingNotifierProvider for state changes (e.g., success/error)
+    ref.listen<AsyncValue<Map<String, dynamic>?>>(confirmBookingNotifierProvider, (_, state) {
+      state.when(
+        data: (bookingDetails) {
+          if (bookingDetails != null) {
+            // Booking was successful (notifier holds the booking details)
+            _showSessionConfirmedModal(context);
+            // Optionally, reset the notifier state if you want it to be ready for another booking attempt
+            // without navigating away, though typically navigation occurs.
+            // ref.read(confirmBookingNotifierProvider.notifier).resetState(); // You'd need to add resetState method
+          }
+          // If bookingDetails is null, it means initial state or reset, do nothing here.
+        },
+        loading: () {
+          // Loading state is handled by the button's appearance
+        },
+        error: (error, stackTrace) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Booking failed: ${error.toString()}'), backgroundColor: Colors.red),
+          );
+        },
+      );
+    });
 
     return Scaffold(
       backgroundColor: HeronFitTheme.bgLight,
@@ -106,7 +136,7 @@ class ReviewBookingScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    _buildSummaryRow(context, icon: SolarIconsOutline.ticket, text: 'Ticket ID: $mockTicketId'),
+                    _buildSummaryRow(context, icon: SolarIconsOutline.ticket, text: 'Ticket ID: ${activatedTicket?.ticketCode ?? 'N/A'}'),
                     _buildSummaryRow(context, icon: SolarIconsOutline.calendar, text: 'Date: $formattedDate'),
                     _buildSummaryRow(context, icon: SolarIconsOutline.clockCircle, text: 'Time: $sessionTime'),
                     _buildSummaryRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Capacity: $availableSlots/${session.capacity} spots left'),
@@ -115,23 +145,56 @@ class ReviewBookingScreen extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  _showSessionConfirmedModal(context);
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: HeronFitTheme.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-                  textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Poppins',
-                        color: Colors.white,
-                      ),
-                ),
-                child: const Text('Confirm Booking'),
+              child: Consumer( // Use Consumer to get specific ref for the button
+                builder: (context, buttonRef, child) {
+                  final confirmBookingState = buttonRef.watch(confirmBookingNotifierProvider);
+                  return FilledButton(
+                    onPressed: confirmBookingState.isLoading ? null : () async {
+                      final userId = Supabase.instance.client.auth.currentUser?.id;
+                      if (userId == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error: User not authenticated.')),
+                        );
+                        return;
+                      }
+
+                      final String formattedSessionDate = DateFormat('yyyy-MM-dd').format(selectedDay);
+                      final String formattedStartTime = DateFormat('HH:mm:ss').format(
+                        DateTime(selectedDay.year, selectedDay.month, selectedDay.day, session.startTime.hour, session.startTime.minute)
+                      ); 
+                      final String formattedEndTime = DateFormat('HH:mm:ss').format(
+                        DateTime(selectedDay.year, selectedDay.month, selectedDay.day, session.endTime.hour, session.endTime.minute)
+                      );
+
+                      // Call the notifier to book the session
+                      await buttonRef.read(confirmBookingNotifierProvider.notifier).bookSession(
+                        sessionId: session.id,
+                        activatedTicketId: activatedTicket?.id, 
+                        sessionDate: formattedSessionDate,
+                        sessionStartTime: formattedStartTime,
+                        sessionEndTime: formattedEndTime,
+                        sessionCategory: session.category,
+                      );
+                      // Success/error is handled by the ref.listen above
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: HeronFitTheme.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                      textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Poppins',
+                            color: Colors.white,
+                          ),
+                    ),
+                    child: confirmBookingState.isLoading 
+                        ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white))
+                        : const Text('Confirm Booking'),
+                  );
+                }
               ),
             ),
             const SizedBox(height: 12),
@@ -174,7 +237,7 @@ class ReviewBookingScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.titleLarge?.copyWith(fontFamily: 'Poppins', color: HeronFitTheme.primary, fontWeight: FontWeight.bold),
           ),
           content: Text(
-            'Your gym session is booked for ${DateFormat('MMMM d, yyyy').format(selectedDay)} at ${session.startTime.format(context)} - ${session.endTime.format(context)}!',
+            'Your gym session is booked for ${DateFormat('MMMM d, yyyy').format(selectedDay)} at ${session.timeRangeShort}!',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins'),
           ),

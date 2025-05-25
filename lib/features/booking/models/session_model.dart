@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Import the intl package for DateFormat
 
 enum SessionStatus {
   available,
@@ -54,6 +55,37 @@ class Session {
     );
   }
 
+  factory Session.fromMap(Map<String, dynamic> map) {
+    // Helper to parse time strings like "10:00:00" into TimeOfDay
+    TimeOfDay _parseTimeOfDay(String timeStr) {
+      final parts = timeStr.split(':');
+      return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+    }
+
+    // Provide default values for potentially missing string fields from RPC response
+    final String id = map['id'] as String? ?? 'unknown_id'; // Should always be present from RPC
+    final String dayOfWeek = map['day_of_week'] as String? ?? 'N/A'; 
+    final String startTimeStr = map['start_time_of_day'] as String? ?? '00:00:00';
+    final String endTimeStr = map['end_time_of_day'] as String? ?? '00:00:00';
+    final String category = map['category'] as String? ?? 'General';
+    final bool isActive = map['is_active'] as bool? ?? false;
+
+    return Session(
+      id: id,
+      dayOfWeek: dayOfWeek,
+      startTime: _parseTimeOfDay(startTimeStr),
+      endTime: _parseTimeOfDay(endTimeStr),
+      capacity: map['capacity'] as int? ?? 0, // Default to 0 if null
+      bookedSlots: map['booked_slots'] as int? ?? 0, // Default to 0 if null
+      category: category, 
+      isActive: isActive,
+      overrideDate: map['override_date'] == null
+          ? null
+          : DateTime.parse(map['override_date'] as String),
+      notes: map['notes'] as String?,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     // Helper to format TimeOfDay to "HH:mm:ss" string
     String _formatTime(TimeOfDay time) {
@@ -104,9 +136,11 @@ class Session {
 
   // Helper for display
   String get timeRangeShort {
-    // Format TimeOfDay to HH:mm string
+    // Format TimeOfDay to h:mm AM/PM string
     String _formatTime(TimeOfDay time) {
-      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+      final now = DateTime.now();
+      final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
+      return DateFormat('h:mm a').format(dt); // e.g., 8:00 AM
     }
     return '${_formatTime(startTime)} - ${_formatTime(endTime)}';
   }

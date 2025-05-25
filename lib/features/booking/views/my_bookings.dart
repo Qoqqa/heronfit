@@ -13,23 +13,25 @@ final myBookingsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) asyn
     throw Exception('User not authenticated');
   }
 
-  final email = user.email;
-  if (email == null) {
-    throw Exception('User email is null');
-  }
+  final userId = user.id; // Use user.id (UUID)
 
+  // Fetch from 'bookings' table and join with 'sessions' table
+  // Select all columns from bookings and all columns from the joined sessions
   final response = await Supabase.instance.client
-      .from('sessions')
-      .select()
-      .eq('email', email) // Ensure email is non-null
-      .order('date', ascending: true)
-      .order('time', ascending: true);
+      .from('bookings')
+      .select('*, sessions(*)') // Join with sessions table
+      .eq('user_id', userId)    // Filter by the current user's ID
+      .order('booking_time', ascending: false); // Order by booking time, newest first
 
-  if (response == null || response.isEmpty) {
-    return [];
-  }
+  // The 'response' here is already a List<Map<String, dynamic>> if successful
+  // and not empty, or an empty list if no records found.
+  // Supabase client handles the case where response might be null internally for .select()
+  // and returns an empty list if the query executes but finds no data.
+  // An error/exception is thrown for actual query failures.
+  
+  // print('MyBookings Response: $response'); // For debugging
 
-  return List<Map<String, dynamic>>.from(response);
+  return response; // Directly return the response
 });
 
 class MyBookingsWidget extends ConsumerWidget {
@@ -88,6 +90,58 @@ class MyBookingsWidget extends ConsumerWidget {
                       itemCount: bookings.length,
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
+                        // Access session details from the nested 'sessions' map
+                        final sessionData = booking['sessions'] as Map<String, dynamic>?;
+
+                        if (sessionData == null) {
+                          // Handle case where session data might be missing (e.g., session deleted)
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 16.0),
+                            child: ListTile(
+                              title: Text('Booking ID: ${booking['id']}'),
+                              subtitle: const Text('Session details unavailable. The session may have been removed.'),
+                              leading: const Icon(Icons.error_outline, color: Colors.red),
+                            ),
+                          );
+                        }
+
+                        // Parse session start and end times
+                        TimeOfDay? startTime, endTime;
+                        DateTime? sessionDate;
+
+                        if (sessionData['start_time'] != null) {
+                          final timeParts = (sessionData['start_time'] as String).split(':');
+                          startTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+                        }
+                        if (sessionData['end_time'] != null) {
+                          final timeParts = (sessionData['end_time'] as String).split(':');
+                          endTime = TimeOfDay(hour: int.parse(timeParts[0]), minute: int.parse(timeParts[1]));
+                        }
+
+                        // Determine the session date: use override_date if available, otherwise infer from booking_time or day_of_week
+                        // For simplicity in display, we'll use the booking_time's date component if override_date is not present.
+                        // A more robust solution would involve reconstructing the actual session occurrence date based on recurring rules.
+                        if (sessionData['override_date'] != null) {
+                          sessionDate = DateTime.parse(sessionData['override_date'] as String);
+                        } else if (booking['booking_time'] != null) {
+                          sessionDate = DateTime.parse(booking['booking_time'] as String);
+                        }
+
+                        String formattedTimeRange = 'N/A';
+                        if (startTime != null && endTime != null) {
+                          final now = DateTime.now();
+                          final startDt = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
+                          final endDt = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
+                          formattedTimeRange = '${DateFormat('h:mm a').format(startDt)} - ${DateFormat('h:mm a').format(endDt)}';
+                        }
+
+                        String formattedSessionDate = sessionDate != null 
+                            ? DateFormat('MMMM d, yyyy').format(sessionDate) 
+                            : 'Date N/A';
+
+                        // Get session category (example, adjust if your model is different)
+                        final String sessionCategory = sessionData['category'] as String? ?? 'General';
+
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16.0),
                           child: InkWell(
@@ -136,30 +190,43 @@ class MyBookingsWidget extends ConsumerWidget {
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
                                                 Text(
-                                                  'Gym Session',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                                                  // Use session category and name if available
+                                                  // For now, using a generic title or session category
+                                                  sessionCategory, // Example: 'Morning Yoga'
+                                                  style: HeronFitTheme.textTheme.titleSmall?.copyWith(
                                                     letterSpacing: 0.0,
                                                     fontWeight: FontWeight.w600,
+                                                    color: HeronFitTheme.textPrimary,
                                                   ),
                                                 ),
+                                                const SizedBox(height: 4),
                                                 Text(
                                                   'Ticket ID: ${booking['ticket_id']}',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
                                                     letterSpacing: 0.0,
+                                                    color: HeronFitTheme.textSecondary,
                                                   ),
                                                 ),
                                                 Text(
-                                                  'Date: ${DateFormat('MMMM d, yyyy').format(DateTime.parse(booking['date']))}',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                                    fontSize: 10,
+                                                  'Date: $formattedSessionDate',
+                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
                                                     letterSpacing: 0.0,
+                                                    color: HeronFitTheme.textSecondary,
                                                   ),
                                                 ),
                                                 Text(
-                                                  'Time: ${booking['time']}',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
+                                                  'Time: $formattedTimeRange',
+                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                    letterSpacing: 0.0,
+                                                    color: HeronFitTheme.textSecondary,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Booked on: ${DateFormat('MMM d, yyyy, h:mm a').format(DateTime.parse(booking['booking_time']))}',
+                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
                                                     fontSize: 10,
                                                     letterSpacing: 0.0,
+                                                    color: HeronFitTheme.textMuted,
                                                   ),
                                                 ),
                                               ],

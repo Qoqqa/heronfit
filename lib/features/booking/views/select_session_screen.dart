@@ -5,6 +5,7 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:heronfit/features/booking/controllers/booking_providers.dart'; // Import new providers
+import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import UserTicket model
 import 'package:table_calendar/table_calendar.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:intl/intl.dart'; // For date formatting
@@ -15,15 +16,27 @@ final selectedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
 class SelectSessionScreen extends ConsumerWidget {
-  const SelectSessionScreen({super.key});
+  final UserTicket? activatedTicket; // Made nullable
+  final bool noTicketMode;          // Added flag
 
-  void _showJoinWaitlistDialog(BuildContext context, Session session) {
+  const SelectSessionScreen({
+    super.key, 
+    this.activatedTicket, 
+    this.noTicketMode = false, // Default to false
+  });
+
+  void _showJoinWaitlistDialog(BuildContext context, WidgetRef ref, Session session) { // Added WidgetRef
+    // To handle loading state within the dialog or on the button
+    // We can use a local state variable if the dialog rebuilds, 
+    // or manage it via the notifier's state if the dialog is simple.
+    // For now, let's keep it simple and show feedback via Snackbars after pop.
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('Join Waitlist?', style: Theme.of(context).textTheme.titleLarge),
-          content: Text('This session (${session.startTime.format(context)}) is currently full. Would you like to join the waitlist?'),
+          content: Text('This session (${session.startTime.format(dialogContext)}) is currently full. Would you like to join the waitlist?'),
           actions: <Widget>[
             TextButton(
               child: const Text('Find Another Session'),
@@ -31,17 +44,30 @@ class SelectSessionScreen extends ConsumerWidget {
                 Navigator.of(dialogContext).pop(); // Close the dialog
               },
             ),
-            ElevatedButton(
-              child: const Text('Yes, Join Waitlist'),
-              onPressed: () {
-                // Implement waitlist logic here
-                Navigator.of(dialogContext).pop(); // Close the dialog
-                // Show a confirmation (e.g., SnackBar)
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('You have been added to the waitlist for ${session.startTime.format(context)}.')),
+            Consumer( // Use Consumer to access ref for the ElevatedButton
+              builder: (context, innerRef, child) {
+                final joinWaitlistState = innerRef.watch(joinWaitlistNotifierProvider);
+                return ElevatedButton(
+                  child: joinWaitlistState.isLoading 
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Yes, Join Waitlist'),
+                  onPressed: joinWaitlistState.isLoading ? null : () async {
+                    try {
+                      await innerRef.read(joinWaitlistNotifierProvider.notifier).join(session.id, activatedTicket?.id);
+                      Navigator.of(dialogContext).pop(); // Close the dialog on success
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Successfully joined the waitlist for ${session.startTime.format(dialogContext)}.')),
+                      );
+                    } catch (e) {
+                      Navigator.of(dialogContext).pop(); // Close the dialog on error too
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to join waitlist: ${e.toString()}'), backgroundColor: Colors.red),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: HeronFitTheme.primary, foregroundColor: Colors.white),
                 );
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: HeronFitTheme.primary, foregroundColor: Colors.white),
+              }
             ),
           ],
         );
@@ -104,60 +130,58 @@ class SelectSessionScreen extends ConsumerWidget {
             ),
             Container(
               margin: const EdgeInsets.only(bottom: 16.0, top: 8.0),
-              decoration: cardDecoration,
+              decoration: cardDecoration.copyWith(color: colorScheme.surface), // Use surface color from theme
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TableCalendar(
-                  firstDay: DateTime.now().subtract(const Duration(days: 30)), // Allow selecting previous days for viewing, but booking logic should prevent it
-                  lastDay: DateTime.now().add(const Duration(days: 60)),
+                  locale: 'en_US',
+                  firstDay: DateTime.utc(2020, 1, 1),
+                  lastDay: DateTime.utc(2030, 12, 31),
                   focusedDay: focusedDay,
                   selectedDayPredicate: (day) => isSameDay(selectedDay, day),
-                  enabledDayPredicate: (day) {
-                    // Disable weekends
-                    if (day.weekday == DateTime.saturday || day.weekday == DateTime.sunday) {
-                      return false;
-                    }
-                    return true;
-                  },
+                  calendarFormat: CalendarFormat.week, // Changed to week view
+                  availableCalendarFormats: const {CalendarFormat.week: 'Week'}, // Only allow week view
                   onDaySelected: (newSelectedDay, newFocusedDay) {
                     ref.read(selectedDayProvider.notifier).state = newSelectedDay;
+                    ref.read(focusedDayProvider.notifier).state = newFocusedDay; // Update focusedDay as well
+                  },
+                  onPageChanged: (newFocusedDay) {
                     ref.read(focusedDayProvider.notifier).state = newFocusedDay;
                   },
+                  headerStyle: HeaderStyle(
+                    titleCentered: true,
+                    formatButtonVisible: false, // Hide format button as we only want week view
+                    titleTextStyle: Theme.of(context).textTheme.titleMedium!.copyWith(fontWeight: FontWeight.bold, color: HeronFitTheme.primary), // Use titleMedium
+                    leftChevronIcon: const Icon(Icons.chevron_left, color: HeronFitTheme.primary),
+                    rightChevronIcon: const Icon(Icons.chevron_right, color: HeronFitTheme.primary),
+                  ),
                   calendarStyle: CalendarStyle(
                     todayDecoration: BoxDecoration(
-                      color: HeronFitTheme.primary.withOpacity(0.3),
+                      color: HeronFitTheme.primaryDark.withOpacity(0.5), // Corrected: Was secondaryColor
                       shape: BoxShape.circle,
                     ),
                     selectedDecoration: BoxDecoration(
                       color: HeronFitTheme.primary,
                       shape: BoxShape.circle,
                     ),
-                    disabledTextStyle: TextStyle(color: Colors.grey.shade400),
-                    outsideDaysVisible: false,
-                    // Use Poppins for calendar text if available through theme, otherwise default
-                    defaultTextStyle: Theme.of(context).textTheme.bodyMedium ?? const TextStyle(), 
-                    weekendTextStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.redAccent) ?? const TextStyle(color: Colors.redAccent),
-                    holidayTextStyle: Theme.of(context).textTheme.bodyMedium ?? const TextStyle(),
-                    selectedTextStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white) ?? const TextStyle(color: Colors.white),
-                    todayTextStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: HeronFitTheme.primary) ?? TextStyle(color: HeronFitTheme.primary),
+                    // Add styling for weekend days if needed
+                    weekendTextStyle: TextStyle(color: Colors.grey[600]),
+                    // Styling for days outside the current month (less relevant for week view but good practice)
+                    outsideDaysVisible: false, 
                   ),
-                  headerStyle: HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                    titleTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold) ?? const TextStyle(),
-                    leftChevronIcon: const Icon(Icons.chevron_left, color: HeronFitTheme.primary),
-                    rightChevronIcon: const Icon(Icons.chevron_right, color: HeronFitTheme.primary),
+                  daysOfWeekStyle: DaysOfWeekStyle(
+                    weekdayStyle: TextStyle(color: Colors.grey[700], fontWeight: FontWeight.w500), // Style for Mon-Fri
+                    weekendStyle: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w500),   // Style for Sat-Sun
                   ),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                'Available Sessions - ${titleDateFormat.format(selectedDay)}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
+            const SizedBox(height: 20),
+            Text(
+              'Available Sessions - ${titleDateFormat.format(selectedDay)}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: HeronFitTheme.textPrimary), // Corrected: Was primaryText
             ),
+            const SizedBox(height: 10),
             Expanded(
               child: sessionsAsync.when(
                 data: (sessions) {
@@ -165,7 +189,7 @@ class SelectSessionScreen extends ConsumerWidget {
                     return const Center(
                       child: Text(
                         'No sessions available for this day.',
-                        style: TextStyle(fontSize: 16, color: HeronFitTheme.textSecondary, fontFamily: 'Poppins'),
+                        style: TextStyle(fontSize: 16, color: Colors.grey, fontFamily: 'Poppins'),
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -174,12 +198,14 @@ class SelectSessionScreen extends ConsumerWidget {
                     itemCount: sessions.length,
                     itemBuilder: (context, index) {
                       final session = sessions[index];
-                      return Container(
+                      return Card(
+                        elevation: 2.0,
                         margin: const EdgeInsets.symmetric(vertical: 8.0),
-                        decoration: cardDecoration,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Expanded(
                                 child: Column(
@@ -187,19 +213,13 @@ class SelectSessionScreen extends ConsumerWidget {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(SolarIconsOutline.clockCircle, size: 18, color: HeronFitTheme.textSecondary),
+                                        Icon(SolarIconsOutline.clockCircle, size: 20, color: HeronFitTheme.primary),
                                         const SizedBox(width: 8),
                                         Text(
-                                          // Format start and end times
-                                          '${session.startTime.format(context)} - ${session.endTime.format(context)}',
+                                          session.timeRangeShort, // Using the getter from Session model
                                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                                         ),
                                       ],
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text( // Display category
-                                      session.category,
-                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: HeronFitTheme.textSecondary, fontStyle: FontStyle.italic),
                                     ),
                                     const SizedBox(height: 8),
                                     Row(
@@ -220,12 +240,17 @@ class SelectSessionScreen extends ConsumerWidget {
                                 onPressed: () {
                                   // Updated logic: remove facultyOnly check, use bookedSlots >= capacity for isFull
                                   if ((session.bookedSlots >= session.capacity)) {
-                                    _showJoinWaitlistDialog(context, session);
+                                    _showJoinWaitlistDialog(context, ref, session); // Pass ref
                                   } else {
                                     // Navigate to Review Booking Screen
                                     context.pushNamed(
                                       AppRoutes.reviewBooking,
-                                      extra: {'session': session, 'selectedDay': selectedDay},
+                                      extra: {
+                                        'session': session, 
+                                        'selectedDay': selectedDay,
+                                        'activatedTicket': activatedTicket, // Pass the potentially null ticket
+                                        'noTicketMode': noTicketMode,     // Pass the flag
+                                      },
                                     );
                                   }
                                 },

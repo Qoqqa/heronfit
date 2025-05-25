@@ -1,8 +1,8 @@
 // d:\Development\heronfit\lib\features\booking\services\booking_supabase_service.dart
 import 'package:supabase_flutter/supabase_flutter.dart' hide Session; // Hide Supabase's Session
-import 'package:heronfit/core/utils/app_strings.dart'; // Ensure this path is correct
-import '../models/user_ticket_model.dart';
-import '../models/session_model.dart'; // Added import for Session model
+import 'package:heronfit/features/booking/models/session_model.dart';
+import 'package:heronfit/features/booking/models/user_ticket_model.dart';
+import 'package:heronfit/features/booking/models/booking_status.dart'; // Added import
 import 'package:intl/intl.dart';      // Added import for DateFormat
 
 class BookingSupabaseService {
@@ -29,25 +29,26 @@ class BookingSupabaseService {
       print('[BookingSupabaseService] Validating ticket ownership...');
       if (ticket.userId != userId) {
         print('[BookingSupabaseService] ERROR: Ticket user ID (${ticket.userId}) does not match provided user ID ($userId).');
-        throw Exception(AppStrings.ticketNotAssociatedError);
+        throw Exception("This Ticket ID isn't linked to your account. Please ensure you're logged in with the correct account or contact support.");
       }
       print('[BookingSupabaseService] Ticket ownership validated.');
 
       // 3. Validate ticket status (must be 'available')
       print('[BookingSupabaseService] Validating ticket status. Current status: ${ticket.status}');
       if (ticket.status != TicketStatus.available) {
-        String errorMessage = AppStrings.ticketNotActiveError;
+        String errorMessage;
         switch (ticket.status) {
           case TicketStatus.used:
-            errorMessage = AppStrings.ticketAlreadyUsedError;
+            errorMessage = "This Ticket ID has already been used for a session. Please purchase a new pass to book.";
             break;
           case TicketStatus.expired:
-            errorMessage = AppStrings.ticketExpiredError;
+            errorMessage = "This Ticket ID has expired. Please purchase a new pass.";
             break;
           case TicketStatus.pending_booking:
-            errorMessage = AppStrings.ticketPendingBookingError;
+            errorMessage = "This ticket is currently being processed. Please try again shortly or check 'My Bookings'.";
             break;
-          default:
+          default: // For any other status that isn't 'available'
+            errorMessage = "Invalid Ticket ID. Please check your entry and try again.";
             break;
         }
         print('[BookingSupabaseService] ERROR: Ticket status is not available. Status: ${ticket.status}');
@@ -55,17 +56,18 @@ class BookingSupabaseService {
       }
       print('[BookingSupabaseService] Ticket status validated as available.');
 
-      // 4. Validate ticket expiry date (if applicable)
+      // 4. Validate ticket expiry date
       print('[BookingSupabaseService] Validating ticket expiry date. Expiry: ${ticket.expiryDate}');
       if (ticket.expiryDate != null && ticket.expiryDate!.isBefore(DateTime.now())) {
         print('[BookingSupabaseService] ERROR: Ticket has expired. Expiry date: ${ticket.expiryDate}');
         // Optionally update status to 'expired' in DB if it's not already
+        // This is a good practice to keep data consistent.
         await _supabaseClient
             .from('user_tickets')
             .update({'status': TicketStatus.expired.name})
             .eq('id', ticket.id);
         ticket.status = TicketStatus.expired; // Update local object
-        throw Exception(AppStrings.ticketExpiredError);
+        throw Exception("This Ticket ID has expired. Please purchase a new pass.");
       }
       print('[BookingSupabaseService] Ticket expiry date validated.');
 
@@ -81,16 +83,29 @@ class BookingSupabaseService {
       return ticket;
 
     } on PostgrestException catch (e, s) {
-      print('[BookingSupabaseService] PostgrestException: ${e.message}, Code: ${e.code}, Details: ${e.details}, Hint: ${e.hint}');
+      print('[BookingSupabaseService] PostgrestException: ${e.message}, code: ${e.code}');
       print('[BookingSupabaseService] Stack Trace: $s');
-      if (e.code == 'PGRST116') { 
-        throw Exception(AppStrings.ticketNotFoundError);
+      if (e.code == 'PGRST116') { // PGRST116: The result contains 0 rows
+        throw Exception("Invalid Ticket ID. Please check your entry and try again.");
       }
-      throw Exception('${AppStrings.ticketValidationFailedError} Details: ${e.message}');
+      // For other Postgrest errors that are not specifically handled above
+      throw Exception("An unexpected error occurred. Please try again later.");
     } catch (e, s) {
       print('[BookingSupabaseService] Generic Exception: ${e.toString()}');
       print('[BookingSupabaseService] Stack Trace: $s');
-      throw Exception(e.toString().startsWith('Exception: ') ? e.toString().substring('Exception: '.length) : AppStrings.unknownError);
+      // If the exception is one of our specific, intentionally thrown messages, rethrow it.
+      // For Exception type, the message is obtained via toString().
+      if (e is Exception && (
+          e.toString() == "Exception: This Ticket ID isn't linked to your account. Please ensure you're logged in with the correct account or contact support." ||
+          e.toString() == "Exception: This Ticket ID has already been used for a session. Please purchase a new pass to book." ||
+          e.toString() == "Exception: This Ticket ID has expired. Please purchase a new pass." ||
+          e.toString() == "Exception: This ticket is currently being processed. Please try again shortly or check 'My Bookings'." ||
+          e.toString() == "Exception: Invalid Ticket ID. Please check your entry and try again."
+      )) {
+        rethrow;
+      }
+      // For any other unforeseen errors (e.g., UserTicket.fromJson failure, other programming errors)
+      throw Exception("An unexpected error occurred. Please try again later.");
     }
   }
 
@@ -179,6 +194,129 @@ class BookingSupabaseService {
       // Consider rethrowing a custom exception or returning an empty list with error state
       // For now, rethrow to allow UI to handle via FutureProvider's error state.
       rethrow; 
+    }
+  }
+
+  Future<Map<String, dynamic>> bookSession({
+    required String sessionId,
+    required String userId,
+    String? activatedTicketId,
+    required String sessionDate,
+    required String sessionStartTime,
+    required String sessionEndTime,
+    required String sessionCategory,
+  }) async {
+    print('[BookingSupabaseService] Attempting to book session. SessionID: $sessionId, UserID: $userId, TicketID: $activatedTicketId');
+    try {
+      // Start a transaction
+      // Note: True database transactions across multiple operations like this are best handled by a database function (RPC).
+      // For client-side, we're performing sequential operations. If one fails, subsequent ones won't run,
+      // but there isn't an automatic rollback of prior successful operations in this client-side sequence.
+
+      // 1. Increment booked_slots in the sessions table
+      print('[BookingSupabaseService] Incrementing booked_slots for session $sessionId...');
+      final Session sessionData = await _supabaseClient
+          .from('sessions')
+          .select('booked_slots, capacity')
+          .eq('id', sessionId)
+          .single() // Expects a single row
+          .then((response) => Session.fromMap(response)); // Assuming Session.fromMap exists
+
+      if (sessionData.bookedSlots >= sessionData.capacity) {
+        print('[BookingSupabaseService] Booking failed: Session $sessionId is full.');
+        throw Exception('Session is full. Cannot book.');
+      }
+
+      await _supabaseClient
+          .from('sessions')
+          .update({'booked_slots': sessionData.bookedSlots + 1})
+          .eq('id', sessionId);
+      print('[BookingSupabaseService] booked_slots incremented for session $sessionId.');
+
+      // 2. Create a booking record in the bookings table
+      print('[BookingSupabaseService] Creating booking record...');
+      final bookingResponse = await _supabaseClient.from('bookings').insert({
+        'user_id': userId,
+        'session_id': sessionId,
+        'user_ticket_id': activatedTicketId, // Changed from 'ticket_id'
+        'booking_time': DateTime.now().toIso8601String(),
+        'status': BookingStatus.confirmed.name, // Assuming BookingStatus enum
+        'session_date': sessionDate,
+        'session_start_time': sessionStartTime,
+        'session_end_time': sessionEndTime,
+        'session_category': sessionCategory,
+      }).select().single(); // .select().single() to get the created record back
+      print('[BookingSupabaseService] Booking record created: ${bookingResponse['id']}');
+
+      // 3. Update the user_tickets table if a ticket was used
+      if (activatedTicketId != null) {
+        print('[BookingSupabaseService] Updating ticket $activatedTicketId status to used...');
+        await _supabaseClient
+            .from('user_tickets')
+            .update({'status': TicketStatus.used.name, 'used_at': DateTime.now().toIso8601String()})
+            .eq('id', activatedTicketId)
+            .eq('status', TicketStatus.pending_booking.name); // Ensure it was pending
+        print('[BookingSupabaseService] Ticket $activatedTicketId status updated to used.');
+      } else {
+        print('[BookingSupabaseService] No ticket ID provided, skipping ticket update.');
+      }
+    
+      return bookingResponse; // Return the created booking details
+    } on PostgrestException catch (e, s) {
+      print('[BookingSupabaseService] PostgrestException during booking: ${e.message}, code: ${e.code}');
+      print('[BookingSupabaseService] Stack Trace: $s');
+      // Attempt to provide a more specific error message based on common PostgREST errors
+      if (e.code == '23505') { // Unique violation (e.g., trying to book twice with same ticket if RLS/constraints are set up)
+        throw Exception('Booking failed: This booking might already exist or conflict with another.');
+      } else if (e.message.toLowerCase().contains('session is full')) { // Custom check if previous check failed
+        throw Exception('Booking failed: The session just became full.');
+      }
+      throw Exception('Booking failed due to a database error: ${e.message}');
+    } catch (e, s) {
+      print('[BookingSupabaseService] Generic Exception during booking: ${e.toString()}');
+      print('[BookingSupabaseService] Stack Trace: $s');
+      throw Exception('An unexpected error occurred while booking the session.');
+    }
+  }
+
+  Future<void> joinWaitlist(String userId, String sessionId, String? ticketId) async {
+    print('[BookingSupabaseService] Attempting to join waitlist. UserID: $userId, SessionID: $sessionId, TicketID: $ticketId');
+    try {
+      // 1. Add entry to waitlist_entries table
+      print('[BookingSupabaseService] Inserting into waitlist_entries...');
+      await _supabaseClient.from('waitlist_entries').insert({
+        'user_id': userId,
+        'session_id': sessionId,
+        'ticket_id': ticketId, // This will be null if no ticket was involved
+        // 'created_at' is expected to have a default value of now() in the database
+      });
+      print('[BookingSupabaseService] Successfully inserted into waitlist_entries.');
+
+      // 2. If a ticketId was provided, revert its status to 'available'
+      if (ticketId != null) {
+        print('[BookingSupabaseService] Reverting ticket $ticketId status to available...');
+        await _supabaseClient
+            .from('user_tickets')
+            .update({'status': TicketStatus.available.name})
+            .eq('id', ticketId)
+            .eq('status', TicketStatus.pending_booking.name); // Only revert if it was pending
+        
+        // Optional: Check if the update affected any row, for more robust logging or error handling
+        // For example, if (updateResponse == null || (updateResponse is List && updateResponse.isEmpty)) { ... }
+        // Supabase update typically returns null on success with default PostgrestFilterBuilder settings, 
+        // or an empty list if .select() was chained and no rows matched.
+        // For simplicity, we'll assume success if no exception is thrown.
+        print('[BookingSupabaseService] Ticket $ticketId status reverted to available (if it was pending).');
+      }
+    } on PostgrestException catch (e, s) {
+      print('[BookingSupabaseService] PostgrestException while joining waitlist: ${e.message}, code: ${e.code}');
+      print('[BookingSupabaseService] Stack Trace: $s');
+      // Provide a more user-friendly error or rethrow a custom exception
+      throw Exception('Failed to join waitlist: ${e.message}');
+    } catch (e, s) {
+      print('[BookingSupabaseService] Generic Exception while joining waitlist: ${e.toString()}');
+      print('[BookingSupabaseService] Stack Trace: $s');
+      throw Exception('An unexpected error occurred while trying to join the waitlist.');
     }
   }
 }

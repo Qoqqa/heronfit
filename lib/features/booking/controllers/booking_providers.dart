@@ -27,3 +27,81 @@ final fetchSessionsProvider = FutureProvider.family<List<Session>, DateTime>((
   final bookingService = ref.watch(bookingSupabaseServiceProvider);
   return bookingService.getSessionsForDate(date);
 });
+
+// --- Join Waitlist Notifier ---
+class JoinWaitlistNotifier extends StateNotifier<AsyncValue<void>> {
+  final BookingSupabaseService _bookingService;
+  final String _userId;
+
+  JoinWaitlistNotifier(this._bookingService, this._userId)
+      : super(const AsyncValue.data(null));
+
+  Future<void> join(String sessionId, String? ticketId) async {
+    state = const AsyncValue.loading();
+    try {
+      await _bookingService.joinWaitlist(_userId, sessionId, ticketId);
+      state = const AsyncValue.data(null);
+      print('[JoinWaitlistNotifier] Successfully joined waitlist for session $sessionId, ticket: $ticketId');
+    } catch (e, s) {
+      print('[JoinWaitlistNotifier] Error joining waitlist: $e\n$s');
+      state = AsyncValue.error(e, s);
+      rethrow; // Rethrow to allow UI to catch specific errors if needed
+    }
+  }
+}
+
+final joinWaitlistNotifierProvider = StateNotifierProvider.autoDispose<JoinWaitlistNotifier, AsyncValue<void>>((ref) {
+  final bookingService = ref.watch(bookingSupabaseServiceProvider);
+  final supabaseUser = Supabase.instance.client.auth.currentUser;
+  if (supabaseUser == null) {
+    throw Exception('User not authenticated. Cannot join waitlist.');
+  }
+  return JoinWaitlistNotifier(bookingService, supabaseUser.id);
+});
+
+// --- Confirm Booking Notifier ---
+class ConfirmBookingNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
+  final BookingSupabaseService _bookingService;
+  final String _userId;
+
+  ConfirmBookingNotifier(this._bookingService, this._userId)
+      : super(const AsyncValue.data(null)); // Initial state is null, no booking attempted yet
+
+  Future<void> bookSession({
+    required String sessionId,
+    String? activatedTicketId,
+    required String sessionDate,
+    required String sessionStartTime,
+    required String sessionEndTime,
+    required String sessionCategory,
+  }) async {
+    state = const AsyncValue.loading();
+    try {
+      final bookingDetails = await _bookingService.bookSession(
+        sessionId: sessionId,
+        userId: _userId,
+        activatedTicketId: activatedTicketId,
+        sessionDate: sessionDate,
+        sessionStartTime: sessionStartTime,
+        sessionEndTime: sessionEndTime,
+        sessionCategory: sessionCategory,
+      );
+      state = AsyncValue.data(bookingDetails);
+      print('[ConfirmBookingNotifier] Successfully booked session: ${bookingDetails['id']}');
+    } catch (e, s) {
+      print('[ConfirmBookingNotifier] Error booking session: $e\n$s');
+      state = AsyncValue.error(e, s);
+      rethrow; // Rethrow to allow UI to catch specific errors if needed
+    }
+  }
+}
+
+final confirmBookingNotifierProvider = StateNotifierProvider.autoDispose<ConfirmBookingNotifier, AsyncValue<Map<String, dynamic>?>>((ref) {
+  final bookingService = ref.watch(bookingSupabaseServiceProvider);
+  final supabaseUser = Supabase.instance.client.auth.currentUser;
+  if (supabaseUser == null) {
+    // This case should ideally be handled before trying to book, but as a safeguard:
+    throw Exception('User not authenticated. Cannot confirm booking.');
+  }
+  return ConfirmBookingNotifier(bookingService, supabaseUser.id);
+});
