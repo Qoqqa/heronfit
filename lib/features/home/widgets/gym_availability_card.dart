@@ -1,98 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:intl/intl.dart';
 import 'home_info_row.dart';
 import '../../../core/theme.dart';
 import 'package:go_router/go_router.dart';
+import '../home_providers.dart';
 
-/// A simple data class to represent a gym session
-class Session {
-  final String time;
-  final DateTime date;
-
-  Session({required this.time, required this.date});
-
-  factory Session.fromJson(Map<String, dynamic> json) {
-    return Session(
-      time: json['time'] as String? ?? '',
-      date: DateTime.parse(json['date'] as String? ?? DateTime.now().toIso8601String()),
-    );
-  }
-}
-
-// Initialize an empty list of sessions
-final List<Session> allSessions = [];
-
-class GymAvailabilityCard extends StatelessWidget {
-  final List<String> sessions = const [
-    '8:00 AM - 9:00 AM',
-    '9:00 AM - 10:00 AM',
-    '10:00 AM - 11:00 AM',
-    '11:00 AM - 12:00 PM',
-    '12:00 PM - 1:00 PM',
-    '1:00 PM - 2:00 PM',
-    '2:00 PM - 3:00 PM',
-    '3:00 PM - 4:00 PM',
-    '4:00 PM - 5:00 PM',
-  ];
-
+class GymAvailabilityCard extends ConsumerWidget {
   const GymAvailabilityCard({super.key});
 
-  String _getNextAvailableSession() {
-    final now = DateTime.now();
-    final dateFormat = DateFormat('h:mm a');
+  String _formatSessionTimeDisplay(String startTimeStr, String endTimeStr, DateTime date) {
+    try {
+      final startTimeParts = startTimeStr.split(':');
+      final endTimeParts = endTimeStr.split(':');
 
-    for (final session in sessions) {
-      try {
-        final startTime = dateFormat.parse(session.split(' - ')[0]);
-        final adjustedStartTime = DateTime(
-          now.year,
-          now.month,
-          now.day,
-          startTime.hour,
-          startTime.minute,
-        );
-
-        if (now.isBefore(adjustedStartTime)) {
-          return session;
-        }
-      } catch (e) {
-        debugPrint('Error parsing session time: $e');
-        return session;
-      }
-    }
-
-    return sessions.isNotEmpty ? sessions.first : 'No sessions available';
-  }
-
-  // Get the number of bookings for a specific session
-  int getSessionCount(String sessionTime) {
-    if (allSessions.isEmpty) return 0;
-    
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    
-    return allSessions.where((session) {
-      final sessionDate = DateTime(
-        session.date.year,
-        session.date.month,
-        session.date.day,
+      final DateTime startTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(startTimeParts[0]),
+        int.parse(startTimeParts[1]),
       );
-      return session.time == sessionTime && sessionDate.isAtSameMomentAs(today);
-    }).length;
+
+      final DateTime endTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(endTimeParts[0]),
+        int.parse(endTimeParts[1]),
+      );
+
+      final DateFormat formatter = DateFormat.jm();
+      return '${formatter.format(startTime)} - ${formatter.format(endTime)}';
+    } catch (e) {
+      print('Error formatting session time for GymAvailabilityCard: $e');
+      return '$startTimeStr - $endTimeStr';
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
 
     final today = DateTime.now();
     final formattedDate = DateFormat('EEEE, MMMM d').format(today);
-    final nextSession = _getNextAvailableSession();
-    final sessionCount = getSessionCount(nextSession);
+
+    final nextSessionAsync = ref.watch(nextAvailableGymSessionProvider);
 
     return Container(
       width: double.infinity,
@@ -113,7 +70,7 @@ class GymAvailabilityCard extends StatelessWidget {
               hoverColor: Colors.transparent,
               highlightColor: Colors.transparent,
               onTap: () {
-                context.go(AppRoutes.booking); // Navigate to the BookingScreen using GoRouter
+                context.go(AppRoutes.booking);
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -139,47 +96,79 @@ class GymAvailabilityCard extends StatelessWidget {
               text: formattedDate,
             ),
             const SizedBox(height: 8),
-            HomeInfoRow(
-              icon: SolarIconsOutline.clockCircle,
-              text: nextSession,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Icon(
-                    SolarIconsOutline.usersGroupRounded,
-                    color: colorScheme.onBackground,
-                    size: 24,
-                  ),
-                ),
-                RichText(
-                  text: TextSpan(
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onBackground,
+            nextSessionAsync.when(
+              data: (sessionData) {
+                if (sessionData == null) {
+                  return const HomeInfoRow(
+                    icon: SolarIconsOutline.clockCircle,
+                    text: 'No sessions available today',
+                  );
+                }
+                final DateTime sessionDateActual = sessionData['session_date_actual'] as DateTime;
+                final String sessionTimeDisplay = _formatSessionTimeDisplay(
+                  sessionData['start_time_of_day'] as String,
+                  sessionData['end_time_of_day'] as String,
+                  sessionDateActual,
+                );
+                final int bookedSlots = sessionData['booked_slots'] as int? ?? 0;
+                final int capacity = sessionData['capacity'] as int? ?? 15;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeInfoRow(
+                      icon: SolarIconsOutline.clockCircle,
+                      text: sessionTimeDisplay,
                     ),
-                    children: [
-                      TextSpan(
-                        text: '$sessionCount',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            SolarIconsOutline.usersGroupRounded,
+                            color: colorScheme.onBackground,
+                            size: 24,
+                          ),
                         ),
-                      ),
-                      const TextSpan(
-                        text: '/15 capacity',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                        RichText(
+                          text: TextSpan(
+                            style: textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onBackground,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: '$bookedSlots',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '/$capacity capacity',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              error: (error, stackTrace) => HomeInfoRow(
+                icon: SolarIconsOutline.dangerTriangle,
+                text: 'Error loading availability',
+                iconColor: colorScheme.error,
+                textColor: colorScheme.error,
+              ),
             ),
           ],
         ),
       ),
     );
   }
-
-
 }
