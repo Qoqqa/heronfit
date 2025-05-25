@@ -25,10 +25,8 @@ class WorkoutRecommendationService {
   WorkoutRecommendationService(this._ref, {String? baseUrl})
     : _recommendationApiBaseUrl =
           baseUrl ??
-          (kDebugMode
-              // Use the actual IP address for local debugging
-              ? 'http://192.168.1.6:5000' // Local debug URL with specific IP
-              : 'https://heronfit-recommendation-service.onrender.com'); // Prod URL
+          // Always use the production URL
+          'https://heronfit-recommendation-service.onrender.com'; // Prod URL
 
   // Internal helper to fetch and process categorized recommendations
   Future<List<Workout>> _fetchAndProcessCategorizedRecommendations(
@@ -39,8 +37,16 @@ class WorkoutRecommendationService {
       '$_recommendationApiBaseUrl/recommendations/workout/$userId',
     );
 
+    debugPrint('Fetching recommendations from: $url'); // Log start of API call
+    final startTime = DateTime.now();
+
     try {
       final response = await http.get(url);
+      final endTime = DateTime.now();
+      final duration = endTime.difference(startTime);
+      debugPrint(
+        'Recommendation API call finished in: ${duration.inMilliseconds}ms',
+      ); // Log end of API call and duration
 
       if (response.statusCode == 200) {
         final decodedBody = jsonDecode(response.body);
@@ -99,10 +105,21 @@ class WorkoutRecommendationService {
       // Assuming workoutSupabaseServiceProvider is correctly set up
       final supabaseService = _ref.read(workoutSupabaseServiceProvider);
 
+      debugPrint(
+        'Fetching exercise details for workout "$name" from Supabase. Exercise IDs: ${exerciseIds.length}',
+      ); // Log start of Supabase call
+      final startTimeSupabase = DateTime.now();
+
       // Ensure getExercisesByIds exists in WorkoutSupabaseService and handles potential errors
       final List<Exercise> exercises = await supabaseService.getExercisesByIds(
         exerciseIds,
       );
+
+      final endTimeSupabase = DateTime.now();
+      final durationSupabase = endTimeSupabase.difference(startTimeSupabase);
+      debugPrint(
+        'Supabase exercise fetch for "$name" finished in: ${durationSupabase.inMilliseconds}ms',
+      ); // Log end of Supabase call and duration
 
       // Estimate duration (e.g., 5 mins per exercise, adjust as needed)
       final estimatedDurationMinutes = exercises.length * 5;

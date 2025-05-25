@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/features/booking/views/booking_screen.dart';
+import 'package:heronfit/features/booking/views/my_bookings.dart';
+import 'package:heronfit/features/workout/views/workout_screen.dart';
 
 // Import necessary screen/widget files
 import 'package:heronfit/features/splash/views/splash_screen.dart'; // Import Splash Screen
@@ -14,14 +17,17 @@ import 'package:heronfit/features/profile/views/edit_profile.dart';
 import 'package:heronfit/features/workout/views/workout_history_screen.dart'; // Added import
 import 'package:heronfit/features/profile/views/contact_us_screen.dart';
 import 'package:heronfit/features/profile/views/privacy_policy_screen.dart';
-import 'package:heronfit/features/profile/views/terms_of_use_screen.dart';
-import 'package:heronfit/features/booking/views/my_bookings.dart';
-import 'package:heronfit/features/booking/views/booking_screen.dart';
-import 'package:heronfit/features/workout/views/workout_screen.dart'; // Added import
+import 'package:heronfit/features/booking/views/activate_gym_pass_screen.dart';
+import 'package:heronfit/features/booking/models/session_model.dart'; // New import for Session model
+import 'package:heronfit/features/booking/models/booking_model.dart'; // Adding this import to fix 'Undefined name Booking'
+import 'package:heronfit/features/booking/views/booking_details_screen.dart'; // New import
+import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import UserTicket model
+import 'package:heronfit/features/booking/views/review_booking_screen.dart'; // New import
+import 'package:heronfit/features/booking/views/select_session_screen.dart'; // Ensure this is the only import for select_session_screen
 import 'package:heronfit/features/workout/models/workout_model.dart';
 import 'package:heronfit/features/workout/models/exercise_model.dart'; // Import Exercise model
 import 'package:heronfit/features/workout/views/workout_complete_screen.dart'; // Added import
-import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Corrected import path
+import 'package:heronfit/features/workout/views/add_exercise_screen.dart'; // Restoring import
 import 'package:heronfit/features/workout/views/start_new_workout_screen.dart';
 import 'package:heronfit/features/workout/views/start_workout_from_template_screen.dart'; // Added import
 import 'package:heronfit/features/workout/views/my_workout_templates_screen.dart'; // Import the new screen
@@ -44,6 +50,8 @@ import 'package:heronfit/features/auth/views/register_success_screen.dart';
 import 'package:heronfit/features/auth/views/request_otp_screen.dart'; // New import
 import 'package:heronfit/features/auth/views/enter_otp_screen.dart'; // New import
 import 'package:heronfit/features/auth/views/create_new_password_screen.dart'; // New import
+import 'package:heronfit/features/notifications/views/notifications_screen.dart';
+import 'package:heronfit/features/notifications/views/notification_details_screen.dart';
 
 import 'app_routes.dart';
 
@@ -148,6 +156,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        // Restoring route
         path: AppRoutes.workoutAddExercise,
         builder: (context, state) => const AddExerciseScreen(),
       ),
@@ -247,6 +256,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.progressDetails,
         builder: (context, state) => const ProgressDetailsScreen(),
       ),
+      // ADDED: Route for Notifications Screen
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      // ADDED: Route for Notification Details Screen
+      GoRoute(
+        path: AppRoutes.notificationDetails,
+        builder:
+            (context, state) => NotificationDetailsScreen(
+              notificationId: state.pathParameters['id']!,
+            ),
+      ),
       GoRoute(
         path: AppRoutes.profileEdit,
         builder: (context, state) => const EditProfileScreen(),
@@ -263,9 +285,125 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profilePrivacy,
         builder: (context, state) => const PrivacyPolicyWidget(),
       ),
+      // Booking Flow Routes
       GoRoute(
-        path: AppRoutes.profileTerms,
-        builder: (context, state) => const TermsOfUseWidget(),
+        path: AppRoutes.activateGymPass,
+        builder: (context, state) => ActivateGymPassScreen(), // Removed const
+      ),
+      GoRoute(
+        path: AppRoutes.selectSession,
+        name: AppRoutes.selectSession,
+        builder: (context, state) {
+          UserTicket? activatedTicket;
+          bool noTicketModeFlag = false;
+          final extra = state.extra;
+
+          if (extra is UserTicket) {
+            activatedTicket = extra;
+          } else if (extra is Map && extra['noTicketMode'] == true) {
+            noTicketModeFlag = true;
+          } else {
+            // This case should ideally not be reached if navigation is correct.
+            // If extra is null or an unexpected type, it's an error.
+            print(
+              'Error: Navigated to SelectSessionScreen with invalid or missing extra parameter.',
+            );
+            // You could redirect or show a generic error screen.
+            // For example, redirect back to the activation screen:
+            // WidgetsBinding.instance.addPostFrameCallback((_) {
+            //   GoRouter.of(context).go(AppRoutes.activateGymPass);
+            // });
+            // return const Scaffold(body: Center(child: CircularProgressIndicator())); // Temporary screen during redirect
+            return Scaffold(
+              appBar: AppBar(title: const Text('Navigation Error')),
+              body: const Center(
+                child: Text('Invalid navigation parameters to select session.'),
+              ),
+            );
+          }
+
+          // Now, correctly pass to SelectSessionScreen
+          return SelectSessionScreen(
+            activatedTicket: activatedTicket,
+            noTicketMode: noTicketModeFlag,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.reviewBooking,
+        name: AppRoutes.reviewBooking,
+        builder: (context, state) {
+          final extra = state.extra;
+
+          if (extra is! Map<String, dynamic>) {
+            print(
+              'Error: Navigated to ReviewBookingScreen with invalid or missing extra parameter (not a Map).',
+            );
+            return Scaffold(
+              appBar: AppBar(title: const Text('Navigation Error')),
+              body: const Center(
+                child: Text('Invalid navigation parameters to review booking.'),
+              ),
+            );
+          }
+
+          final args = extra;
+          final Session? session = args['session'] as Session?;
+          final DateTime? selectedDay = args['selectedDay'] as DateTime?;
+          final UserTicket? activatedTicket =
+              args['activatedTicket'] as UserTicket?;
+          final bool noTicketMode = args['noTicketMode'] as bool? ?? false;
+
+          if (session == null || selectedDay == null) {
+            print(
+              'Error: Navigated to ReviewBookingScreen with missing session or selectedDay.',
+            );
+            return Scaffold(
+              appBar: AppBar(title: const Text('Data Error')),
+              body: const Center(
+                child: Text('Essential booking information is missing.'),
+              ),
+            );
+          }
+
+          return ReviewBookingScreen(
+            session: session,
+            selectedDay: selectedDay,
+            activatedTicket: activatedTicket,
+            noTicketMode: noTicketMode,
+          );
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.bookingDetails,
+        name: AppRoutes.bookingDetails,
+        builder: (context, state) {
+          if (state.extra == null || state.extra is! Map<String, dynamic>) {
+            print(
+              'Error: Navigated to BookingDetailsScreen with invalid or missing extra data. Expected Map<String, dynamic>. Got: ${state.extra?.runtimeType}',
+            );
+            return Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: const Center(child: Text('Booking details are missing or invalid.')),
+            );
+          }
+
+          final bookingDetailsMap = state.extra as Map<String, dynamic>;
+          try {
+            final booking = Booking.fromJson(bookingDetailsMap);
+            return BookingDetailsScreen(booking: booking); // Pass Booking object
+          } catch (e, s) {
+            print('Error parsing bookingDetailsMap in AppRouter: $e\n$s');
+            return Scaffold(
+              appBar: AppBar(title: const Text('Error')),
+              body: Center(child: Text('Error displaying booking details: $e')),
+            );
+          }
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.booking,
+        builder: (context, state) => const BookingScreen(),
       ),
       GoRoute(
         path: AppRoutes.bookings,

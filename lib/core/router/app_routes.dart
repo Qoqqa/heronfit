@@ -17,7 +17,7 @@ class AppRoutes {
 
   static const home =
       '/home'; // Base for main app features often using ShellRoute
-  static const booking = '/booking'; // Route for the main booking tab
+  static const booking = '/booking'; // Route for the main booking tab (legacy)
 
   // Profile Routes
   static const profile = '/profile';
@@ -27,8 +27,12 @@ class AppRoutes {
   static const profilePrivacy = '/profile/privacy';
   static const profileTerms = '/profile/terms';
 
-  // Booking Routes
+  // Booking Flow Routes
   static const bookings = '/bookings';
+  static const activateGymPass = '/booking/activate';
+  static const selectSession = '/booking/select-session';
+  static const reviewBooking = '/booking/review-booking'; // New route
+  static const bookingDetails = '/booking/booking-details'; // New route
 
   // Workout Routes
   static const workout = '/workout'; // Maybe a base screen
@@ -66,4 +70,13 @@ class AppRoutes {
   static const String workoutDetails = '/workoutDetails';
 
   // Add other routes as needed
+
+  // ADDED: Route for the notifications screen
+  static const String notifications = '/notifications';
+  // ADDED: Route for the notification details screen
+  static const String notificationDetails = '/notifications/:id';
+
+  // Legacy booking routes (to be removed after migration)
+  static const String legacyBookings = '/legacy/bookings';
+  static const String legacyBookingDetails = '/legacy/booking-details';
 }

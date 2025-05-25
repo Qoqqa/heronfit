@@ -1,63 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:solar_icons/solar_icons.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
-import 'home_info_row.dart'; // Import the reusable row widget
-import '../../../core/theme.dart'; // Import HeronFitTheme
-import 'package:heronfit/features/booking/views/booking_screen.dart'; // Import for session count function
-import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:intl/intl.dart';
+import 'home_info_row.dart';
+import '../../../core/theme.dart';
+import 'package:go_router/go_router.dart';
+import '../home_providers.dart';
+import 'package:heronfit/features/booking/controllers/booking_providers.dart';
 
-class GymAvailabilityCard extends StatelessWidget {
-  final List<String> sessions = const [
-    '8:00 AM - 9:00 AM',
-    '9:00 AM - 10:00 AM',
-    '10:00 AM - 11:00 AM',
-    '11:00 AM - 12:00 PM',
-    '12:00 PM - 1:00 PM',
-    '1:00 PM - 2:00 PM',
-    '2:00 PM - 3:00 PM',
-    '3:00 PM - 4:00 PM',
-    '4:00 PM - 5:00 PM',
-  ];
-
+class GymAvailabilityCard extends ConsumerWidget {
   const GymAvailabilityCard({super.key});
 
-  String getUpcomingSession() {
-    final now = DateTime.now();
-    final dateFormat = DateFormat('h:mm a');
+  String _formatSessionTimeDisplay(String startTimeStr, String endTimeStr, DateTime date) {
+    try {
+      final startTimeParts = startTimeStr.split(':');
+      final endTimeParts = endTimeStr.split(':');
 
-    for (final session in sessions) {
-      final startTime = dateFormat.parse(session.split(' - ')[0]);
-      final adjustedStartTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        startTime.hour,
-        startTime.minute,
+      final DateTime startTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(startTimeParts[0]),
+        int.parse(startTimeParts[1]),
       );
 
-      if (now.isBefore(adjustedStartTime)) {
-        return session;
-      }
-    }
+      final DateTime endTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        int.parse(endTimeParts[0]),
+        int.parse(endTimeParts[1]),
+      );
 
-    return sessions.first; // Default to the first session if none are upcoming
+      final DateFormat formatter = DateFormat.jm();
+      return '${formatter.format(startTime)} - ${formatter.format(endTime)}';
+    } catch (e) {
+      print('Error formatting session time for GymAvailabilityCard: $e');
+      return '$startTimeStr - $endTimeStr';
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
 
     final today = DateTime.now();
     final formattedDate = DateFormat('EEEE, MMMM d').format(today);
-    final upcomingSession = getUpcomingSession();
-    final sessionCount = filterSessionsByTime(
-      allSessions,
-      upcomingSession,
-      DateTime.now(),
-    );
+
+    final nextSessionAsync = ref.watch(nextAvailableGymSessionProvider);
 
     return Container(
       width: double.infinity,
@@ -77,8 +70,42 @@ class GymAvailabilityCard extends StatelessWidget {
               focusColor: Colors.transparent,
               hoverColor: Colors.transparent,
               highlightColor: Colors.transparent,
-              onTap: () {
-                context.go(AppRoutes.booking); // Navigate to the BookingScreen using GoRouter
+              onTap: () async {
+                final activeBooking = await ref.read(userActiveBookingProvider.future);
+                bool hasActiveBooking = activeBooking != null;
+
+                if (hasActiveBooking) {
+                  if (context.mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return AlertDialog(
+                          title: const Text('Active Booking Found'),
+                          content: const Text(
+                            'You already have an upcoming session. Please cancel it or wait for it to complete before booking a new one.',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('View My Bookings'),
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                context.go(AppRoutes.bookings);
+                              },
+                            ),
+                            TextButton(
+                              child: const Text('OK'),
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                } else {
+                  context.go(AppRoutes.booking);
+                }
               },
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,69 +131,79 @@ class GymAvailabilityCard extends StatelessWidget {
               text: formattedDate,
             ),
             const SizedBox(height: 8),
-            HomeInfoRow(
-              icon: SolarIconsOutline.clockCircle,
-              text: upcomingSession,
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.max,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Icon(
-                    SolarIconsOutline.usersGroupRounded,
-                    color: colorScheme.onBackground,
-                    size: 24,
-                  ),
-                ),
-                RichText(
-                  text: TextSpan(
-                    style: textTheme.labelMedium?.copyWith(
-                      color: colorScheme.onBackground,
+            nextSessionAsync.when(
+              data: (sessionData) {
+                if (sessionData == null) {
+                  return const HomeInfoRow(
+                    icon: SolarIconsOutline.clockCircle,
+                    text: 'No sessions available today',
+                  );
+                }
+                final DateTime sessionDateActual = sessionData['session_date_actual'] as DateTime;
+                final String sessionTimeDisplay = _formatSessionTimeDisplay(
+                  sessionData['start_time_of_day'] as String,
+                  sessionData['end_time_of_day'] as String,
+                  sessionDateActual,
+                );
+                final int bookedSlots = sessionData['booked_slots'] as int? ?? 0;
+                final int capacity = sessionData['capacity'] as int? ?? 15;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeInfoRow(
+                      icon: SolarIconsOutline.clockCircle,
+                      text: sessionTimeDisplay,
                     ),
-                    children: [
-                      TextSpan(
-                        text: '$sessionCount',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: Icon(
+                            SolarIconsOutline.usersGroupRounded,
+                            color: colorScheme.onBackground,
+                            size: 24,
+                          ),
                         ),
-                      ),
-                      const TextSpan(
-                        text: '/15 capacity',
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                        RichText(
+                          text: TextSpan(
+                            style: textTheme.labelMedium?.copyWith(
+                              color: colorScheme.onBackground,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: '$bookedSlots',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextSpan(
+                                text: '/$capacity capacity',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
+              },
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              error: (error, stackTrace) => HomeInfoRow(
+                icon: SolarIconsOutline.dangerTriangle,
+                text: 'Error loading availability',
+                iconColor: colorScheme.error,
+                textColor: colorScheme.error,
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  int? filterSessionsByTime(
-    List<SessionsRow>? sessions,
-    String? sessionTime,
-    DateTime? selectedDate,
-  ) {
-    if (sessions == null || sessionTime == null || selectedDate == null) {
-      return 0; // Return 0 if any parameter is null
-    }
-
-    final normalizedSessionTime = sessionTime.trim().toLowerCase();
-
-    final filteredSessions = sessions.where((session) {
-      final normalizedTime = session.time?.trim().toLowerCase() ?? '';
-      final matchesTime = normalizedTime == normalizedSessionTime;
-      final matchesDate = session.date?.toIso8601String().split('T').first ==
-          selectedDate.toIso8601String().split('T').first;
-      debugPrint('Session: ${session.time}, Date: ${session.date}');
-      debugPrint('Matches Time: $matchesTime, Matches Date: $matchesDate');
-      return matchesTime && matchesDate;
-    }).toList();
-
-    return filteredSessions.length;
   }
 }

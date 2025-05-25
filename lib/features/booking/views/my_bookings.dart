@@ -2,34 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/theme.dart';
+import 'package:heronfit/features/booking/models/booking_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:heronfit/core/router/app_routes.dart';
 
-final myBookingsProvider = FutureProvider<List<Map<String, dynamic>>>((ref) async {
+final myBookingsProvider = FutureProvider<List<Booking>>((ref) async {
   final user = Supabase.instance.client.auth.currentUser;
 
   if (user == null) {
     throw Exception('User not authenticated');
   }
 
-  final email = user.email;
-  if (email == null) {
-    throw Exception('User email is null');
-  }
+  final userId = user.id;
 
   final response = await Supabase.instance.client
-      .from('sessions')
-      .select()
-      .eq('email', email) // Ensure email is non-null
-      .order('date', ascending: true)
-      .order('time', ascending: true);
+      .from('bookings')
+      .select('*, sessions(*)')
+      .eq('user_id', userId)
+      .order('booking_time', ascending: false);
 
-  if (response == null || response.isEmpty) {
-    return [];
-  }
-
-  return List<Map<String, dynamic>>.from(response);
+  final bookings = response.map((item) => Booking.fromJson(item)).toList();
+  return bookings;
 });
 
 class MyBookingsWidget extends ConsumerWidget {
@@ -88,88 +83,109 @@ class MyBookingsWidget extends ConsumerWidget {
                       itemCount: bookings.length,
                       itemBuilder: (context, index) {
                         final booking = bookings[index];
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: InkWell(
-                            splashColor: Colors.transparent,
-                            focusColor: Colors.transparent,
-                            hoverColor: Colors.transparent,
-                            highlightColor: Colors.transparent,
-                            onTap: () {
-                              // Handle booking tap
-                            },
-                            child: Container(
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: HeronFitTheme.bgSecondary,
-                                boxShadow: [
-                                  BoxShadow(
-                                    blurRadius: 40,
-                                    color: HeronFitTheme.textMuted.withOpacity(0.1),
-                                    offset: const Offset(0, 10),
+
+                        final DateFormat dateFormat = DateFormat('MMM d, yyyy');
+
+                        final String formattedSessionDate = dateFormat.format(booking.sessionDate);
+
+                        String formattedTimeRange = 'N/A';
+                        try {
+                          final startTime = TimeOfDay(hour: int.parse(booking.sessionStartTime.split(':')[0]), minute: int.parse(booking.sessionStartTime.split(':')[1]));
+                          final endTime = TimeOfDay(hour: int.parse(booking.sessionEndTime.split(':')[0]), minute: int.parse(booking.sessionEndTime.split(':')[1]));
+                          formattedTimeRange = '${startTime.format(context)} - ${endTime.format(context)}';
+                        } catch (e) {
+                          // Handle parsing error, keep 'N/A' or log error
+                          // print('Error parsing session time: $e');
+                        }
+
+                        final String ticketIdDisplay = booking.userTicketId ?? 'N/A';
+                        final String bookingTimeDisplay = DateFormat('MMM d, yyyy, h:mm a').format(booking.bookingTime.toLocal());
+
+                        return InkWell(
+                          onTap: () {
+                            // Navigate to BookingDetailsScreen, passing the booking object
+                            // The router expects a Map<String, dynamic> for the 'extra' parameter
+                            context.push(AppRoutes.bookingDetails, extra: booking.toJson()); // Changed to context.push()
+                          },
+                          child: Card(
+                            elevation: 2.0,
+                            margin: const EdgeInsets.only(bottom: 16.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    booking.sessionCategory,
+                                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.0,
+                                      color: HeronFitTheme.primaryDark,
+                                    ),
                                   ),
-                                ],
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(24),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.max,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Row(
-                                      mainAxisSize: MainAxisSize.max,
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                  const SizedBox(height: 8.0),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.qr_code, color: HeronFitTheme.textSecondary, size: 16),
+                                      const SizedBox(width: 8.0),
+                                      Expanded(
+                                        child: Text(
+                                          'Ref: ${booking.bookingReferenceId ?? "N/A"}',
+                                          style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                            letterSpacing: 0.0,
+                                            color: HeronFitTheme.textSecondary,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const Divider(height: 20.0),
+                                  IntrinsicHeight(
+                                    child: Row(
                                       children: [
-                                        Row(
-                                          mainAxisSize: MainAxisSize.max,
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
-                                            const Icon(
-                                              Icons.calendar_today,
-                                              color: HeronFitTheme.primary,
-                                              size: 32,
+                                            Text(
+                                              'Ticket ID: $ticketIdDisplay',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textSecondary,
+                                              ),
                                             ),
-                                            const SizedBox(width: 8),
-                                            Column(
-                                              mainAxisSize: MainAxisSize.max,
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  'Gym Session',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                                    letterSpacing: 0.0,
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Ticket ID: ${booking['ticket_id']}',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                                    letterSpacing: 0.0,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Date: ${DateFormat('MMMM d, yyyy').format(DateTime.parse(booking['date']))}',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                                    fontSize: 10,
-                                                    letterSpacing: 0.0,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  'Time: ${booking['time']}',
-                                                  style: HeronFitTheme.textTheme.labelMedium?.copyWith(
-                                                    fontSize: 10,
-                                                    letterSpacing: 0.0,
-                                                  ),
-                                                ),
-                                              ],
+                                            Text(
+                                              'Date: $formattedSessionDate',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textSecondary,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Time: $formattedTimeRange',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textSecondary,
+                                              ),
+                                            ),
+                                            Text(
+                                              'Booked on: $bookingTimeDisplay',
+                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                fontSize: 10,
+                                                letterSpacing: 0.0,
+                                                color: HeronFitTheme.textMuted,
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

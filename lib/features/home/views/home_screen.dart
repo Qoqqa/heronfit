@@ -5,17 +5,23 @@ import '../widgets/gym_availability_card.dart';
 import '../widgets/upcoming_session_card.dart';
 import '../widgets/recent_activity_card.dart';
 import 'package:heronfit/features/booking/views/booking_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heronfit/core/router/app_routes.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:heronfit/features/notifications/controllers/notifications_controller.dart'
+    as controller;
+import 'package:badges/badges.dart' as badges;
 
-class HomeWidget extends StatefulWidget {
+class HomeWidget extends ConsumerStatefulWidget {
   const HomeWidget({super.key});
 
   static String routePath = '/home';
 
   @override
-  State<HomeWidget> createState() => _HomeWidgetState();
+  ConsumerState<HomeWidget> createState() => _HomeWidgetState();
 }
 
-class _HomeWidgetState extends State<HomeWidget> {
+class _HomeWidgetState extends ConsumerState<HomeWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   String? userName;
   String? userEmail;
@@ -79,6 +85,14 @@ class _HomeWidgetState extends State<HomeWidget> {
     final textTheme = theme.textTheme;
     final colorScheme = theme.colorScheme;
 
+    final notificationsAsyncValue = ref.watch(controller.notificationsProvider);
+
+    final unreadCount = notificationsAsyncValue.when(
+      data: (notifications) => notifications.where((n) => !n.isRead).length,
+      loading: () => 0,
+      error: (err, stack) => 0,
+    );
+
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -136,29 +150,47 @@ class _HomeWidgetState extends State<HomeWidget> {
                               ],
                             ),
                           ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: colorScheme.background,
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  blurRadius: 4,
-                                  color: Colors.black.withOpacity(0.05),
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: IconButton(
-                              icon: Icon(
-                                SolarIconsBold.bell,
-                                color: colorScheme.primary,
-                                size: 26,
+                          badges.Badge(
+                            showBadge: unreadCount > 0,
+                            badgeContent: Text(
+                              unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
                               ),
-                              onPressed: () {
-                                // TODO: Navigate to Notification screen
-                                print('Notification Tapped');
-                              },
-                              tooltip: 'Notifications',
+                            ),
+                            badgeStyle: badges.BadgeStyle(
+                              badgeColor: colorScheme.error,
+                              padding: const EdgeInsets.all(5),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            position: badges.BadgePosition.topEnd(
+                              top: -5,
+                              end: -5,
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: colorScheme.background,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    blurRadius: 4,
+                                    color: Colors.black.withOpacity(0.05),
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  SolarIconsBold.bell,
+                                  color: colorScheme.primary,
+                                  size: 26,
+                                ),
+                                onPressed: () {
+                                  context.push(AppRoutes.notifications);
+                                },
+                                tooltip: 'Notifications',
+                              ),
                             ),
                           ),
                         ],
