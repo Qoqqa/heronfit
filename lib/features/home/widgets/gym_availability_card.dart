@@ -7,6 +7,7 @@ import 'home_info_row.dart';
 import '../../../core/theme.dart';
 import 'package:go_router/go_router.dart';
 import '../home_providers.dart';
+import 'package:heronfit/features/booking/controllers/booking_providers.dart';
 
 class GymAvailabilityCard extends ConsumerWidget {
   const GymAvailabilityCard({super.key});
@@ -70,48 +71,11 @@ class GymAvailabilityCard extends ConsumerWidget {
               hoverColor: Colors.transparent,
               highlightColor: Colors.transparent,
               onTap: () async {
-                // Check for active upcoming session first
-                final upcomingSessionData = await ref.read(upcomingSessionProvider.future);
-                bool hasActiveBooking = false;
-
-                if (upcomingSessionData != null) {
-                  final dynamic sessionDateActualDynamic = upcomingSessionData['session_date_actual'];
-                  final dynamic endTimeStrDynamic = upcomingSessionData['session_end_time'];
-
-                  if (sessionDateActualDynamic is DateTime && endTimeStrDynamic is String) {
-                    final DateTime sessionDate = sessionDateActualDynamic;
-                    final String endTimeStr = endTimeStrDynamic;
-                    final now = DateTime.now();
-
-                    // Parse end time
-                    try {
-                      final endTimeParts = endTimeStr.split(':');
-                      final DateTime sessionEndDateTime = DateTime(
-                        sessionDate.year,
-                        sessionDate.month,
-                        sessionDate.day,
-                        int.parse(endTimeParts[0]),
-                        int.parse(endTimeParts[1]),
-                        // Assuming seconds are not always present, default to 0
-                        endTimeParts.length > 2 ? int.parse(endTimeParts[2]) : 0,
-                      );
-
-                      if (sessionEndDateTime.isAfter(now)) {
-                        hasActiveBooking = true;
-                      }
-                    } catch (e) {
-                      print('Error parsing session end time for active booking check: $e');
-                      // Potentially treat as no active booking or handle error differently
-                    }
-                  } else {
-                    print('Debug: session_date_actual is not DateTime or session_end_time is not String.');
-                    print('Debug: session_date_actual type: ${sessionDateActualDynamic?.runtimeType}, value: $sessionDateActualDynamic');
-                    print('Debug: session_end_time type: ${endTimeStrDynamic?.runtimeType}, value: $endTimeStrDynamic');
-                  }
-                }
+                final activeBooking = await ref.read(userActiveBookingProvider.future);
+                bool hasActiveBooking = activeBooking != null;
 
                 if (hasActiveBooking) {
-                  if (context.mounted) { // Check if widget is still in the tree
+                  if (context.mounted) {
                     showDialog(
                       context: context,
                       builder: (BuildContext dialogContext) {
@@ -124,14 +88,14 @@ class GymAvailabilityCard extends ConsumerWidget {
                             TextButton(
                               child: const Text('View My Bookings'),
                               onPressed: () {
-                                Navigator.of(dialogContext).pop(); // Close dialog
-                                context.go(AppRoutes.bookings); // Navigate to my bookings
+                                Navigator.of(dialogContext).pop();
+                                context.go(AppRoutes.bookings);
                               },
                             ),
                             TextButton(
                               child: const Text('OK'),
                               onPressed: () {
-                                Navigator.of(dialogContext).pop(); // Close dialog
+                                Navigator.of(dialogContext).pop();
                               },
                             ),
                           ],
