@@ -11,6 +11,9 @@ class RegistrationModel {
   final String weight;
   final String height;
   final String goal;
+  final String userRole;
+  final String roleStatus;
+  final String? verificationDocumentUrl;
 
   const RegistrationModel({
     this.firstName = '',
@@ -22,6 +25,9 @@ class RegistrationModel {
     this.weight = '',
     this.height = '',
     this.goal = '',
+    this.userRole = 'PUBLIC',
+    this.roleStatus = 'VERIFIED',
+    this.verificationDocumentUrl,
   });
 
   RegistrationModel copyWith({
@@ -34,6 +40,10 @@ class RegistrationModel {
     String? weight,
     String? height,
     String? goal,
+    String? userRole,
+    String? roleStatus,
+    String? verificationDocumentUrl,
+    bool setVerificationDocumentUrlToNull = false,
   }) {
     return RegistrationModel(
       firstName: firstName ?? this.firstName,
@@ -45,6 +55,11 @@ class RegistrationModel {
       weight: weight ?? this.weight,
       height: height ?? this.height,
       goal: goal ?? this.goal,
+      userRole: userRole ?? this.userRole,
+      roleStatus: roleStatus ?? this.roleStatus,
+      verificationDocumentUrl: setVerificationDocumentUrlToNull 
+          ? null 
+          : verificationDocumentUrl ?? this.verificationDocumentUrl,
     );
   }
 }

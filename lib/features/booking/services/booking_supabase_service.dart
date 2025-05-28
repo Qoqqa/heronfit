@@ -186,7 +186,6 @@ class BookingSupabaseService {
           (a.startTime.hour * 60 + a.startTime.minute)
               .compareTo(b.startTime.hour * 60 + b.startTime.minute));
 
-      print('[BookingSupabaseService] Combined and sorted ${combinedSessions.length} sessions.');
       return combinedSessions;
 
     } catch (e, stackTrace) {
