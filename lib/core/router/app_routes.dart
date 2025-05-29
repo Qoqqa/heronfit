@@ -31,6 +31,7 @@ class AppRoutes {
   // Booking Flow Routes
   static const bookings = '/bookings';
   static const activateGymPass = '/booking/activate';
+  static const activateGymPassName = 'activateGymPass';
   static const selectSession = '/booking/select-session';
   static const reviewBooking = '/booking/review-booking'; // New route
   static const bookingDetails = '/booking/booking-details'; // New route

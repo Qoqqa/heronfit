@@ -3,6 +3,7 @@ description:
 globs:
 alwaysApply: true
 ---
+
 # HeronFit: Comprehensive AI Development Guidelines
 
 **Document Version:** 2.1
@@ -124,81 +125,126 @@ Prioritize based on project milestones and address charter recommendations.
 - **Follow Architecture:** Implement all features within their dedicated folders (`lib/features/<feature_name>/`). Break down large features into smaller tasks.
 
 - **Booking System Implementation (Refined Flow):**
-    The booking system must adhere strictly to the following streamlined, single-session ticket flow:
+  The booking system must adhere strictly to the following streamlined, single-session ticket flow:
 
-    1.  **User Navigation:** User taps the **"Book" icon** in the bottom navigation bar.
+  1.  **User Navigation:** User taps the **"Book" icon** in the bottom navigation bar.
 
-    2.  **Screen: Activate Your Gym Pass**
-        * **Purpose:** The entry point for gym booking, requiring a valid single-session ticket ID upfront.
-        * **Title:** "Activate Your Gym Pass"
-        * **Primary Message:** "To book your single gym session at the **University of Makati HPSB 11th Floor Gym**, please enter your valid Ticket ID."
-        * **Input Field:** "Ticket ID" (e.g., `XXXX-XXXX-XXXX-XXXX`)
-        * **Help Text:** "Find your Ticket ID on your purchase confirmation email or receipt."
-        * **Button:** "Activate & Find Sessions"
-        * **Backend Validation (Critical):**
-            * Validate Ticket ID existence, `active` status (not used/expired), and **association with the current user's logged-in account**.
-            * Temporarily mark ticket as `pending_booking` in Supabase upon successful validation.
-            * Provide clear, specific error messages for invalid, used, expired, or unassociated tickets.
+  2.  **Screen: Activate Your Gym Pass**
 
-    3.  **Screen: Select Your Session**
-        * **Purpose:** Allows users to choose a date and available time slot after ticket activation.
-        * **Title:** "Select Your Session"
-        * **Location Display:** Prominently display: "Location: **University of Makati HPSB 11th Floor Gym**"
-        * **Calendar View:**
-            * Visually distinguish dates with available slots.
-            * Disable/grey out dates with no availability or in the past.
-        * **Available Slots List:**
-            * For each slot: Display "Time Slot", "Capacity Status" ("X of 15 slots remaining" or "Full").
-            * **Action Button:** "Book This Slot" (if available) or "Join Waitlist" (if full).
+      - **Purpose:** The entry point for gym booking, requiring a valid single-session ticket ID upfront.
+      - **Title:** "Activate Your Gym Pass"
+      - **Primary Message:** "To book your single gym session at the **University of Makati HPSB 11th Floor Gym**, please enter your valid Ticket ID."
+      - **Input Field:** "Ticket ID" (e.g., `XXXX-XXXX-XXXX-XXXX`)
+      - **Help Text:** "Find your Ticket ID on your purchase confirmation email or receipt."
+      - **Button:** "Activate & Find Sessions"
+      - **Backend Validation (Critical):**
+        - Validate Ticket ID existence, `active` status (not used/expired), and **association with the current user's logged-in account**.
+        - Temporarily mark ticket as `pending_booking` in Supabase upon successful validation.
+        - Provide clear, specific error messages for invalid, used, expired, or unassociated tickets.
 
-    4.  **Waitlist Interaction (If Slot is Full):**
-        * **Purpose:** Offers users an option to be notified if a slot becomes available.
-        * **User Action:** Taps "Join Waitlist" on a full slot.
-        * **Modal: Join Waitlist?**
-            * **Title:** "Join Waitlist?"
-            * **Message:** "This session is currently full. If a slot becomes available, we'll notify you. Would you like to join the waitlist for [Date], [Time Slot]?"
-            * **Buttons:** "Yes, Join Waitlist" / "No, Find Another Session"
-        * **Backend Process:** If "Yes, Join Waitlist" is tapped, add user to waitlist in Supabase. **Revert the `pending_booking` status of the Ticket ID**, allowing it to be used for a different booking or waitlist entry.
-        * **Confirmation Message (Waitlist):** "You've been added to the waitlist for [Date], [Time Slot]. We'll send you an in-app notification if a slot opens up!"
+  3.  **Screen: Select Your Session**
 
-    5.  **Screen: Review Your Booking**
-        * **Purpose:** Presents selected details for final confirmation before booking.
-        * **Title:** "Review Your Booking"
-        * **Details Display:** Summarize Date, Time, Location, and the partial Ticket ID used.
-        * **Buttons:** "Confirm Booking" / "Change Session" (to go back to `Select Your Session`).
+      - **Purpose:** Allows users to choose a date and available time slot after ticket activation.
+      - **Title:** "Select Your Session"
+      - **Location Display:** Prominently display: "Location: **University of Makati HPSB 11th Floor Gym**"
+      - **Calendar View:**
+        - Visually distinguish dates with available slots.
+        - Disable/grey out dates with no availability or in the past.
+      - **Available Slots List:**
+        - For each slot: Display "Time Slot", "Capacity Status" ("X of 15 slots remaining" or "Full").
+        - **Action Button:** "Book This Slot" (if available) or "Join Waitlist" (if full).
 
-    6.  **Booking Finalization (Backend Process):**
-        * Upon "Confirm Booking" tap: Update slot status in Supabase and **permanently mark the Ticket ID as `used`**.
-        * Ensure robust RLS to prevent unauthorized modifications or double-bookings.
+  4.  **Waitlist Interaction (If Slot is Full):**
 
-    7.  **Modal: Session Confirmed!**
-        * **Purpose:** Immediate visual confirmation of successful booking.
-        * **Title:** "Session Confirmed!"
-        * **Brief Message:** "Your gym session is booked for [Date] at [Time]!"
-        * **Button:** "View Booking Details" (leads to the final summary screen).
+      - **Purpose:** Offers users an option to be notified if a slot becomes available.
+      - **User Action:** Taps "Join Waitlist" on a full slot.
+      - **Modal: Join Waitlist?**
+        - **Title:** "Join Waitlist?"
+        - **Message:** "This session is currently full. If a slot becomes available, we'll notify you. Would you like to join the waitlist for [Date], [Time Slot]?"
+        - **Buttons:** "Yes, Join Waitlist" / "No, Find Another Session"
+      - **Backend Process:** If "Yes, Join Waitlist" is tapped, add user to waitlist in Supabase. **Revert the `pending_booking` status of the Ticket ID**, allowing it to be used for a different booking or waitlist entry.
+      - **Confirmation Message (Waitlist):** "You've been added to the waitlist for [Date], [Time Slot]. We'll send you an in-app notification if a slot opens up!"
 
-    8.  **Screen: Your Booking Details**
-        * **Purpose:** Provides a comprehensive summary of the confirmed booking and next steps.
-        * **Title:** "Your Booking Details"
-        * **Comprehensive Summary:** Includes Date, Time, Location, Booking Reference ID, and the full Ticket ID used.
-        * **Important Instructions/Next Steps:** Clear guidance on arrival, check-in, and cancellation policy.
-        * **Buttons:** "Add to Calendar", "View My Bookings". **Do NOT include a "Download Receipt" button.** The screen itself, along with an auto-sent email, serves as the confirmation.
+  5.  **Screen: Review Your Booking**
 
-- **Workout Tracking Enhancements:**
-  - Fully integrate `yuhonas/free-exercise-db` with efficient searching/filtering.
-  - Replace static images with GIFs for exercises (source/create GIFs).
-  - Implement exercise filtering based on available university gym equipment (requires mapping data).
-  - Complete "Customize Your Workout" and "Recommended/All Programs" sections.
-- **Recommendation System:**
-  - **Backend Focus:** Implement core logic (content-based, collaborative filtering, hybrid) as a **separate backend service** (Python/Flask/FastAPI preferred, or Supabase Edge Functions for simpler logic/proxy). Leverage libraries like `scikit-learn`, `pandas`.
-  - **Flutter Role:** Make HTTP requests to the recommendation API endpoint (e.g., `/recommendations?userId=<user_id>`). Receive recommendations (e.g., list of workout/program IDs). Fetch details for these IDs from Supabase and display them.
-  - **Data:** Ensure the backend service has secure access to necessary user data (profile, goals, history, ratings if any) and exercise data.
-  - **Triggering:** Decide when recommendations are generated (on-demand, background task?).
-  - **Enhancements:** Improve algorithm for beginner workouts based on fitness levels (requires capturing/using this data). Allow user preferences and feedback loops.
-- **Profile:** Implement all sections (My Bookings categorization, Workout History details, Notifications settings, Contact Us, Privacy Policy).
-- **Admin Module Awareness:** While developing user features, be mindful of related Admin needs (Analytics, Session Attendance Tracking, Targeted Alerts) when designing shared Supabase tables and logic.
-    * **Real-time Occupancy Updates:** The Admin Web App is the primary source for updating gym occupancy data (e.g., check-ins/outs, manual capacity adjustments). The mobile app subscribes to these real-time updates via Supabase.
-    * **Booking Restriction:** The Admin Web App will manage the list of approved university students, faculty, and staff, which the mobile app uses for user validation during registration/booking.
+      - **Purpose:** Presents selected details for final confirmation before booking.
+      - **Title:** "Review Your Booking"
+      - **Details Display:** Summarize Date, Time, Location, and the partial Ticket ID used.
+      - **Buttons:** "Confirm Booking" / "Change Session" (to go back to `Select Your Session`).
+
+  6.  **Booking Finalization (Backend Process):**
+
+      - Upon "Confirm Booking" tap: Update slot status in Supabase and **permanently mark the Ticket ID as `used`**.
+      - Ensure robust RLS to prevent unauthorized modifications or double-bookings.
+
+  7.  **Modal: Session Confirmed!**
+
+      - **Purpose:** Immediate visual confirmation of successful booking.
+      - **Title:** "Session Confirmed!"
+      - **Brief Message:** "Your gym session is booked for [Date] at [Time]!"
+      - **Button:** "View Booking Details" (leads to the final summary screen).
+
+  8.  **Screen: Your Booking Details**
+      - **Purpose:** Provides a comprehensive summary of the confirmed booking and next steps.
+      - **Title:** "Your Booking Details"
+      - **Comprehensive Summary:** Includes Date, Time, Location, Booking Reference ID, and the full Ticket ID used.
+      - **Important Instructions/Next Steps:** Clear guidance on arrival, check-in, and cancellation policy.
+      - **Buttons:** "Add to Calendar", "View My Bookings". **Do NOT include a "Download Receipt" button.** The screen itself, along with an auto-sent email, serves as the confirmation.
+
+### Booking System Data Model Update: Recurring Sessions & Session Occurrences
+
+#### Motivation
+
+To efficiently support recurring gym sessions, real-time capacity tracking, and robust admin management (without bloating the database with every possible date), HeronFit now uses a two-table model:
+
+1. **sessions** (Recurring Template Table)
+
+   - Stores the _template_ for a recurring session (e.g., "Monday 8am-9am, 15 slots").
+   - Key fields: `id`, `day_of_week`, `start_time_of_day`, `end_time_of_day`, `category`, `capacity`, `is_active`, `notes`, `override_date` (for one-off overrides).
+
+2. **session_occurrences** (Actual Instance Table)
+   - Stores _actual_ session instances for a specific date, only when needed (e.g., when a booking is made or admin wants to track attendance/capacity for a date).
+   - Key fields: `id`, `session_id` (FK to sessions), `date`, `booked_slots`, `attended_count`, `status`, `override_capacity`, `notes`, `created_at`.
+   - **Unique constraint:** (`session_id`, `date`) to prevent duplicates.
+
+#### How It Works in the App
+
+- **User browses sessions:**
+  - The app shows available sessions for a selected date by combining recurring templates (`sessions`) with any existing occurrences (`session_occurrences`) for that date.
+  - If no occurrence exists, the app "virtually" shows the session as available (using the template's default capacity).
+- **User books a session:**
+  - If no occurrence exists for that session/date, the app creates one (with `booked_slots = 1`).
+  - If an occurrence exists, it increments `booked_slots`.
+- **Capacity/Attendance:**
+  - Capacity is tracked per occurrence. Admin can override capacity for a specific date.
+  - Attendance is tracked per occurrence (admin marks users as attended).
+
+#### Admin Dashboard Integration
+
+- **Admin can:**
+  - Edit recurring templates (sessions).
+  - View, edit, and manage occurrences (per date), including capacity, attendance, and status.
+  - Override capacity for a specific date (e.g., for holidays or special events).
+  - Mark users as attended (for attendance tracking).
+  - Cancel or reschedule a specific occurrence.
+
+#### Benefits
+
+- **No table bloat:** Only actual, needed occurrences are created.
+- **Full flexibility:** Admin can override, cancel, or adjust any specific date/session.
+- **Easy reporting:** Track attendance, bookings, and capacity per occurrence.
+
+#### Migration/Transition
+
+- No need to pre-populate `session_occurrences`.
+- Existing bookings can be migrated to reference the new occurrence if needed.
+
+#### Example Table Structure
+
+| Table               | Purpose                    | Example Row                                               |
+| ------------------- | -------------------------- | --------------------------------------------------------- |
+| sessions            | Recurring template         | id: 1, day_of_week: Monday, 8am-9am, 15 slots             |
+| session_occurrences | Actual instance for a date | id: 101, session_id: 1, date: 2025-05-30, booked_slots: 3 |
 
 ## 12. Testing
 

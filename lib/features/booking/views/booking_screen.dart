@@ -19,7 +19,7 @@ class _BookingScreenState extends State<BookingScreen> {
     // Redirect to the select session screen when this screen is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.go(AppRoutes.selectSession, extra: {'noTicketMode': true});
+        context.go(AppRoutes.selectSession);
       }
     });
   }
@@ -27,10 +27,6 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   Widget build(BuildContext context) {
     // This is a temporary screen that will be replaced by the new flow
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }

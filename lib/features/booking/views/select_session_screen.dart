@@ -39,7 +39,7 @@ class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
   @override
   void initState() {
     super.initState();
-    // Check for active bookings when the screen loads
+    // Remove ticket checks; allow browsing sessions always
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForActiveBooking();
     });
@@ -503,7 +503,7 @@ class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
                                                 try {
                                                   // Always refresh before proceeding
                                                   final activeBooking =
-                                                      await ref.refresh(
+                                                      await ref.read(
                                                         userActiveBookingProvider
                                                             .future,
                                                       );
@@ -531,27 +531,46 @@ class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
                                                       context,
                                                       session,
                                                     );
-                                                  } else if (widget
-                                                              .activatedTicket !=
-                                                          null ||
-                                                      widget.noTicketMode) {
-                                                    context.pushNamed(
-                                                      AppRoutes.reviewBooking,
-                                                      extra: {
-                                                        'session': session,
-                                                        'selectedDay':
-                                                            selectedDay,
-                                                        'activatedTicket':
-                                                            widget
-                                                                .activatedTicket,
-                                                        'noTicketMode':
-                                                            widget.noTicketMode,
-                                                      },
-                                                    );
                                                   } else {
-                                                    context.push(
-                                                      AppRoutes.activateGymPass,
+                                                    debugPrint(
+                                                      '[SelectSessionScreen] Navigating to ActivateGymPassScreen with sessionId=${session.id}, selectedDay=${selectedDay.toIso8601String()}, noTicketMode=${widget.noTicketMode}',
                                                     );
+                                                    if (session.id.isEmpty ||
+                                                        selectedDay == null) {
+                                                      debugPrint(
+                                                        '[SelectSessionScreen] ERROR: session.id is empty or selectedDay is null when trying to navigate to ActivateGymPassScreen!',
+                                                      );
+                                                    }
+                                                    // Always go to ActivateGymPassScreen to validate ticket before booking
+                                                    debugPrint(
+                                                      '[SelectSessionScreen] AppRoutes.activateGymPassName:  ${AppRoutes.activateGymPassName}',
+                                                    );
+                                                    debugPrint(
+                                                      '[SelectSessionScreen] About to pushNamed. Extra type: ${{'sessionId': session.id, 'selectedDay': selectedDay.toIso8601String(), 'noTicketMode': widget.noTicketMode}.runtimeType}',
+                                                    );
+                                                    try {
+                                                      context.pushNamed(
+                                                        AppRoutes
+                                                            .activateGymPassName,
+                                                        extra: {
+                                                          'sessionId':
+                                                              session.id,
+                                                          'selectedDay':
+                                                              selectedDay
+                                                                  .toIso8601String(),
+                                                          'noTicketMode':
+                                                              widget
+                                                                  .noTicketMode,
+                                                        },
+                                                      );
+                                                      debugPrint(
+                                                        '[SelectSessionScreen] pushNamed called successfully',
+                                                      );
+                                                    } catch (e, stack) {
+                                                      debugPrint(
+                                                        '[SelectSessionScreen] ERROR during pushNamed: $e\n$stack',
+                                                      );
+                                                    }
                                                   }
                                                 } catch (error) {
                                                   if (mounted) {

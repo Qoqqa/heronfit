@@ -294,7 +294,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Booking Flow Routes
       GoRoute(
         path: AppRoutes.activateGymPass,
-        builder: (context, state) => ActivateGymPassScreen(), // Removed const
+        name: 'activateGymPass',
+        builder: (context, state) => ActivateGymPassScreen(extra: state.extra),
       ),
       GoRoute(
         path: AppRoutes.selectSession,
@@ -309,26 +310,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           } else if (extra is Map && extra['noTicketMode'] == true) {
             noTicketModeFlag = true;
           } else {
-            // This case should ideally not be reached if navigation is correct.
-            // If extra is null or an unexpected type, it's an error.
-            print(
-              'Error: Navigated to SelectSessionScreen with invalid or missing extra parameter.',
-            );
-            // You could redirect or show a generic error screen.
-            // For example, redirect back to the activation screen:
-            // WidgetsBinding.instance.addPostFrameCallback((_) {
-            //   GoRouter.of(context).go(AppRoutes.activateGymPass);
-            // });
-            // return const Scaffold(body: Center(child: CircularProgressIndicator())); // Temporary screen during redirect
-            return Scaffold(
-              appBar: AppBar(title: const Text('Navigation Error')),
-              body: const Center(
-                child: Text('Invalid navigation parameters to select session.'),
-              ),
-            );
+            // Allow default browsing mode if no extra is provided
+            activatedTicket = null;
+            noTicketModeFlag = false;
           }
 
-          // Now, correctly pass to SelectSessionScreen
           return SelectSessionScreen(
             activatedTicket: activatedTicket,
             noTicketMode: noTicketModeFlag,
@@ -390,14 +376,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
             return Scaffold(
               appBar: AppBar(title: const Text('Error')),
-              body: const Center(child: Text('Booking details are missing or invalid.')),
+              body: const Center(
+                child: Text('Booking details are missing or invalid.'),
+              ),
             );
           }
 
           final bookingDetailsMap = state.extra as Map<String, dynamic>;
           try {
             final booking = Booking.fromJson(bookingDetailsMap);
-            return BookingDetailsScreen(booking: booking); // Pass Booking object
+            return BookingDetailsScreen(
+              booking: booking,
+            ); // Pass Booking object
           } catch (e, s) {
             print('Error parsing bookingDetailsMap in AppRouter: $e\n$s');
             return Scaffold(
