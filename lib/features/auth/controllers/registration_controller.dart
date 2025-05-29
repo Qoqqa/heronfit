@@ -37,19 +37,16 @@ class RegistrationController extends StateNotifier<RegistrationModel> {
         email: state.email,
         password: state.password,
         data: {
-          // Temporarily sending a minimal payload for debugging
-          'debug_signup_attempt': true,
-          'user_role': state.userRole, // Keep user_role as it's fundamental
-          'role_status': state.roleStatus, // Keep role_status
-          'first_name': state.firstName, // Keep essential names
-          'last_name': state.lastName
-          // Commenting out other fields to isolate the issue:
-          // 'full_name': '${state.firstName} ${state.lastName}', // public.users doesn't have this
-          // 'verification_document_url': state.verificationDocumentUrl, 
-          // 'gender': state.gender,
-          // 'birth_date': state.birthDate?.toIso8601String(),
-          // 'fitness_goal': state.fitnessGoal,
-          // 'activity_level': state.activityLevel,
+          'first_name': state.firstName,
+          'last_name': state.lastName,
+          'gender': state.gender,
+          'birthday': state.birthday,
+          'weight': state.weight,
+          'height': state.height,
+          'goal': state.goal,
+          'user_role': state.userRole,
+          'role_status': state.roleStatus,
+          'verification_document_url': state.verificationDocumentUrl,
         },
       );
       debugPrint('Supabase signUp call completed.');
@@ -91,33 +88,111 @@ class RegistrationController extends StateNotifier<RegistrationModel> {
   // This method inserts additional details not typically part of raw_user_meta_data during signup.
   // user_role, role_status, verification_document_url are expected to be in public.users via a trigger from auth.users.
   Future<void> insertUserProfile(String userId) async {
-    debugPrint('Attempting to insert profile for user ID: $userId');
     try {
-      // Check if user already exists to prevent re-inserting/overwriting if this is called multiple times
-      // This is a simple check; more robust handling might be needed depending on flow
-      final existingUser = await _supabase.from('users').select('id').eq('id', userId).maybeSingle();
-      if (existingUser != null) {
-        debugPrint('User profile for $userId already exists. Skipping insert.');
-        // Optionally, update existing fields if necessary, but for now, we skip.
-        return;
-      }
+      // Log all the state values for debugging
+      debugPrint('Saving user profile with data:');
+      debugPrint('First Name: ${state.firstName}');
+      debugPrint('Last Name: ${state.lastName}');
+      debugPrint('Email: ${state.email}');
+      debugPrint('Gender: ${state.gender}');
+      debugPrint('Birthday: ${state.birthday}');
+      debugPrint('Weight: ${state.weight}');
+      debugPrint('Height: ${state.height}');
+      debugPrint('Goal: ${state.goal}');
+      debugPrint('User Role: ${state.userRole}');
+      debugPrint('Role Status: ${state.roleStatus}');
+      debugPrint('Verification Doc URL: ${state.verificationDocumentUrl}');
 
-      await _supabase.from('users').insert({
+      // First, check if user exists and get current data
+      final existingUser = await _supabase
+          .from('users')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
+
+      final userData = <String, dynamic>{
         'id': userId,
         'first_name': state.firstName,
         'last_name': state.lastName,
-        'email_address': state.email, // Use the correct column name
+        'email_address': state.email,
         'gender': state.gender,
         'birthday': state.birthday.isEmpty ? null : state.birthday,
         'weight': state.weight,
         'height': int.tryParse(state.height),
         'goal': state.goal,
-        // 'user_role': state.userRole, // Should be set by trigger from auth.users
-        // 'role_status': state.roleStatus, // Should be set by trigger from auth.users
-        // 'verification_document_url': state.verificationDocumentUrl, // Should be set by trigger
-        'created_at': DateTime.now().toIso8601String(),
-      });
-      debugPrint('User profile inserted successfully for user: $userId');
+        'user_role': state.userRole,
+        'role_status': state.roleStatus,
+        'verification_document_url': state.verificationDocumentUrl,
+      };
+
+      if (existingUser != null) {
+        debugPrint('Updating existing profile for user: $userId');
+        // Remove null values to avoid overwriting existing data with null
+        userData.removeWhere((key, value) => value == null);
+        
+        // Update existing user
+        try {
+          final response = await _supabase
+              .from('users')
+              .update(userData)
+              .eq('id', userId);
+          debugPrint('Update response: $response');
+        } catch (e) {
+          debugPrint('Error updating user: $e');
+          // If update fails, try with only the essential fields
+          final essentialData = <String, dynamic>{
+            'first_name': state.firstName,
+            'last_name': state.lastName,
+            'email_address': state.email,
+            'gender': state.gender,
+          };
+          final fallbackResponse = await _supabase
+              .from('users')
+              .update(essentialData)
+              .eq('id', userId);
+          debugPrint('Fallback update response: $fallbackResponse');
+        }
+      } else {
+        debugPrint('Creating new profile for user: $userId');
+        // For new users, include created_at
+        final newUserData = Map<String, dynamic>.from(userData);
+        newUserData['created_at'] = DateTime.now().toIso8601String();
+        
+        try {
+          final response = await _supabase
+              .from('users')
+              .insert(newUserData);
+          debugPrint('Insert response: $response');
+        } catch (e) {
+          debugPrint('Error creating user: $e');
+          // If insert fails with full data, try with minimal required fields
+          final minimalUserData = {
+            'id': userId,
+            'first_name': state.firstName,
+            'last_name': state.lastName,
+            'email_address': state.email,
+            'created_at': DateTime.now().toIso8601String(),
+          };
+          final fallbackResponse = await _supabase
+              .from('users')
+              .insert(minimalUserData);
+          debugPrint('Fallback insert response: $fallbackResponse');
+        }
+      }
+      
+      // Verify the data was saved correctly
+      try {
+        final savedUser = await _supabase
+            .from('users')
+            .select()
+            .eq('id', userId)
+            .single();
+        
+        debugPrint('User profile saved successfully. Current data:');
+        debugPrint(savedUser.toString());
+      } catch (e) {
+        debugPrint('Error verifying saved user data: $e');
+      }
     } catch (e) {
       debugPrint('Error inserting user profile for $userId: ${e.toString()}');
       // Decide how to handle profile insertion failure - user is verified but profile failed.
