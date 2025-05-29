@@ -45,6 +45,7 @@ import 'package:heronfit/features/workout/views/exercise_details_screen.dart'; /
 import 'package:heronfit/features/workout/views/workout_details_screen.dart';
 import 'package:heronfit/widgets/main_screen_wrapper.dart';
 import 'package:heronfit/features/auth/views/register_getting_to_know_screen.dart';
+import 'package:heronfit/features/auth/views/register_role_selection_screen.dart';
 import 'package:heronfit/features/auth/views/register_set_goals_screen.dart';
 import 'package:heronfit/features/auth/views/register_success_screen.dart';
 import 'package:heronfit/features/auth/views/request_otp_screen.dart'; // New import
@@ -114,6 +115,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: AppRoutes.register,
         builder: (context, state) => const RegisterWidget(),
         routes: [
+          GoRoute(
+            path: 'role-selection',
+            name: AppRoutes.registerRoleSelection,
+            builder: (context, state) => const RegisterRoleSelectionScreen(),
+          ),
           GoRoute(
             path: 'getting-to-know',
             name: AppRoutes.registerGettingToKnow,

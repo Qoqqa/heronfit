@@ -8,12 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../controllers/registration_controller.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 import '../../../widgets/loading_indicator.dart'; // For loading state
-import 'package:file_picker/file_picker.dart'; // Import file_picker
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase for storage
-import 'dart:io'; // Added for File class
 
-// Enum for Umak affiliation
-enum UmakAffiliation { student, facultyStaff }
+// No longer needed - moved to RegisterRoleSelectionScreen
 
 class RegisterWidget extends ConsumerStatefulWidget {
   const RegisterWidget({super.key});
@@ -41,9 +37,7 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-  // State for role selection
-  UmakAffiliation? _selectedAffiliation;
-  String? _verificationDocumentPath;
+  // Role selection moved to RegisterRoleSelectionScreen
 
   @override
   void initState() {
@@ -78,119 +72,7 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
     return null;
   }
 
-  Future<void> _pickAndUploadVerificationDocument() async {
-    // 1. Pick file
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['jpg', 'png', 'pdf', 'doc', 'docx'],
-    );
-
-    if (result != null && result.files.single.path != null) {
-      final filePath = result.files.single.path!;
-      final fileName = 'verification_documents/${_emailController.text.trim()}_${DateTime.now().millisecondsSinceEpoch}.${result.files.single.extension}';
-
-      setState(() => _isLoading = true); // Show loading indicator during upload
-
-      try {
-        final file = File(filePath);
-        final String uploadedPath = await Supabase.instance.client.storage
-            .from('user-documents') // Ensure this bucket exists and has correct policies
-            .upload(fileName, file);
-        
-        // The 'uploadedPath' here is just the key/path within the bucket.
-        // To get a public URL, you might need to construct it or use .getPublicUrl()
-        // For now, we'll store the path and assume the admin dashboard can access it.
-        // Or, more simply, we can construct a public URL if policies allow.
-        // final publicUrl = Supabase.instance.client.storage.from('user-documents').getPublicUrl(fileName);
-
-        ref.read(registrationProvider.notifier).updateVerificationDocumentUrl(uploadedPath); // Or publicUrl
-        setState(() {
-          _verificationDocumentPath = uploadedPath; // Or publicUrl, for local feedback if needed
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Verification document uploaded.'), backgroundColor: Colors.green),
-        );
-      } on StorageException catch (e) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Document upload failed: ${e.message}'), backgroundColor: HeronFitTheme.error),
-        );
-        throw Exception('Document upload failed'); // Rethrow to stop registration if critical
-      } catch (e) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Document upload error: $e'), backgroundColor: HeronFitTheme.error),
-        );
-        throw Exception('Document upload error'); // Rethrow
-      }
-    } else {
-      // User canceled the picker
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No document selected.'), backgroundColor: HeronFitTheme.error),
-      );
-      throw Exception('No document selected'); // Stop registration if document is mandatory
-    }
-  }
-
-  Future<void> _showUmakAffiliationDialog() async {
-    _selectedAffiliation = null; // Reset before showing dialog
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false, // User must make a selection
-      builder: (BuildContext context) {
-        return StatefulBuilder( // Needed to update dialog state for radio buttons
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: const Text('Confirm UMAK Affiliation'),
-              content: SingleChildScrollView(
-                child: ListBody(
-                  children: <Widget>[
-                    RadioListTile<UmakAffiliation>(
-                      title: const Text('Student'),
-                      value: UmakAffiliation.student,
-                      groupValue: _selectedAffiliation,
-                      onChanged: (UmakAffiliation? value) {
-                        setDialogState(() => _selectedAffiliation = value);
-                      },
-                    ),
-                    RadioListTile<UmakAffiliation>(
-                      title: const Text('Faculty/Staff'),
-                      value: UmakAffiliation.facultyStaff,
-                      groupValue: _selectedAffiliation,
-                      onChanged: (UmakAffiliation? value) {
-                        setDialogState(() => _selectedAffiliation = value);
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Pops dialog, _selectedAffiliation remains null or last value
-                  },
-                ),
-                TextButton(
-                  child: const Text('OK'),
-                  onPressed: () {
-                    if (_selectedAffiliation == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Please select an affiliation.'), backgroundColor: HeronFitTheme.error),
-                      );
-                      return; // Don't pop
-                    }
-                    Navigator.of(context).pop(); // Pops dialog, _selectedAffiliation is set
-                  },
-                ),
-              ],
-            );
-          }
-        );
-      },
-    );
-  }
+  // Methods for role selection and document upload moved to RegisterRoleSelectionScreen
 
   Future<void> _onRegister() async {
     FocusScope.of(context).unfocus(); // Dismiss keyboard
@@ -199,7 +81,7 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
     }
     if (!_termsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Please accept the terms and conditions.'), backgroundColor: HeronFitTheme.error),
+        const SnackBar(content: Text('Please accept the terms and conditions.'), backgroundColor: HeronFitTheme.error),
       );
       return;
     }
@@ -215,40 +97,10 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
     registrationNotifier.updatePassword(_passwordController.text.trim());
 
     try {
-      if (email.toLowerCase().endsWith('@umak.edu.ph')) {
-        await _showUmakAffiliationDialog(); // Show dialog and wait for selection
-
-        if (_selectedAffiliation == null) { // User cancelled dialog or didn't select
-          setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Affiliation selection is required for UMAK emails.'), backgroundColor: HeronFitTheme.error),
-          );
-          return;
-        }
-
-        if (_selectedAffiliation == UmakAffiliation.student) {
-          registrationNotifier.updateUserRole('STUDENT');
-          registrationNotifier.updateRoleStatus('VERIFIED');
-          registrationNotifier.updateVerificationDocumentUrl(null); // Ensure it's null
-        } else { // Faculty/Staff
-          registrationNotifier.updateUserRole('FACULTY_STAFF');
-          registrationNotifier.updateRoleStatus('PENDING_VERIFICATION');
-          // Prompt for document upload
-          await _pickAndUploadVerificationDocument(); // This will throw if it fails and is mandatory
-          // If successful, verificationDocumentUrl is already updated in the provider by the method itself.
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Your Faculty/Staff account is pending verification by an administrator.'), backgroundColor: HeronFitTheme.primary, duration: Duration(seconds: 5)),
-          );
-        }
-      } else {
-        registrationNotifier.updateUserRole('PUBLIC');
-        registrationNotifier.updateRoleStatus('VERIFIED');
-        registrationNotifier.updateVerificationDocumentUrl(null); // Ensure it's null
-      }
-
-      // All role info set, proceed to next step
+      // Navigate to role selection screen for all users
       if (mounted) {
-        context.pushNamed(AppRoutes.registerGettingToKnow);
+        context.pushNamed(AppRoutes.registerRoleSelection);
+        setState(() => _isLoading = false); // Reset loading state after navigation
       }
     } catch (e) {
       if (mounted) {

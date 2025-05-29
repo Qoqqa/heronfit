@@ -11,6 +11,7 @@ class AppRoutes {
   static const createNewPassword =
       '/password-recovery/create-new-password'; // New route for new password
   static const registerStep2 = '/register/step2'; // Example, adjust as needed
+  static const registerRoleSelection = '/register/role-selection';
   static const registerGettingToKnow = '/register/getting-to-know';
   static const registerSetGoals = '/register/set-goals';
   static const registerSuccess = '/register/success';
