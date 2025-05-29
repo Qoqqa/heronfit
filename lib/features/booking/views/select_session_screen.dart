@@ -6,6 +6,7 @@ import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:heronfit/features/booking/controllers/booking_providers.dart'; // Import new providers
 import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import UserTicket model
+import 'package:heronfit/features/booking/models/booking_model.dart'; // Import Booking model
 import 'package:table_calendar/table_calendar.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:intl/intl.dart'; // For date formatting
@@ -15,7 +16,7 @@ final selectedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 // Provider for focused day (for calendar controls)
 final focusedDayProvider = StateProvider<DateTime>((ref) => DateTime.now());
 
-class SelectSessionScreen extends ConsumerWidget {
+class SelectSessionScreen extends ConsumerStatefulWidget {
   final UserTicket? activatedTicket; // Made nullable
   final bool noTicketMode; // Added flag
 
@@ -25,17 +26,133 @@ class SelectSessionScreen extends ConsumerWidget {
     this.noTicketMode = false, // Default to false
   });
 
-  void _showJoinWaitlistDialog(
-    BuildContext context,
-    WidgetRef ref,
-    Session session,
-  ) {
-    // Added WidgetRef
-    // To handle loading state within the dialog or on the button
-    // We can use a local state variable if the dialog rebuilds,
-    // or manage it via the notifier's state if the dialog is simple.
-    // For now, let's keep it simple and show feedback via Snackbars after pop.
+  @override
+  ConsumerState<SelectSessionScreen> createState() =>
+      _SelectSessionScreenState();
+}
 
+class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
+  bool _hasCheckedActiveBooking = false;
+  bool _hasActiveBooking = false;
+  bool _hasShownActiveBookingDialog = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Remove ticket checks; allow browsing sessions always
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForActiveBooking();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh the active booking check when the screen becomes active again
+    if (mounted && _hasCheckedActiveBooking) {
+      _checkForActiveBooking();
+    }
+  }
+
+  Future<void> _checkForActiveBooking() async {
+    try {
+      print('[SelectSessionScreen] Checking for active bookings...');
+      final activeBooking = await ref.read(userActiveBookingProvider.future);
+      print(
+        '[SelectSessionScreen] Active booking check result: ${activeBooking != null ? 'Found booking' : 'No active booking'}',
+      );
+
+      if (activeBooking != null && mounted) {
+        print('[SelectSessionScreen] Setting _hasActiveBooking to true');
+        setState(() {
+          _hasActiveBooking = true;
+          _hasCheckedActiveBooking = true;
+        });
+
+        // Show the active booking dialog if it hasn't been shown yet
+        // or if it's being triggered by the Book button (reset flag)
+        if (!_hasShownActiveBookingDialog) {
+          print('[SelectSessionScreen] Showing active booking dialog');
+          _showActiveBookingDialog(activeBooking);
+        }
+      } else if (mounted) {
+        print('[SelectSessionScreen] Setting _hasActiveBooking to false');
+        setState(() {
+          _hasActiveBooking = false;
+          _hasCheckedActiveBooking = true;
+          _hasShownActiveBookingDialog =
+              false; // Reset flag if no active booking
+        });
+      }
+    } catch (e) {
+      print('[SelectSessionScreen] Error checking for active bookings: $e');
+      if (mounted) {
+        setState(() {
+          _hasCheckedActiveBooking = true;
+          // Default to true if there's an error, to be safe
+          _hasActiveBooking = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error checking active bookings: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showActiveBookingDialog(Booking activeBooking) {
+    if (!mounted) return;
+
+    // Set flag to indicate dialog has been shown
+    setState(() {
+      _hasShownActiveBookingDialog = true;
+    });
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User must tap a button to dismiss
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Active Booking Exists'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You already have an active booking for ${DateFormat('MMMM d, yyyy').format(activeBooking.sessionDate)} at ${activeBooking.sessionTimeRangeShort}.',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Please cancel your current booking or wait for it to complete before booking another session.',
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('View My Bookings'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                context.push(AppRoutes.bookings);
+              },
+            ),
+            TextButton(
+              child: const Text('Go Back'),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                Navigator.of(context).pop(); // Go back to previous screen
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showJoinWaitlistDialog(BuildContext context, Session session) {
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -79,7 +196,7 @@ class SelectSessionScreen extends ConsumerWidget {
                             try {
                               await innerRef
                                   .read(joinWaitlistNotifierProvider.notifier)
-                                  .join(session.id, activatedTicket?.id);
+                                  .join(session.id, widget.activatedTicket?.id);
                               Navigator.of(
                                 dialogContext,
                               ).pop(); // Close the dialog on success
@@ -118,7 +235,7 @@ class SelectSessionScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final DateTime selectedDay = ref.watch(selectedDayProvider);
     final DateTime focusedDay = ref.watch(focusedDayProvider);
     final AsyncValue<List<Session>> sessionsAsync = ref.watch(
@@ -147,7 +264,13 @@ class SelectSessionScreen extends ConsumerWidget {
             color: HeronFitTheme.primary,
             size: 30,
           ),
-          onPressed: () => Navigator.of(context).maybePop(),
+          onPressed: () {
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+            } else {
+              context.go(AppRoutes.home);
+            }
+          },
         ),
         title: Text(
           'Book a Session', // Title from previous iteration
@@ -268,19 +391,31 @@ class SelectSessionScreen extends ConsumerWidget {
                     itemBuilder: (context, index) {
                       final session = sessions[index];
                       return Container(
-                        margin: const EdgeInsets.symmetric(vertical: 8.0), // Original Card margin
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 8.0,
+                        ), // Original Card margin
                         decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor, // Use theme's card color for background
-                          borderRadius: BorderRadius.circular(12.0), // Match Card's shape
-                          boxShadow: HeronFitTheme.cardShadow, // Apply custom shadow
+                          color:
+                              Theme.of(
+                                context,
+                              ).cardColor, // Use theme's card color for background
+                          borderRadius: BorderRadius.circular(
+                            12.0,
+                          ), // Match Card's shape
+                          boxShadow:
+                              HeronFitTheme.cardShadow, // Apply custom shadow
                         ),
                         child: Card(
-                          elevation: 0, // Set elevation to 0 as shadow is handled by Container
-                          margin: EdgeInsets.zero, // Margin handled by Container
+                          elevation:
+                              0, // Set elevation to 0 as shadow is handled by Container
+                          margin:
+                              EdgeInsets.zero, // Margin handled by Container
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.0),
                           ),
-                          color: Colors.transparent, // Card is transparent, Container provides background
+                          color:
+                              Colors
+                                  .transparent, // Card is transparent, Container provides background
                           child: Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Row(
@@ -288,7 +423,8 @@ class SelectSessionScreen extends ConsumerWidget {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Row(
                                         children: [
@@ -344,51 +480,161 @@ class SelectSessionScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 const SizedBox(width: 16),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    // Updated logic: remove facultyOnly check, use bookedSlots >= capacity for isFull
-                                    if ((session.bookedSlots >=
-                                        session.capacity)) {
-                                      _showJoinWaitlistDialog(
-                                        context,
-                                        ref,
-                                        session,
-                                      ); // Pass ref
-                                    } else {
-                                      // Navigate to Review Booking Screen
-                                      context.pushNamed(
-                                        AppRoutes.reviewBooking,
-                                        extra: {
-                                          'session': session,
-                                          'selectedDay': selectedDay,
-                                          'activatedTicket':
-                                              activatedTicket, // Pass the potentially null ticket
-                                          'noTicketMode':
-                                              noTicketMode, // Pass the flag
-                                        },
-                                      );
-                                    }
+                                Consumer(
+                                  builder: (context, ref, _) {
+                                    // Always check for active booking before enabling the button
+                                    final activeBookingAsync = ref.watch(
+                                      userActiveBookingProvider,
+                                    );
+                                    final hasActiveBooking =
+                                        activeBookingAsync.asData?.value !=
+                                            null ||
+                                        _hasActiveBooking;
+                                    return ElevatedButton(
+                                      key: const ValueKey('book_button'),
+                                      onPressed:
+                                          hasActiveBooking
+                                              ? null
+                                              : () async {
+                                                if (!mounted) return;
+                                                debugPrint(
+                                                  '[SelectSessionScreen] Book button clicked. Checking for active booking...',
+                                                );
+                                                try {
+                                                  // Always refresh before proceeding
+                                                  final activeBooking =
+                                                      await ref.read(
+                                                        userActiveBookingProvider
+                                                            .future,
+                                                      );
+                                                  if (!mounted) return;
+                                                  if (activeBooking != null) {
+                                                    setState(() {
+                                                      _hasActiveBooking = true;
+                                                      _hasCheckedActiveBooking =
+                                                          true;
+                                                    });
+                                                    _showActiveBookingDialog(
+                                                      activeBooking,
+                                                    );
+                                                    return;
+                                                  }
+                                                  setState(() {
+                                                    _hasActiveBooking = false;
+                                                    _hasCheckedActiveBooking =
+                                                        true;
+                                                  });
+                                                  // Check if session is full
+                                                  if (session.bookedSlots >=
+                                                      session.capacity) {
+                                                    _showJoinWaitlistDialog(
+                                                      context,
+                                                      session,
+                                                    );
+                                                  } else {
+                                                    debugPrint(
+                                                      '[SelectSessionScreen] Navigating to ActivateGymPassScreen with sessionId=${session.id}, selectedDay=${selectedDay.toIso8601String()}, noTicketMode=${widget.noTicketMode}',
+                                                    );
+                                                    if (session.id.isEmpty ||
+                                                        selectedDay == null) {
+                                                      debugPrint(
+                                                        '[SelectSessionScreen] ERROR: session.id is empty or selectedDay is null when trying to navigate to ActivateGymPassScreen!',
+                                                      );
+                                                    }
+                                                    // Always go to ActivateGymPassScreen to validate ticket before booking
+                                                    debugPrint(
+                                                      '[SelectSessionScreen] AppRoutes.activateGymPassName:  ${AppRoutes.activateGymPassName}',
+                                                    );
+                                                    debugPrint(
+                                                      '[SelectSessionScreen] About to pushNamed. Extra type: ${{'sessionId': session.id, 'selectedDay': selectedDay.toIso8601String(), 'noTicketMode': widget.noTicketMode}.runtimeType}',
+                                                    );
+                                                    try {
+                                                      context.pushNamed(
+                                                        AppRoutes
+                                                            .activateGymPassName,
+                                                        extra: {
+                                                          'sessionId':
+                                                              session.id,
+                                                          'selectedDay':
+                                                              selectedDay
+                                                                  .toIso8601String(),
+                                                          'noTicketMode':
+                                                              widget
+                                                                  .noTicketMode,
+                                                        },
+                                                      );
+                                                      debugPrint(
+                                                        '[SelectSessionScreen] pushNamed called successfully',
+                                                      );
+                                                    } catch (e, stack) {
+                                                      debugPrint(
+                                                        '[SelectSessionScreen] ERROR during pushNamed: $e\n$stack',
+                                                      );
+                                                    }
+                                                  }
+                                                } catch (error) {
+                                                  if (mounted) {
+                                                    ScaffoldMessenger.of(
+                                                      context,
+                                                    ).showSnackBar(
+                                                      SnackBar(
+                                                        content: const Text(
+                                                          'Error checking booking status. Please try again.',
+                                                        ),
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                      style: ButtonStyle(
+                                        backgroundColor:
+                                            MaterialStateProperty.resolveWith<
+                                              Color
+                                            >((Set<MaterialState> states) {
+                                              if (states.contains(
+                                                MaterialState.disabled,
+                                              )) {
+                                                return Colors.grey;
+                                              }
+                                              return HeronFitTheme.primary;
+                                            }),
+                                        foregroundColor:
+                                            MaterialStateProperty.all(
+                                              Colors.white,
+                                            ),
+                                        shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder
+                                        >(
+                                          RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10.0,
+                                            ),
+                                          ),
+                                        ),
+                                        padding: MaterialStateProperty.all<
+                                          EdgeInsets
+                                        >(
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 24,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        hasActiveBooking
+                                            ? 'Already Booked'
+                                            : 'Book',
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.labelLarge?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    );
                                   },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: HeronFitTheme.primary,
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 24,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Book',
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.labelLarge?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
                                 ),
                               ],
                             ),

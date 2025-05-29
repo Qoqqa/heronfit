@@ -48,6 +48,9 @@ class _RegisterVerificationScreenState
     final registrationState = ref.read(registrationProvider);
 
     try {
+      debugPrint('Verifying email with token for: ${registrationState.email}');
+      
+      // Verify the email with the token
       final AuthResponse verificationResponse = await verifyEmailWithToken(
         registrationState.email,
         pinCodeController.text,
@@ -57,10 +60,28 @@ class _RegisterVerificationScreenState
       if (userId == null) {
         throw Exception('Verification succeeded but user ID is missing.');
       }
-
+      
+      debugPrint('Email verified successfully. User ID: $userId');
+      
+      // Log the registration state before saving
+      debugPrint('Registration state before saving:');
+      debugPrint('First Name: ${registrationState.firstName}');
+      debugPrint('Last Name: ${registrationState.lastName}');
+      debugPrint('Email: ${registrationState.email}');
+      debugPrint('Gender: ${registrationState.gender}');
+      debugPrint('Birthday: ${registrationState.birthday}');
+      debugPrint('Weight: ${registrationState.weight}');
+      debugPrint('Height: ${registrationState.height}');
+      debugPrint('Goal: ${registrationState.goal}');
+      debugPrint('User Role: ${registrationState.userRole}');
+      debugPrint('Role Status: ${registrationState.roleStatus}');
+      
+      // Insert or update the user profile with all collected data
       await registrationNotifier.insertUserProfile(userId);
-
+      
+      // Clear the registration state after successful registration
       if (mounted) {
+        // Navigate to success screen
         context.goNamed(AppRoutes.registerSuccess);
       }
     } on AuthException catch (e) {

@@ -1,3 +1,4 @@
+import 'dart:async'; // For StreamController
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:heronfit/features/booking/services/booking_supabase_service.dart';
@@ -33,35 +34,112 @@ final fetchSessionsProvider = FutureProvider.family<List<Session>, DateTime>((
 });
 
 // Provider to fetch the current user's active (confirmed and not ended) booking
-final userActiveBookingProvider = FutureProvider<Booking?>((ref) async {
+// Using StreamProvider for real-time updates when bookings change in the database
+final userActiveBookingProvider = StreamProvider<Booking?>((ref) {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id;
 
   if (userId == null) {
-    return null; // Or throw an exception if user must be logged in
+    return Stream.value(
+      null,
+    ); // Or throw an exception if user must be logged in
   }
 
+  // Create a stream controller to emit values when bookings change
+  final streamController = StreamController<void>();
+
+  // Subscribe to changes in the bookings table
+  final channel =
+      supabase
+          .channel('public:bookings')
+          .onPostgresChanges(
+            event: PostgresChangeEvent.all,
+            schema: 'public',
+            table: 'bookings',
+            callback: (payload) {
+              // Process the payload if needed
+              print('Booking change detected: ${payload.toString()}');
+              // Add an event to the stream controller to trigger a refresh
+              streamController.add(null);
+            },
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'user_id',
+              value: userId,
+            ),
+          )
+          .subscribe();
+
+  // Return a stream from the controller
+  final stream = streamController.stream;
+
+  // Close the stream controller when the provider is disposed
+  ref.onDispose(() {
+    streamController.close();
+    channel.unsubscribe();
+  });
+
+  // Create a merged stream that combines the initial fetch with subsequent updates
+  // First, create a stream with just the initial booking
+  final initialStream = Stream.fromFuture(_fetchActiveBooking(userId));
+
+  // Then, create a stream that emits whenever the streamController emits
+  final updatesStream = stream.asyncMap((_) => _fetchActiveBooking(userId));
+
+  // Merge the two streams to get a stream that first emits the initial booking
+  // and then emits whenever there's a change
+  return Stream.multi((controller) {
+    // Add the initial booking
+    initialStream.listen(
+      (booking) => controller.add(booking),
+      onError: controller.addError,
+    );
+
+    // Add subsequent updates
+    updatesStream.listen(
+      (booking) => controller.add(booking),
+      onError: controller.addError,
+      onDone: controller.close,
+    );
+  });
+});
+
+// Helper function to fetch the active booking
+Future<Booking?> _fetchActiveBooking(String userId) async {
+  final supabase = Supabase.instance.client;
   final now = DateTime.now();
   final todayDateString = DateFormat('yyyy-MM-dd').format(now);
-  // final currentTimeString = DateFormat('HH:mm:ss').format(now); // Not directly usable with Supabase string time
 
   try {
-    final response = await supabase
-        .from('bookings')
-        .select()
-        .eq('user_id', userId)
-        .eq('status', BookingStatus.confirmed.name)
-        .gte('session_date', todayDateString) // Session is today or in the future
-        .order('session_date', ascending: true)
-        .order('session_start_time', ascending: true)
-        .limit(1)
-        .maybeSingle();
+    final response =
+        await supabase
+            .from('bookings')
+            .select()
+            .eq('user_id', userId)
+            .eq('status', BookingStatus.confirmed.name)
+            .gte(
+              'session_date',
+              todayDateString,
+            ) // Session is today or in the future
+            .order('session_date', ascending: true)
+            .order('session_start_time', ascending: true)
+            .limit(1)
+            .maybeSingle();
+
+    print('[userActiveBookingProvider] Supabase response: $response');
 
     if (response == null) {
+      print('[userActiveBookingProvider] No active booking found.');
       return null;
     }
 
-    final booking = Booking.fromJson(response);
+    Booking booking;
+    try {
+      booking = Booking.fromJson(response);
+    } catch (e) {
+      print('[userActiveBookingProvider] Error parsing Booking.fromJson: $e');
+      return null;
+    }
 
     // Combine session_date and session_end_time to check if it has passed
     try {
@@ -74,23 +152,32 @@ final userActiveBookingProvider = FutureProvider<Booking?>((ref) async {
         int.parse(sessionEndTimeParts[1]),
         sessionEndTimeParts.length > 2 ? int.parse(sessionEndTimeParts[2]) : 0,
       );
-
+      print(
+        '[userActiveBookingProvider] sessionEndDateTime: $sessionEndDateTime, now: $now',
+      );
       if (sessionEndDateTime.isAfter(now)) {
+        print(
+          '[userActiveBookingProvider] Active booking found: ${booking.id}',
+        );
         return booking; // Active booking found
+      } else {
+        print(
+          '[userActiveBookingProvider] Booking found but session has ended.',
+        );
       }
     } catch (e) {
-      // Handle parsing error for sessionEndTime, maybe log it
-      print('Error parsing sessionEndTime for booking ${booking.id}: $e');
+      print(
+        '[userActiveBookingProvider] Error parsing sessionEndTime for booking ${booking.id}: $e',
+      );
       return null; // Treat as non-active if time is invalid
     }
 
     return null; // Booking found but session has ended
   } catch (e) {
-    print('Error fetching active booking: $e');
-    // Optionally, rethrow or handle specific Supabase exceptions
-    return null; // Or throw an error to be caught by the UI
+    print('[userActiveBookingProvider] Error fetching active booking: $e');
+    return null;
   }
-});
+}
 
 // --- Join Waitlist Notifier ---
 class JoinWaitlistNotifier extends StateNotifier<AsyncValue<void>> {
@@ -98,14 +185,16 @@ class JoinWaitlistNotifier extends StateNotifier<AsyncValue<void>> {
   final String _userId;
 
   JoinWaitlistNotifier(this._bookingService, this._userId)
-      : super(const AsyncValue.data(null));
+    : super(const AsyncValue.data(null));
 
   Future<void> join(String sessionId, String? ticketId) async {
     state = const AsyncValue.loading();
     try {
       await _bookingService.joinWaitlist(_userId, sessionId, ticketId);
       state = const AsyncValue.data(null);
-      print('[JoinWaitlistNotifier] Successfully joined waitlist for session $sessionId, ticket: $ticketId');
+      print(
+        '[JoinWaitlistNotifier] Successfully joined waitlist for session $sessionId, ticket: $ticketId',
+      );
     } catch (e, s) {
       print('[JoinWaitlistNotifier] Error joining waitlist: $e\n$s');
       state = AsyncValue.error(e, s);
@@ -114,23 +203,27 @@ class JoinWaitlistNotifier extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-final joinWaitlistNotifierProvider = StateNotifierProvider.autoDispose<JoinWaitlistNotifier, AsyncValue<void>>((ref) {
-  final bookingService = ref.watch(bookingSupabaseServiceProvider);
-  final supabaseUser = Supabase.instance.client.auth.currentUser;
-  if (supabaseUser == null) {
-    throw Exception('User not authenticated. Cannot join waitlist.');
-  }
-  return JoinWaitlistNotifier(bookingService, supabaseUser.id);
-});
+final joinWaitlistNotifierProvider =
+    StateNotifierProvider.autoDispose<JoinWaitlistNotifier, AsyncValue<void>>((
+      ref,
+    ) {
+      final bookingService = ref.watch(bookingSupabaseServiceProvider);
+      final supabaseUser = Supabase.instance.client.auth.currentUser;
+      if (supabaseUser == null) {
+        throw Exception('User not authenticated. Cannot join waitlist.');
+      }
+      return JoinWaitlistNotifier(bookingService, supabaseUser.id);
+    });
 
 // --- Confirm Booking Notifier ---
-class ConfirmBookingNotifier extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
+class ConfirmBookingNotifier
+    extends StateNotifier<AsyncValue<Map<String, dynamic>?>> {
   final BookingSupabaseService _bookingService;
   final String _userId;
   final StateNotifierProviderRef _ref;
 
   ConfirmBookingNotifier(this._bookingService, this._userId, this._ref)
-      : super(const AsyncValue.data(null));
+    : super(const AsyncValue.data(null));
 
   Future<void> bookSession({
     required String sessionId,
@@ -152,12 +245,15 @@ class ConfirmBookingNotifier extends StateNotifier<AsyncValue<Map<String, dynami
         sessionCategory: sessionCategory,
       );
       state = AsyncValue.data(bookingDetails);
-      print('[ConfirmBookingNotifier] Successfully booked session: ${bookingDetails['id']}');
+      print(
+        '[ConfirmBookingNotifier] Successfully booked session: ${bookingDetails['id']}',
+      );
 
       _ref.invalidate(upcomingSessionProvider);
-
     } on ActiveBookingExistsException catch (e, s) {
-      print('[ConfirmBookingNotifier] Error booking session: ActiveBookingExistsException: ${e.message}\n$s');
+      print(
+        '[ConfirmBookingNotifier] Error booking session: ActiveBookingExistsException: ${e.message}\n$s',
+      );
       state = AsyncValue.error(e.message, s);
     } catch (e, s) {
       print('[ConfirmBookingNotifier] Error booking session: $e\n$s');
@@ -168,7 +264,9 @@ class ConfirmBookingNotifier extends StateNotifier<AsyncValue<Map<String, dynami
 }
 
 final confirmBookingNotifierProvider = StateNotifierProvider.autoDispose<
-    ConfirmBookingNotifier, AsyncValue<Map<String, dynamic>?>>((ref) {
+  ConfirmBookingNotifier,
+  AsyncValue<Map<String, dynamic>?>
+>((ref) {
   final bookingService = ref.watch(bookingSupabaseServiceProvider);
   final supabaseUser = Supabase.instance.client.auth.currentUser;
   if (supabaseUser == null) {

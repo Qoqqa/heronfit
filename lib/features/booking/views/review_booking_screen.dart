@@ -65,6 +65,9 @@ class ReviewBookingScreen extends ConsumerWidget {
         data: (bookingDetails) {
           if (bookingDetails != null) {
             // Booking was successful (notifier holds the booking details)
+            // Invalidate the userActiveBookingProvider to refresh the active booking check
+            ref.invalidate(userActiveBookingProvider);
+
             _showSessionConfirmedModal(
               context,
               bookingDetails,
@@ -199,6 +202,7 @@ class ReviewBookingScreen extends ConsumerWidget {
                                 return;
                               }
 
+
                               final String formattedSessionDate = DateFormat(
                                 'yyyy-MM-dd',
                               ).format(selectedDay);
@@ -292,6 +296,7 @@ class ReviewBookingScreen extends ConsumerWidget {
       ),
     );
   }
+
 
   void _showSessionConfirmedModal(
     BuildContext context,

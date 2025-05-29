@@ -1,13 +1,13 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: true
 ---
 # HeronFit: Comprehensive AI Development Guidelines
 
 **Document Version:** 2.1
 **Date:** May 25, 2025 (Updated with refined booking flow and build tool guidelines)
-
+**Supabase Project ID:** dktxspcehngtrbnvhkfh
 ## 1. Introduction
 
 This document provides comprehensive, consolidated guidance for the AI-assisted development of the HeronFit mobile application. It merges and refines insights from previous guidance documents (`custom_instructions.md`, `ai_coding_guidelines.md`, `context.md`, `commit_message_instructions.md`) and aligns with the project charter. The goal is to ensure consistent, high-quality, maintainable, and scalable code that adheres to the project's vision and technical requirements.
@@ -66,7 +66,7 @@ Follow a **features-first** project structure:
 ## 6. Coding Standards & Conventions
 
 - **Language:** Dart (latest stable SDK specified in `pubspec.yaml`).
-- **Style:** Follow the official [Dart Style Guide](https://dart.dev/guides/language/effective-dart/style) and Flutter lint rules defined in `analysis_options.yaml`. Run `flutter analyze` frequently.
+- **Style:** Follow the official [Dart Style Guide](mdc:https:/dart.dev/guides/language/effective-dart/style) and Flutter lint rules defined in `analysis_options.yaml`. Run `flutter analyze` frequently.
 - **Naming:**
   - `UpperCamelCase` for classes, enums, typedefs, and extensions.
   - `lowerCamelCase` for variables, parameters, and function/method names.
@@ -232,7 +232,7 @@ Prioritize based on project milestones and address charter recommendations.
 
 ### Commit Message Format (Conventional Commits)
 
-Follow the [Conventional Commits specification](https://www.conventionalcommits.org).
+Follow the [Conventional Commits specification](mdc:https:/www.conventionalcommits.org).
 
 **Basic Format:**
 

@@ -4,13 +4,16 @@ import 'package:solar_icons/solar_icons.dart';
 import 'package:intl/intl.dart';
 import '../providers/activate_gym_pass_providers.dart';
 import '../models/user_ticket_model.dart';
+import '../models/session_model.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/features/booking/providers/booking_providers.dart';
 import 'package:heronfit/features/booking/models/booking_model.dart';
+import 'package:heronfit/features/booking/services/booking_supabase_service.dart';
 
 class ActivateGymPassScreen extends ConsumerStatefulWidget {
-  const ActivateGymPassScreen({super.key});
+  final Object? extra;
+  const ActivateGymPassScreen({Key? key, this.extra}) : super(key: key);
 
   @override
   ConsumerState<ActivateGymPassScreen> createState() =>
@@ -21,12 +24,58 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
   final TextEditingController _ticketCodeController = TextEditingController();
   bool _noTicketMode = false;
   bool _isLoadingCheck = true;
+  Session? _session;
+  DateTime? _selectedDay;
+  bool _isLoadingSession = true;
 
   @override
   void initState() {
     super.initState();
+    _loadSessionAndDate();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkActiveBooking();
+    });
+  }
+
+  Future<void> _loadSessionAndDate() async {
+    final extra = widget.extra;
+    String? sessionId;
+    String? selectedDayStr;
+    if (extra is Map) {
+      sessionId = extra['sessionId'] as String?;
+      selectedDayStr = extra['selectedDay'] as String?;
+      _noTicketMode = extra['noTicketMode'] as bool? ?? false;
+    }
+    debugPrint(
+      '[ActivateGymPassScreen] _loadSessionAndDate: sessionId=$sessionId, selectedDayStr=$selectedDayStr, noTicketMode=$_noTicketMode',
+    );
+    if (sessionId == null || selectedDayStr == null) {
+      debugPrint(
+        '[ActivateGymPassScreen] ERROR: sessionId or selectedDayStr is null!',
+      );
+      setState(() {
+        _isLoadingSession = false;
+      });
+      return;
+    }
+    try {
+      final bookingService = ref.read(bookingSupabaseServiceProvider);
+      final sessionList = await bookingService.getSessionsForDate(
+        DateTime.parse(selectedDayStr),
+      );
+      _session = sessionList.firstWhere(
+        (s) => s.id == sessionId,
+        orElse: () => throw Exception('Session not found'),
+      );
+      _selectedDay = DateTime.parse(selectedDayStr);
+      debugPrint(
+        '[ActivateGymPassScreen] Loaded session: $_session, selectedDay: $_selectedDay',
+      );
+    } catch (e) {
+      debugPrint('[ActivateGymPassScreen] ERROR loading session: $e');
+    }
+    setState(() {
+      _isLoadingSession = false;
     });
   }
 
@@ -35,7 +84,13 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
       _isLoadingCheck = true;
     });
     try {
+      debugPrint(
+        '[ActivateGymPassScreen] _checkActiveBooking: Checking for active bookings...',
+      );
       final activeBooking = await ref.read(activeBookingCheckProvider.future);
+      debugPrint(
+        '[ActivateGymPassScreen] _checkActiveBooking: activeBooking=$activeBooking',
+      );
       if (mounted && activeBooking != null) {
         _showActiveBookingDialog(activeBooking);
       } else {
@@ -43,13 +98,21 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
           _isLoadingCheck = false;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint(
+        '[ActivateGymPassScreen] _checkActiveBooking: ERROR: $e\n$stack',
+      );
       if (mounted) {
         setState(() {
           _isLoadingCheck = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not verify active bookings: ${e.toString()}')),
+          SnackBar(
+            content: Text(
+              'Error checking booking status: [31m${e.toString()}[0m',
+            ),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }
@@ -74,10 +137,10 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               },
             ),
             FilledButton(
-              child: const Text('View My Booking'),
+              child: const Text('View My Bookings'),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.push(AppRoutes.bookingDetails, extra: activeBooking);
+                context.push(AppRoutes.bookings);
               },
             ),
           ],
@@ -102,7 +165,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoadingCheck) {
+    if (_isLoadingCheck || _isLoadingSession) {
       return const Scaffold(
         body: Center(
           child: Column(
@@ -110,10 +173,15 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text('Checking for active bookings...'),
+              Text('Loading session details...'),
             ],
           ),
         ),
+      );
+    }
+    if (_session == null || _selectedDay == null) {
+      return const Scaffold(
+        body: Center(child: Text('Error: Session or date not found.')),
       );
     }
 
@@ -124,22 +192,43 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
       previous,
       next,
     ) {
+      debugPrint(
+        '[ActivateGymPassScreen] ref.listen: next=$next, _noTicketMode=$_noTicketMode, _session=$_session, _selectedDay=$_selectedDay',
+      );
       if (!_noTicketMode && next is AsyncData && next.value != null) {
         final ticket = next.value!;
-        if (ticket.status == TicketStatus.pending_booking) {
+        debugPrint(
+          '[ActivateGymPassScreen] ref.listen: Ticket validated, navigating to review booking. ticket=$ticket',
+        );
+        if (ticket.status == TicketStatus.pending_booking &&
+            _session != null &&
+            _selectedDay != null) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Ticket ${ticket.ticketCode} validated. Proceed to select a session.',
+                  'Ticket ${ticket.ticketCode} validated. Proceed to review booking.',
                 ),
                 backgroundColor: Colors.green,
               ),
             );
-            GoRouter.of(context).push('/booking/select-session', extra: ticket);
+            context.pushNamed(
+              AppRoutes.reviewBooking,
+              extra: {
+                'session': _session!,
+                'selectedDay': _selectedDay!,
+                'activatedTicket': ticket,
+                'noTicketMode': false,
+              },
+            );
           }
+        } else {
+          debugPrint(
+            '[ActivateGymPassScreen] ref.listen: Ticket not valid or session/selectedDay missing.',
+          );
         }
       } else if (next is AsyncError) {
+        debugPrint('[ActivateGymPassScreen] ref.listen: Error: ${next.error}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -180,9 +269,9 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
         title: Text(
           'Activate Gym Pass',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -192,14 +281,18 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(SolarIconsBold.ticket, size: 48, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                SolarIconsBold.ticket,
+                size: 48,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 20),
               Text(
                 'Enter Your Gym Pass ID',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onBackground,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onBackground,
+                ),
                 textAlign: TextAlign.start,
               ),
               const SizedBox(height: 10),
@@ -207,8 +300,8 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 'Please enter your 7-digit Ticket ID to book your session at the UMak HPSB 11th Floor Gym.',
                 textAlign: TextAlign.start,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 28),
               CheckboxListTile(
@@ -227,75 +320,103 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 contentPadding: EdgeInsets.zero,
               ),
               const SizedBox(height: 20),
-              if (!_noTicketMode)
-                TextFormField(
-                  controller: _ticketCodeController,
-                  decoration: InputDecoration(
-                    hintText: 'Enter your 7-digit Ticket ID',
-                    prefixIcon: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Icon(
-                        SolarIconsOutline.ticket,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+              TextFormField(
+                controller: _ticketCodeController,
+                enabled: !_noTicketMode,
+                decoration: InputDecoration(
+                  hintText: 'Enter your 7-digit Ticket ID',
+                  prefixIcon: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                    child: Icon(
+                      SolarIconsOutline.ticket,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  textAlign: TextAlign.start,
-                  keyboardType: TextInputType.text,
-                  maxLength: 7,
-                  buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
                 ),
-              if (!_noTicketMode) const SizedBox(height: 28),
+                textAlign: TextAlign.start,
+                keyboardType: TextInputType.text,
+                maxLength: 7,
+                buildCounter:
+                    (
+                      context, {
+                      required currentLength,
+                      required isFocused,
+                      maxLength,
+                    }) => null,
+              ),
+              const SizedBox(height: 28),
               activateState.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
-                          textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor:
+                            Theme.of(context).colorScheme.onPrimary,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 24,
                         ),
-                        onPressed: () {
-                          FocusScope.of(context).unfocus();
-                          if (_noTicketMode) {
-                            GoRouter.of(context).push(
-                              '/booking/select-session',
-                              extra: {'noTicketMode': true},
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        textStyle: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      onPressed: () {
+                        FocusScope.of(context).unfocus();
+                        debugPrint(
+                          '[ActivateGymPassScreen] Button pressed. _noTicketMode=$_noTicketMode, _session=$_session, _selectedDay=$_selectedDay',
+                        );
+                        if (_noTicketMode) {
+                          if (_session != null && _selectedDay != null) {
+                            debugPrint(
+                              '[ActivateGymPassScreen] Test mode: Navigating to review booking with session=$_session, selectedDay=$_selectedDay',
+                            );
+                            context.goNamed(
+                              AppRoutes.reviewBooking,
+                              extra: {
+                                'session': _session!,
+                                'selectedDay': _selectedDay!,
+                                'activatedTicket': null,
+                                'noTicketMode': true,
+                              },
                             );
                           } else {
-                            final ticketCode = _ticketCodeController.text.trim();
-                            if (ticketCode.isNotEmpty) {
-                              activateNotifier.activateAndFindSessions(
-                                ticketCode,
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please enter a Ticket ID.'),
-                                  backgroundColor: Colors.orangeAccent,
-                                ),
-                              );
-                            }
+                            debugPrint(
+                              '[ActivateGymPassScreen] Test mode: _session or _selectedDay is null, cannot navigate.',
+                            );
                           }
-                        },
-                        icon: Icon(
-                          _noTicketMode ? SolarIconsOutline.doubleAltArrowRight : SolarIconsOutline.arrowRight,
-                          size: 20,
-                        ),
-                        label: Text(
-                          _noTicketMode
-                              ? 'Skip & Find Sessions'
-                              : 'Verify & Continue',
-                        ),
-                      ),
+                        } else {
+                          final ticketCode = _ticketCodeController.text.trim();
+                          debugPrint(
+                            '[ActivateGymPassScreen] Normal mode: ticketCode="$ticketCode"',
+                          );
+                          if (ticketCode.isNotEmpty) {
+                            debugPrint(
+                              '[ActivateGymPassScreen] Normal mode: activating and finding sessions.',
+                            );
+                            activateNotifier.activateAndFindSessions(
+                              ticketCode,
+                            );
+                          } else {
+                            debugPrint(
+                              '[ActivateGymPassScreen] Normal mode: ticketCode is empty, showing snackbar.',
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a Ticket ID.'),
+                                backgroundColor: Colors.orangeAccent,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      icon: Icon(SolarIconsOutline.arrowRight, size: 20),
+                      label: const Text('Verify & Continue'),
                     ),
+                  ),
               const SizedBox(height: 20),
             ],
           ),

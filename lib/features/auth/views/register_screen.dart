@@ -9,6 +9,8 @@ import '../controllers/registration_controller.dart';
 import 'package:solar_icons/solar_icons.dart'; // Import SolarIcons
 import '../../../widgets/loading_indicator.dart'; // For loading state
 
+// No longer needed - moved to RegisterRoleSelectionScreen
+
 class RegisterWidget extends ConsumerStatefulWidget {
   const RegisterWidget({super.key});
 
@@ -34,6 +36,8 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+
+  // Role selection moved to RegisterRoleSelectionScreen
 
   @override
   void initState() {
@@ -68,6 +72,8 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
     return null;
   }
 
+  // Methods for role selection and document upload moved to RegisterRoleSelectionScreen
+
   Future<void> _onRegister() async {
     FocusScope.of(context).unfocus(); // Dismiss keyboard
     if (!(_formKey.currentState?.validate() ?? false)) {
@@ -75,35 +81,26 @@ class _RegisterWidgetState extends ConsumerState<RegisterWidget> {
     }
     if (!_termsAccepted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept the terms and conditions.'),
-          backgroundColor: HeronFitTheme.error,
-        ),
+        const SnackBar(content: Text('Please accept the terms and conditions.'), backgroundColor: HeronFitTheme.error),
       );
       return;
     }
 
     setState(() => _isLoading = true);
 
-    try {
-      // Update Riverpod state with current controller values before initiating sign up
-      // This ensures the controller has the latest data if onChanged was used directly
-      ref
-          .read(registrationProvider.notifier)
-          .updateFirstName(_firstNameController.text.trim());
-      ref
-          .read(registrationProvider.notifier)
-          .updateLastName(_lastNameController.text.trim());
-      ref
-          .read(registrationProvider.notifier)
-          .updateEmail(_emailController.text.trim());
-      ref
-          .read(registrationProvider.notifier)
-          .updatePassword(_passwordController.text.trim());
+    // Update basic info in provider first
+    final registrationNotifier = ref.read(registrationProvider.notifier);
+    registrationNotifier.updateFirstName(_firstNameController.text.trim());
+    registrationNotifier.updateLastName(_lastNameController.text.trim());
+    final email = _emailController.text.trim();
+    registrationNotifier.updateEmail(email);
+    registrationNotifier.updatePassword(_passwordController.text.trim());
 
-      // Navigate to the Getting to Know screen
+    try {
+      // Navigate to role selection screen for all users
       if (mounted) {
-        context.pushNamed(AppRoutes.registerGettingToKnow);
+        context.pushNamed(AppRoutes.registerRoleSelection);
+        setState(() => _isLoading = false); // Reset loading state after navigation
       }
     } catch (e) {
       if (mounted) {
