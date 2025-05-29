@@ -1,3 +1,4 @@
+import 'dart:async'; // For StreamController
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/features/booking/models/session_model.dart';
 import 'package:heronfit/features/booking/services/booking_supabase_service.dart';
@@ -33,17 +34,78 @@ final fetchSessionsProvider = FutureProvider.family<List<Session>, DateTime>((
 });
 
 // Provider to fetch the current user's active (confirmed and not ended) booking
-final userActiveBookingProvider = FutureProvider<Booking?>((ref) async {
+// Using StreamProvider for real-time updates when bookings change in the database
+final userActiveBookingProvider = StreamProvider<Booking?>((ref) {
   final supabase = Supabase.instance.client;
   final userId = supabase.auth.currentUser?.id;
 
   if (userId == null) {
-    return null; // Or throw an exception if user must be logged in
+    return Stream.value(null); // Or throw an exception if user must be logged in
   }
 
+  // Create a stream controller to emit values when bookings change
+  final streamController = StreamController<void>();
+
+  // Subscribe to changes in the bookings table
+  final channel = supabase
+      .channel('public:bookings')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.all,
+        schema: 'public',
+        table: 'bookings',
+        callback: (payload) {
+          // Process the payload if needed
+          print('Booking change detected: ${payload.toString()}');
+          // Add an event to the stream controller to trigger a refresh
+          streamController.add(null);
+        },
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'user_id',
+          value: userId,
+        ),
+      )
+      .subscribe();
+
+  // Return a stream from the controller
+  final stream = streamController.stream;
+
+  // Close the stream controller when the provider is disposed
+  ref.onDispose(() {
+    streamController.close();
+    channel.unsubscribe();
+  });
+
+  // Create a merged stream that combines the initial fetch with subsequent updates
+  // First, create a stream with just the initial booking
+  final initialStream = Stream.fromFuture(_fetchActiveBooking(userId));
+
+  // Then, create a stream that emits whenever the streamController emits
+  final updatesStream = stream.asyncMap((_) => _fetchActiveBooking(userId));
+
+  // Merge the two streams to get a stream that first emits the initial booking
+  // and then emits whenever there's a change
+  return Stream.multi((controller) {
+    // Add the initial booking
+    initialStream.listen(
+      (booking) => controller.add(booking),
+      onError: controller.addError,
+    );
+
+    // Add subsequent updates
+    updatesStream.listen(
+      (booking) => controller.add(booking),
+      onError: controller.addError,
+      onDone: controller.close,
+    );
+  });
+});
+
+// Helper function to fetch the active booking
+Future<Booking?> _fetchActiveBooking(String userId) async {
+  final supabase = Supabase.instance.client;
   final now = DateTime.now();
   final todayDateString = DateFormat('yyyy-MM-dd').format(now);
-  // final currentTimeString = DateFormat('HH:mm:ss').format(now); // Not directly usable with Supabase string time
 
   try {
     final response = await supabase
@@ -90,7 +152,7 @@ final userActiveBookingProvider = FutureProvider<Booking?>((ref) async {
     // Optionally, rethrow or handle specific Supabase exceptions
     return null; // Or throw an error to be caught by the UI
   }
-});
+}
 
 // --- Join Waitlist Notifier ---
 class JoinWaitlistNotifier extends StateNotifier<AsyncValue<void>> {

@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:heronfit/core/theme.dart';
 import 'package:heronfit/features/booking/models/booking_model.dart';
 import 'package:heronfit/features/booking/views/my_bookings.dart';
+import 'package:heronfit/features/booking/controllers/booking_providers.dart'; // Import for userActiveBookingProvider
+import 'package:heronfit/features/home/home_providers.dart'; // Import for upcomingSessionProvider
 import 'package:intl/intl.dart';
 import 'package:solar_icons/solar_icons.dart';
 import 'package:heronfit/core/router/app_routes.dart';
@@ -39,18 +41,11 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
 
   bool _isCancellable() {
     final now = DateTime.now();
-    final sessionDate = widget.booking.sessionDate;
-    final startTimeParts = widget.booking.sessionStartTime.split(':');
-    final sessionStartDateTime = DateTime(
-      sessionDate.year,
-      sessionDate.month,
-      sessionDate.day,
-      int.parse(startTimeParts[0]),
-      int.parse(startTimeParts[1]),
-    );
+    final bookingTime = widget.booking.bookingTime;
 
-    // Check if booking status is 'confirmed' and session is at least 2 hours away
-    return widget.booking.status == BookingStatus.confirmed && sessionStartDateTime.difference(now).inHours >= 2;
+    // Check if booking status is 'confirmed' and booking was made within the last 2 hours
+    return widget.booking.status == BookingStatus.confirmed && 
+           now.difference(bookingTime).inHours <= 2;
   }
 
   Future<void> _cancelBooking() async {
@@ -92,6 +87,8 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
             .eq('id', widget.booking.id);
 
         ref.invalidate(myBookingsProvider); // Refresh the list of bookings
+        ref.invalidate(userActiveBookingProvider); // Refresh the active booking check
+        ref.invalidate(upcomingSessionProvider); // Refresh the upcoming session on home screen
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -178,9 +175,9 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
   Widget build(BuildContext context) {
     final DateFormat dateFormat = DateFormat('EEEE, MMMM d, yyyy');
     final String formattedDate = dateFormat.format(widget.booking.sessionDate);
-    
+
     final String sessionTime = '${formatSessionTime(widget.booking.sessionStartTime)} - ${formatSessionTime(widget.booking.sessionEndTime)}'; 
-    
+
     final String ticketIdDisplay = widget.booking.userTicketId ?? 'N/A';
     final String bookingRefIdDisplay = widget.booking.bookingReferenceId ?? 'N/A';
     const String gymLocation = "University of Makati HPSB 11th Floor Gym";

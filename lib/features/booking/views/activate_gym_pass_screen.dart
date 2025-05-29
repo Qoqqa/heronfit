@@ -74,10 +74,10 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               },
             ),
             FilledButton(
-              child: const Text('View My Booking'),
+              child: const Text('View My Bookings'),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.push(AppRoutes.bookingDetails, extra: activeBooking);
+                context.push(AppRoutes.bookings);
               },
             ),
           ],
@@ -136,7 +136,14 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 backgroundColor: Colors.green,
               ),
             );
-            GoRouter.of(context).push('/booking/select-session', extra: ticket);
+            // Return to the select session screen with the validated ticket
+            if (GoRouter.of(context).canPop()) {
+              GoRouter.of(context).pop();
+              // Push the ticket to the select session screen
+              GoRouter.of(context).push(AppRoutes.selectSession, extra: ticket);
+            } else {
+              GoRouter.of(context).push(AppRoutes.selectSession, extra: ticket);
+            }
           }
         }
       } else if (next is AsyncError) {

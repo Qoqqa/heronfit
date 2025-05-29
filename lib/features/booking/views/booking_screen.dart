@@ -16,10 +16,10 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void initState() {
     super.initState();
-    // Redirect to the new booking flow when this screen is loaded
+    // Redirect to the select session screen when this screen is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.go(AppRoutes.activateGymPass);
+        context.go(AppRoutes.selectSession, extra: {'noTicketMode': true});
       }
     });
   }
