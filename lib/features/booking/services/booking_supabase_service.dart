@@ -592,4 +592,44 @@ class BookingSupabaseService {
       );
     }
   }
+
+  /// Cancels a booking and decrements the booked_slots in session_occurrences
+  Future<void> cancelBooking({
+    required String bookingId,
+    required String sessionOccurrenceId,
+    String? userTicketId,
+  }) async {
+    // 1. Update booking status to cancelled_by_user
+    await _supabaseClient
+        .from('bookings')
+        .update({'status': BookingStatus.cancelled_by_user.name})
+        .eq('id', bookingId);
+
+    // 2. Decrement booked_slots in session_occurrences
+    final occurrence = await _supabaseClient
+        .from('session_occurrences')
+        .select('booked_slots')
+        .eq('id', sessionOccurrenceId)
+        .maybeSingle();
+    if (occurrence != null && occurrence['booked_slots'] != null) {
+      final int currentSlots = occurrence['booked_slots'] as int;
+      final int newSlots = currentSlots > 0 ? currentSlots - 1 : 0;
+      await _supabaseClient
+          .from('session_occurrences')
+          .update({'booked_slots': newSlots})
+          .eq('id', sessionOccurrenceId);
+    }
+
+    // 3. Optionally revert ticket status if a ticket was used
+    if (userTicketId != null && userTicketId.isNotEmpty) {
+      await _supabaseClient
+          .from('user_tickets')
+          .update({
+            'status': TicketStatus.available.name,
+            'activation_date': null,
+          })
+          .eq('id', userTicketId)
+          .eq('status', TicketStatus.used.name);
+    }
+  }
 }

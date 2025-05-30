@@ -19,6 +19,7 @@ class Booking {
   final DateTime bookingTime; // Timestamp of when the booking was made by the user for the session
   final BookingStatus status;
   final String? bookingReferenceId; // User-friendly ID like HERONFIT-YYYYMMDD-XXXX, can be null if not generated yet
+  final String? sessionOccurrenceId; // Foreign Key to session_occurrences.id, nullable
 
   // Session details - denormalized for easier display in booking lists
   // These fields will be populated from the 'bookings' table which now stores them directly.
@@ -36,6 +37,7 @@ class Booking {
     required this.bookingTime,
     required this.status,
     this.bookingReferenceId,
+    this.sessionOccurrenceId, // Add to constructor
     required this.sessionCategory,
     required this.sessionDate,
     required this.sessionStartTime,
@@ -64,6 +66,7 @@ class Booking {
         orElse: () => BookingStatus.confirmed, // Default status
       ),
       bookingReferenceId: json['booking_reference_id'] as String?,
+      sessionOccurrenceId: json['session_occurrence_id'] as String?, // Add this line
       // Denormalized fields from the 'bookings' table
       sessionCategory: json['session_category'] as String? ?? 'N/A', // From bookings table
       sessionDate: DateTime.parse(json['session_date'] as String? ?? DateTime.now().toIso8601String()), // From bookings table
@@ -86,6 +89,7 @@ class Booking {
       'session_date': DateFormat('yyyy-MM-dd').format(sessionDate),
       'session_start_time': sessionStartTime,
       'session_end_time': sessionEndTime,
+      'session_occurrence_id': sessionOccurrenceId, // Add this line
     };
   }
 
@@ -102,6 +106,7 @@ class Booking {
     DateTime? sessionDate,
     String? sessionStartTime,
     String? sessionEndTime,
+    String? sessionOccurrenceId,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -112,6 +117,7 @@ class Booking {
       bookingTime: bookingTime ?? this.bookingTime,
       status: status ?? this.status,
       bookingReferenceId: bookingReferenceId ?? this.bookingReferenceId,
+      sessionOccurrenceId: sessionOccurrenceId ?? this.sessionOccurrenceId,
       sessionCategory: sessionCategory ?? this.sessionCategory,
       sessionDate: sessionDate ?? this.sessionDate,
       sessionStartTime: sessionStartTime ?? this.sessionStartTime,
@@ -160,7 +166,8 @@ class Booking {
       other.sessionCategory == sessionCategory &&
       other.sessionDate == sessionDate &&
       other.sessionStartTime == sessionStartTime &&
-      other.sessionEndTime == sessionEndTime;
+      other.sessionEndTime == sessionEndTime &&
+      other.sessionOccurrenceId == sessionOccurrenceId;
   }
 
   @override
@@ -176,11 +183,12 @@ class Booking {
       sessionCategory.hashCode ^
       sessionDate.hashCode ^
       sessionStartTime.hashCode ^
-      sessionEndTime.hashCode;
+      sessionEndTime.hashCode ^
+      sessionOccurrenceId.hashCode;
   }
 
   @override
   String toString() {
-    return 'Booking(id: $id, createdAt: $createdAt, userId: $userId, sessionId: $sessionId, userTicketId: $userTicketId, bookingTime: $bookingTime, status: $status, bookingReferenceId: $bookingReferenceId, sessionCategory: $sessionCategory, sessionDate: $sessionDate, sessionStartTime: $sessionStartTime, sessionEndTime: $sessionEndTime)';
+    return 'Booking(id: $id, createdAt: $createdAt, userId: $userId, sessionId: $sessionId, userTicketId: $userTicketId, bookingTime: $bookingTime, status: $status, bookingReferenceId: $bookingReferenceId, sessionCategory: $sessionCategory, sessionDate: $sessionDate, sessionStartTime: $sessionStartTime, sessionEndTime: $sessionEndTime, sessionOccurrenceId: $sessionOccurrenceId)';
   }
 }
