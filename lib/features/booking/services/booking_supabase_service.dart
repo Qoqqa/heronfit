@@ -492,7 +492,6 @@ class BookingSupabaseService {
             .from('user_tickets')
             .update({
               'status': TicketStatus.used.name,
-              'used_at': DateTime.now().toIso8601String(),
             })
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);

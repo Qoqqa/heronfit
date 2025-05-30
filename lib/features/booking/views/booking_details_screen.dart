@@ -10,6 +10,7 @@ import 'package:solar_icons/solar_icons.dart';
 import 'package:heronfit/core/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import TicketStatus
 
 class BookingDetailsScreen extends ConsumerStatefulWidget {
   final Booking booking;
@@ -85,6 +86,16 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
             .from('bookings')
             .update({'status': BookingStatus.cancelled_by_user.name}) // Use enum value
             .eq('id', widget.booking.id);
+
+        // Revert ticket status if a ticket was used
+        final ticketId = widget.booking.userTicketId;
+        if (ticketId != null && ticketId.isNotEmpty) {
+          await Supabase.instance.client
+              .from('user_tickets')
+              .update({'status': TicketStatus.available.name})
+              .eq('id', ticketId)
+              .eq('status', TicketStatus.pending_booking.name);
+        }
 
         ref.invalidate(myBookingsProvider); // Refresh the list of bookings
         ref.invalidate(userActiveBookingProvider); // Refresh the active booking check
