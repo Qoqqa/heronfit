@@ -92,9 +92,13 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
         if (ticketId != null && ticketId.isNotEmpty) {
           await Supabase.instance.client
               .from('user_tickets')
-              .update({'status': TicketStatus.available.name})
+              .update({
+                'status': TicketStatus.available.name,
+                'activation_date': null, // Clear activation_date on cancellation
+              })
               .eq('id', ticketId)
-              .eq('status', TicketStatus.pending_booking.name);
+              // Ensure we are only reverting tickets that were actually used for this booking
+              .eq('status', TicketStatus.used.name); 
         }
 
         ref.invalidate(myBookingsProvider); // Refresh the list of bookings
