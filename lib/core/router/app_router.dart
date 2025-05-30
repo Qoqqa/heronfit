@@ -53,6 +53,7 @@ import 'package:heronfit/features/auth/views/enter_otp_screen.dart'; // New impo
 import 'package:heronfit/features/auth/views/create_new_password_screen.dart'; // New import
 import 'package:heronfit/features/notifications/views/notifications_screen.dart';
 import 'package:heronfit/features/notifications/views/notification_details_screen.dart';
+import 'package:heronfit/features/notifications/controllers/notifications_controller.dart' as controller;
 
 import 'app_routes.dart';
 
@@ -270,10 +271,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ADDED: Route for Notification Details Screen
       GoRoute(
         path: AppRoutes.notificationDetails,
-        builder:
-            (context, state) => NotificationDetailsScreen(
-              notificationId: state.pathParameters['id']!,
-            ),
+        builder: (context, state) {
+          final notification = state.extra;
+          if (notification == null || notification is! controller.Notification) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Notification Details')),
+              body: const Center(child: Text('Notification not found.')),
+            );
+          }
+          return NotificationDetailsScreen(notification: notification);
+        },
       ),
       GoRoute(
         path: AppRoutes.profileEdit,
@@ -295,7 +302,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.activateGymPass,
         name: 'activateGymPass',
-        builder: (context, state) => ActivateGymPassScreen(extra: state.extra),
+        builder: (context, state) => MainScreenWrapper(child: ActivateGymPassScreen(extra: state.extra)),
       ),
       GoRoute(
         path: AppRoutes.selectSession,
@@ -315,9 +322,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             noTicketModeFlag = false;
           }
 
-          return SelectSessionScreen(
-            activatedTicket: activatedTicket,
-            noTicketMode: noTicketModeFlag,
+          return MainScreenWrapper(
+            child: SelectSessionScreen(
+              activatedTicket: activatedTicket,
+              noTicketMode: noTicketModeFlag,
+            ),
           );
         },
       ),
@@ -358,11 +367,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
           }
 
-          return ReviewBookingScreen(
-            session: session,
-            selectedDay: selectedDay,
-            activatedTicket: activatedTicket,
-            noTicketMode: noTicketMode,
+          return MainScreenWrapper(
+            child: ReviewBookingScreen(
+              session: session,
+              selectedDay: selectedDay,
+              activatedTicket: activatedTicket,
+              noTicketMode: noTicketMode,
+            ),
           );
         },
       ),
@@ -372,7 +383,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           if (state.extra == null || state.extra is! Map<String, dynamic>) {
             print(
-              'Error: Navigated to BookingDetailsScreen with invalid or missing extra data. Expected Map<String, dynamic>. Got: ${state.extra?.runtimeType}',
+              'Error: Navigated to BookingDetailsScreen with invalid or missing extra data. Expected Map<String, dynamic>. Got: {state.extra?.runtimeType}',
             );
             return Scaffold(
               appBar: AppBar(title: const Text('Error')),
@@ -385,8 +396,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           final bookingDetailsMap = state.extra as Map<String, dynamic>;
           try {
             final booking = Booking.fromJson(bookingDetailsMap);
-            return BookingDetailsScreen(
-              booking: booking,
+            return MainScreenWrapper(
+              child: BookingDetailsScreen(
+                booking: booking,
+              ),
             ); // Pass Booking object
           } catch (e, s) {
             print('Error parsing bookingDetailsMap in AppRouter: $e\n$s');

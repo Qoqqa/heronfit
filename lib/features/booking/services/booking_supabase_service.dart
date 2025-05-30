@@ -486,17 +486,18 @@ class BookingSupabaseService {
       // 3. Update the user_tickets table if a ticket was used
       if (activatedTicketId != null) {
         print(
-          '[BookingSupabaseService] Updating ticket $activatedTicketId status to used...',
+          '[BookingSupabaseService] Updating ticket $activatedTicketId status to used and setting activation_date...',
         );
         await _supabaseClient
             .from('user_tickets')
             .update({
               'status': TicketStatus.used.name,
+              'activation_date': DateTime.now().toIso8601String(), // Add activation_date
             })
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);
         print(
-          '[BookingSupabaseService] Ticket $activatedTicketId status updated to used.',
+          '[BookingSupabaseService] Ticket $activatedTicketId status updated to used and activation_date set.',
         );
       } else {
         print(
