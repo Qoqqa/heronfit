@@ -11,6 +11,7 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import TicketStatus
+import 'package:heronfit/features/booking/models/booking_status.dart' as booking_status; // Ensure correct enum is used
 
 class BookingDetailsScreen extends ConsumerStatefulWidget {
   final Booking booking;
@@ -45,7 +46,8 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
     final bookingTime = widget.booking.bookingTime;
 
     // Check if booking status is 'confirmed' and booking was made within the last 2 hours
-    return widget.booking.status == BookingStatus.confirmed && 
+    // TODO: Refactor all status usage to a single source of truth (BookingStatus from booking_status.dart)
+    return widget.booking.status.name == booking_status.BookingStatus.confirmed.name && 
            now.difference(bookingTime).inHours <= 2;
   }
 
@@ -84,7 +86,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
       try {
         await Supabase.instance.client
             .from('bookings')
-            .update({'status': BookingStatus.cancelled_by_user.name}) // Use enum value
+            .update({'status': booking_status.BookingStatus.cancelled_by_user.name}) // Use correct enum value
             .eq('id', widget.booking.id);
 
         // Revert ticket status if a ticket was used
@@ -262,7 +264,7 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
                     _buildDetailRow(context, icon: SolarIconsOutline.mapPoint, label: 'Location', value: gymLocation),
                     _buildDetailRow(context, icon: SolarIconsOutline.document, label: 'Booking Reference ID', value: bookingRefIdDisplay),
                     _buildDetailRow(context, icon: SolarIconsOutline.ticket, label: 'Ticket ID Used', value: ticketIdDisplay),
-                    if (widget.booking.status != BookingStatus.confirmed) // Show status if not confirmed
+                    if (widget.booking.status != booking_status.BookingStatus.confirmed) // Show status if not confirmed
                       _buildDetailRow(context, icon: SolarIconsOutline.infoCircle, label: 'Status', value: widget.booking.status.name.toUpperCase()), // Used .name.toUpperCase()
                   ],
                 ),
