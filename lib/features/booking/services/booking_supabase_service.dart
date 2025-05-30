@@ -195,8 +195,8 @@ class BookingSupabaseService {
       print(
         '[BookingSupabaseService] session_occurrences response: $occurrencesResponse',
       );
-      if (occurrencesResponse == null ||
-          (occurrencesResponse is List && occurrencesResponse.isEmpty)) {
+      // Remove unnecessary null and type checks for occurrencesResponse
+      if ((occurrencesResponse as List).isEmpty) {
         print(
           '[BookingSupabaseService] No session_occurrences found for $targetDateIso',
         );
@@ -326,6 +326,7 @@ class BookingSupabaseService {
           .from('bookings')
           .select('id, session_date, session_end_time, status')
           .eq('user_id', userId)
+          // Only consider bookings with status 'confirmed' (not cancelled, not completed, etc.)
           .eq('status', BookingStatus.confirmed.name);
 
       print(

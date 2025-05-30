@@ -4,10 +4,10 @@ enum BookingStatus {
   confirmed,
 
   /// The booking has been cancelled by the user.
-  cancelled_user,
+  cancelled_by_user,
 
   /// The booking has been cancelled by an admin or system.
-  cancelled_admin,
+  cancelled_by_admin,
 
   /// The user did not show up for the session.
   no_show,
