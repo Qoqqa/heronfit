@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:heronfit/features/booking/models/user_ticket_model.dart'; // Import TicketStatus
 import 'package:heronfit/features/booking/models/booking_status.dart' as booking_status; // Ensure correct enum is used
+import 'package:heronfit/features/booking/services/booking_supabase_service.dart';
 
 class BookingDetailsScreen extends ConsumerStatefulWidget {
   final Booking booking;
@@ -84,24 +85,15 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
       });
 
       try {
-        await Supabase.instance.client
-            .from('bookings')
-            .update({'status': booking_status.BookingStatus.cancelled_by_user.name}) // Use correct enum value
-            .eq('id', widget.booking.id);
-
-        // Revert ticket status if a ticket was used
-        final ticketId = widget.booking.userTicketId;
-        if (ticketId != null && ticketId.isNotEmpty) {
-          await Supabase.instance.client
-              .from('user_tickets')
-              .update({
-                'status': TicketStatus.available.name,
-                'activation_date': null, // Clear activation_date on cancellation
-              })
-              .eq('id', ticketId)
-              // Ensure we are only reverting tickets that were actually used for this booking
-              .eq('status', TicketStatus.used.name); 
+        final bookingService = ref.read(bookingSupabaseServiceProvider);
+        if (widget.booking.sessionOccurrenceId == null || widget.booking.sessionOccurrenceId!.isEmpty) {
+          throw Exception('Booking is missing session occurrence ID. Cannot cancel and update slots.');
         }
+        await bookingService.cancelBooking(
+          bookingId: widget.booking.id,
+          sessionOccurrenceId: widget.booking.sessionOccurrenceId!,
+          userTicketId: widget.booking.userTicketId,
+        );
 
         ref.invalidate(myBookingsProvider); // Refresh the list of bookings
         ref.invalidate(userActiveBookingProvider); // Refresh the active booking check
