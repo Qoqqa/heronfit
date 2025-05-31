@@ -281,6 +281,7 @@ class BookingSupabaseService {
           'id': sessionId,
           'capacity': capacity,
           'booked_slots': bookedSlots,
+          'date': occ['date'],
         });
         mergedSessions.add(session);
       }
@@ -490,9 +491,7 @@ class BookingSupabaseService {
         );
         await _supabaseClient
             .from('user_tickets')
-            .update({
-              'status': TicketStatus.used.name,
-            })
+            .update({'status': TicketStatus.used.name})
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);
         print(

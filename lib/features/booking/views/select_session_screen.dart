@@ -493,7 +493,8 @@ class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
                                     return ElevatedButton(
                                       key: const ValueKey('book_button'),
                                       onPressed:
-                                          hasActiveBooking
+                                          // Disable button if user has an active booking OR if the session is in the past
+                                          hasActiveBooking || session.isPast
                                               ? null
                                               : () async {
                                                 if (!mounted) return;
