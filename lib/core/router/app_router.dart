@@ -53,7 +53,9 @@ import 'package:heronfit/features/auth/views/enter_otp_screen.dart'; // New impo
 import 'package:heronfit/features/auth/views/create_new_password_screen.dart'; // New import
 import 'package:heronfit/features/notifications/views/notifications_screen.dart';
 import 'package:heronfit/features/notifications/views/notification_details_screen.dart';
-import 'package:heronfit/features/notifications/controllers/notifications_controller.dart' as controller;
+import 'package:heronfit/features/notifications/controllers/notifications_controller.dart'
+    as controller;
+import 'package:heronfit/features/profile/views/terms_of_use_screen.dart'; // Import Terms of Use Screen
 
 import 'app_routes.dart';
 
@@ -273,7 +275,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.notificationDetails,
         builder: (context, state) {
           final notification = state.extra;
-          if (notification == null || notification is! controller.Notification) {
+          if (notification == null ||
+              notification is! controller.Notification) {
             return Scaffold(
               appBar: AppBar(title: const Text('Notification Details')),
               body: const Center(child: Text('Notification not found.')),
@@ -298,11 +301,19 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.profilePrivacy,
         builder: (context, state) => const PrivacyPolicyWidget(),
       ),
+      // ADDED: Route for the Terms of Use screen
+      GoRoute(
+        path: AppRoutes.profileTerms,
+        builder: (context, state) => const TermsOfUseWidget(),
+      ),
       // Booking Flow Routes
       GoRoute(
         path: AppRoutes.activateGymPass,
         name: 'activateGymPass',
-        builder: (context, state) => MainScreenWrapper(child: ActivateGymPassScreen(extra: state.extra)),
+        builder:
+            (context, state) => MainScreenWrapper(
+              child: ActivateGymPassScreen(extra: state.extra),
+            ),
       ),
       GoRoute(
         path: AppRoutes.selectSession,
@@ -397,9 +408,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           try {
             final booking = Booking.fromJson(bookingDetailsMap);
             return MainScreenWrapper(
-              child: BookingDetailsScreen(
-                booking: booking,
-              ),
+              child: BookingDetailsScreen(booking: booking),
             ); // Pass Booking object
           } catch (e, s) {
             print('Error parsing bookingDetailsMap in AppRouter: $e\n$s');
