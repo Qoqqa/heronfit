@@ -295,7 +295,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.profileContact,
-        builder: (context, state) => const ContactUsWidget(),
+        builder: (context, state) => const ContactUsScreen(),
       ),
       GoRoute(
         path: AppRoutes.profilePrivacy,
