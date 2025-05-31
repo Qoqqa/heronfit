@@ -17,6 +17,15 @@ jobs:
         with:
           channel: 'stable' # Use the stable Flutter channel
 
+      # Add this step to create the assets directory if it doesn't exist
+      - name: Create assets directory
+        run: mkdir -p assets
+
+      # Add this step to create the .env file from GitHub Secrets
+      # Make sure you have a GitHub Secret named DOTENV_FILE_CONTENT
+      - name: Create .env file
+        run: echo "${{ secrets.DOTENV_FILE_CONTENT }}" > assets/.env
+
       - name: Get dependencies
         run: flutter pub get
 
