@@ -24,6 +24,10 @@ final myBookingsProvider = FutureProvider<List<Booking>>((ref) async {
       .order('booking_time', ascending: false);
 
   final bookings = response.map((item) => Booking.fromJson(item)).toList();
+  print('Fetched bookings: \\${bookings.length}');
+  for (final b in bookings) {
+    print('Booking: \\${b.id}, status: \\${b.status}');
+  }
   return bookings;
 });
 
@@ -124,6 +128,16 @@ class MyBookingsWidget extends ConsumerWidget {
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.0,
                                       color: HeronFitTheme.primaryDark,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4.0),
+                                  Text(
+                                    'Status: \\${booking.status.name}',
+                                    style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                      color: booking.status.name == 'confirmed'
+                                          ? Colors.green
+                                          : Colors.orange,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 8.0),

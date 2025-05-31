@@ -195,8 +195,8 @@ class BookingSupabaseService {
       print(
         '[BookingSupabaseService] session_occurrences response: $occurrencesResponse',
       );
-      if (occurrencesResponse == null ||
-          (occurrencesResponse is List && occurrencesResponse.isEmpty)) {
+      // Remove unnecessary null and type checks for occurrencesResponse
+      if ((occurrencesResponse as List).isEmpty) {
         print(
           '[BookingSupabaseService] No session_occurrences found for $targetDateIso',
         );
@@ -327,6 +327,7 @@ class BookingSupabaseService {
           .from('bookings')
           .select('id, session_date, session_end_time, status')
           .eq('user_id', userId)
+          // Only consider bookings with status 'confirmed' (not cancelled, not completed, etc.)
           .eq('status', BookingStatus.confirmed.name);
 
       print(
@@ -487,15 +488,19 @@ class BookingSupabaseService {
       // 3. Update the user_tickets table if a ticket was used
       if (activatedTicketId != null) {
         print(
-          '[BookingSupabaseService] Updating ticket $activatedTicketId status to used...',
+          '[BookingSupabaseService] Updating ticket $activatedTicketId status to used and setting activation_date...',
         );
         await _supabaseClient
             .from('user_tickets')
-            .update({'status': TicketStatus.used.name})
+            .update({
+              'status': TicketStatus.used.name,
+              'activation_date':
+                  DateTime.now().toIso8601String(), // Add activation_date
+            })
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);
         print(
-          '[BookingSupabaseService] Ticket $activatedTicketId status updated to used.',
+          '[BookingSupabaseService] Ticket $activatedTicketId status updated to used and activation_date set.',
         );
       } else {
         print(
@@ -587,6 +592,47 @@ class BookingSupabaseService {
       throw Exception(
         'An unexpected error occurred while trying to join the waitlist.',
       );
+    }
+  }
+
+  /// Cancels a booking and decrements the booked_slots in session_occurrences
+  Future<void> cancelBooking({
+    required String bookingId,
+    required String sessionOccurrenceId,
+    String? userTicketId,
+  }) async {
+    // 1. Update booking status to cancelled_by_user
+    await _supabaseClient
+        .from('bookings')
+        .update({'status': BookingStatus.cancelled_by_user.name})
+        .eq('id', bookingId);
+
+    // 2. Decrement booked_slots in session_occurrences
+    final occurrence =
+        await _supabaseClient
+            .from('session_occurrences')
+            .select('booked_slots')
+            .eq('id', sessionOccurrenceId)
+            .maybeSingle();
+    if (occurrence != null && occurrence['booked_slots'] != null) {
+      final int currentSlots = occurrence['booked_slots'] as int;
+      final int newSlots = currentSlots > 0 ? currentSlots - 1 : 0;
+      await _supabaseClient
+          .from('session_occurrences')
+          .update({'booked_slots': newSlots})
+          .eq('id', sessionOccurrenceId);
+    }
+
+    // 3. Optionally revert ticket status if a ticket was used
+    if (userTicketId != null && userTicketId.isNotEmpty) {
+      await _supabaseClient
+          .from('user_tickets')
+          .update({
+            'status': TicketStatus.available.name,
+            'activation_date': null,
+          })
+          .eq('id', userTicketId)
+          .eq('status', TicketStatus.used.name);
     }
   }
 }

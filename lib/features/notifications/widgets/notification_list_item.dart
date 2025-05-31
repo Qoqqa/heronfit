@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:heronfit/core/theme.dart';
 import 'package:solar_icons/solar_icons.dart';
-// ADDED: Import notifications controller and any necessary models
-// MODIFIED: Added prefix to import for notifications controller to avoid name conflict
-import 'package:heronfit/features/notifications/controllers/notifications_controller.dart'
-    as controller;
-// ADDED: Import for timeago package (assuming it's used or will be added)
-// import 'package:timeago/timeago.dart' as timeago;
-// ADDED: Import for GoRouter
+import 'package:heronfit/features/notifications/controllers/notifications_controller.dart' as controller;
 import 'package:go_router/go_router.dart';
-// ADDED: Import for AppRoutes
 import 'package:heronfit/core/router/app_routes.dart';
 
 class NotificationListItem extends ConsumerWidget {
@@ -24,14 +16,22 @@ class NotificationListItem extends ConsumerWidget {
 
     // Assuming 'title', 'body', 'created_at', and 'is_read' keys exist
     final title = notification.title;
-    final body = notification.body;
     final timestamp = notification.createdAt;
     final isRead = notification.isRead;
 
-    // Determine icon based on notification type or other data (TODO: refine this)
-    IconData leadingIcon = SolarIconsBold.bell;
-    // Example: if notification['type'] == 'booking_success' leadingIcon = SolarIconsBold.checkCircle;
-    // Example: if notification['type'] == 'alert' leadingIcon = SolarIconsBold.dangerCircle;
+    // Determine icon and style based on notification type
+    IconData leadingIcon;
+    Color iconBgColor;
+    String subtitleText;
+    if (notification.type == controller.NotificationType.announcement) {
+      leadingIcon = Icons.campaign; // Fallback to Material icon for announcement
+      iconBgColor = Colors.orange;
+      subtitleText = 'Announcement • ' + _formatRelativeDate(timestamp);
+    } else {
+      leadingIcon = SolarIconsBold.bell;
+      iconBgColor = theme.colorScheme.primary;
+      subtitleText = _formatRelativeDate(timestamp);
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -51,10 +51,16 @@ class NotificationListItem extends ConsumerWidget {
         ),
       ),
       child: ListTile(
+        onTap: () {
+          // Navigate to details screen, pass notification id and type
+          context.push('${AppRoutes.notifications}/${notification.id}',
+            extra: notification,
+          );
+        },
         leading: Container(
           padding: const EdgeInsets.all(8.0), // Padding around the icon
           decoration: BoxDecoration(
-            color: theme.colorScheme.primary,
+            color: iconBgColor,
             shape: BoxShape.circle,
           ),
           child: Icon(leadingIcon, color: Colors.white, size: 24.0),
@@ -69,44 +75,44 @@ class NotificationListItem extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
-          _formatRelativeDate(timestamp),
+          subtitleText,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onBackground.withOpacity(0.7),
           ),
         ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert),
-          onSelected: (String value) {
-            // TODO: Implement controller calls for actions
-            final notificationsNotifier = ref.read(
-              controller.notificationsProvider.notifier,
-            );
-
-            if (value == 'read') {
-              notificationsNotifier.markAsRead(notification.id);
-            } else if (value == 'delete') {
-              notificationsNotifier.deleteNotification(notification.id);
-            } else if (value == 'view_details') {
-              context.push('${AppRoutes.notifications}/${notification.id}');
-            }
-          },
-          itemBuilder: (BuildContext context) {
-            return <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'view_details',
-                child: Text('View Details'),
+        trailing: notification.type == controller.NotificationType.announcement
+            ? null // No menu for announcements
+            : PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert),
+                onSelected: (String value) {
+                  final notificationsNotifier = ref.read(
+                    controller.notificationsProvider.notifier,
+                  );
+                  if (value == 'read') {
+                    notificationsNotifier.markAsRead(notification.id);
+                  } else if (value == 'delete') {
+                    notificationsNotifier.deleteNotification(notification.id);
+                  } else if (value == 'view_details') {
+                    context.push('${AppRoutes.notifications}/${notification.id}');
+                  }
+                },
+                itemBuilder: (BuildContext context) {
+                  return <PopupMenuEntry<String>>[
+                    const PopupMenuItem<String>(
+                      value: 'view_details',
+                      child: Text('View Details'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'read',
+                      child: Text('Mark as Read'),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Text('Delete'),
+                    ),
+                  ];
+                },
               ),
-              const PopupMenuItem<String>(
-                value: 'read',
-                child: Text('Mark as Read'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'delete',
-                child: Text('Delete'),
-              ),
-            ];
-          },
-        ),
       ),
     );
   }

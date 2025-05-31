@@ -78,6 +78,7 @@ class NotificationsScreen extends ConsumerWidget {
               itemCount: notifications.length,
               itemBuilder: (context, index) {
                 final notification = notifications[index];
+                // Pass notification object as extra for details screen
                 return NotificationListItem(notification: notification);
               },
             );

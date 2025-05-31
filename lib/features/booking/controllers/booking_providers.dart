@@ -116,6 +116,7 @@ Future<Booking?> _fetchActiveBooking(String userId) async {
             .from('bookings')
             .select()
             .eq('user_id', userId)
+            // Only consider bookings with status 'confirmed' (not cancelled, not completed, etc.)
             .eq('status', BookingStatus.confirmed.name)
             .gte(
               'session_date',

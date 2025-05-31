@@ -1,14 +1,18 @@
 import 'package:riverpod/riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-// ADDED: Notification model class
+// ADDED: NotificationType enum to distinguish between notification and announcement
+enum NotificationType { user, announcement }
+
+// MODIFIED: Notification model class
 class Notification {
   final String id;
-  final String userId;
+  final String userId; // For announcements, can be empty
   final String title;
   final String body;
   final DateTime createdAt;
   bool isRead;
+  final NotificationType type;
 
   Notification({
     required this.id,
@@ -17,19 +21,32 @@ class Notification {
     required this.body,
     required this.createdAt,
     required this.isRead,
+    required this.type,
   });
 
-  // Factory constructor to create a Notification from a Supabase map
+  // Factory for user notification
   factory Notification.fromMap(Map<String, dynamic> map) {
     return Notification(
       id: map['id'] as String,
       userId: map['user_id'] as String,
       title: map['title'] as String,
       body: map['body'] as String,
-      createdAt: DateTime.parse(
-        map['created_at'] as String,
-      ), // Assuming timestamp is a string
-      isRead: map['is_read'] as bool? ?? false, // Default to false if null
+      createdAt: DateTime.parse(map['created_at'] as String),
+      isRead: map['is_read'] as bool? ?? false,
+      type: NotificationType.user,
+    );
+  }
+
+  // Factory for announcement
+  factory Notification.fromAnnouncement(Map<String, dynamic> map) {
+    return Notification(
+      id: map['id'] as String,
+      userId: '',
+      title: map['title'] as String,
+      body: map['content'] as String, // FIXED: use 'content' for announcements
+      createdAt: DateTime.parse(map['created_at'] as String),
+      isRead: true, // Announcements are always read
+      type: NotificationType.announcement,
     );
   }
 }
@@ -46,7 +63,7 @@ final notificationsProvider = StateNotifierProvider<
 class NotificationsNotifier
     extends StateNotifier<AsyncValue<List<Notification>>> {
   NotificationsNotifier() : super(const AsyncValue.loading()) {
-    _fetchNotifications(); // Fetch notifications when the notifier is created
+    _fetchNotifications();
   }
 
   final supabase = Supabase.instance.client;
@@ -54,32 +71,35 @@ class NotificationsNotifier
   Future<void> _fetchNotifications() async {
     try {
       final currentUser = supabase.auth.currentUser;
-
-      if (currentUser == null) {
-        state = const AsyncValue.data(
-          [],
-        ); // User not logged in, return empty list
-        return;
+      // Fetch user notifications
+      List<Notification> notifications = [];
+      if (currentUser != null) {
+        final response = await supabase
+            .from('notifications')
+            .select()
+            .eq('user_id', currentUser.id)
+            .order('created_at', ascending: false);
+        final List<dynamic> data = response as List<dynamic>;
+        notifications = data
+            .map((item) => Notification.fromMap(item as Map<String, dynamic>))
+            .toList();
       }
-
-      final response = await supabase
-          .from('notifications')
+      // Fetch announcements (public, for all users)
+      final announcementResponse = await supabase
+          .from('announcements')
           .select()
-          .eq('user_id', currentUser.id)
           .order('created_at', ascending: false);
-
-      final List<dynamic> data = response as List<dynamic>;
-
-      // Map the data to Notification models
-      final notifications =
-          data
-              .map((item) => Notification.fromMap(item as Map<String, dynamic>))
-              .toList();
-
-      state = AsyncValue.data(notifications);
-    } catch (e, stackTrace) {
-      print('Error fetching notifications: $e');
-      state = AsyncValue.error(e, stackTrace); // Propagate the error
+      final List<dynamic> announcementData = announcementResponse as List<dynamic>;
+      final announcements = announcementData
+          .map((item) => Notification.fromAnnouncement(item as Map<String, dynamic>))
+          .toList();
+      // Merge and sort by createdAt descending
+      final allItems = [...notifications, ...announcements];
+      allItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      state = AsyncValue.data(allItems);
+    } catch (e) {
+      print('Error fetching notifications/announcements: $e');
+      state = AsyncValue.error(e, StackTrace.current);
     }
   }
 
@@ -98,6 +118,7 @@ class NotificationsNotifier
                 body: notification.body,
                 createdAt: notification.createdAt,
                 isRead: true, // Mark as read
+                type: notification.type, // Preserve the type
               );
             } else {
               return notification;
