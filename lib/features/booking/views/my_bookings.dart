@@ -90,26 +90,49 @@ class MyBookingsWidget extends ConsumerWidget {
 
                         final DateFormat dateFormat = DateFormat('MMM d, yyyy');
 
-                        final String formattedSessionDate = dateFormat.format(booking.sessionDate);
+                        final String formattedSessionDate = dateFormat.format(
+                          booking.sessionDate,
+                        );
 
                         String formattedTimeRange = 'N/A';
                         try {
-                          final startTime = TimeOfDay(hour: int.parse(booking.sessionStartTime.split(':')[0]), minute: int.parse(booking.sessionStartTime.split(':')[1]));
-                          final endTime = TimeOfDay(hour: int.parse(booking.sessionEndTime.split(':')[0]), minute: int.parse(booking.sessionEndTime.split(':')[1]));
-                          formattedTimeRange = '${startTime.format(context)} - ${endTime.format(context)}';
+                          final startTime = TimeOfDay(
+                            hour: int.parse(
+                              booking.sessionStartTime.split(':')[0],
+                            ),
+                            minute: int.parse(
+                              booking.sessionStartTime.split(':')[1],
+                            ),
+                          );
+                          final endTime = TimeOfDay(
+                            hour: int.parse(
+                              booking.sessionEndTime.split(':')[0],
+                            ),
+                            minute: int.parse(
+                              booking.sessionEndTime.split(':')[1],
+                            ),
+                          );
+                          formattedTimeRange =
+                              '${startTime.format(context)} - ${endTime.format(context)}';
                         } catch (e) {
                           // Handle parsing error, keep 'N/A' or log error
                           // print('Error parsing session time: $e');
                         }
 
-                        final String ticketIdDisplay = booking.userTicketId ?? 'N/A';
-                        final String bookingTimeDisplay = DateFormat('MMM d, yyyy, h:mm a').format(booking.bookingTime.toLocal());
+                        final String ticketIdDisplay =
+                            booking.userTicketId ?? 'N/A';
+                        final String bookingTimeDisplay = DateFormat(
+                          'MMM d, yyyy, h:mm a',
+                        ).format(booking.bookingTime.toLocal());
 
                         return InkWell(
                           onTap: () {
                             // Navigate to BookingDetailsScreen, passing the booking object
                             // The router expects a Map<String, dynamic> for the 'extra' parameter
-                            context.push(AppRoutes.bookingDetails, extra: booking.toJson()); // Changed to context.push()
+                            context.push(
+                              AppRoutes.bookingDetails,
+                              extra: booking.toJson(),
+                            ); // Changed to context.push()
                           },
                           child: Card(
                             elevation: 2.0,
@@ -124,35 +147,46 @@ class MyBookingsWidget extends ConsumerWidget {
                                 children: [
                                   Text(
                                     booking.sessionCategory,
-                                    style: HeronFitTheme.textTheme.titleMedium?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.0,
-                                      color: HeronFitTheme.primaryDark,
-                                    ),
+                                    style: HeronFitTheme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 0.0,
+                                          color: HeronFitTheme.primaryDark,
+                                        ),
                                   ),
                                   const SizedBox(height: 4.0),
                                   Text(
-                                    'Status: \\${booking.status.name}',
-                                    style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                      color: booking.status.name == 'confirmed'
-                                          ? Colors.green
-                                          : Colors.orange,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                    'Status: ${booking.status.name.replaceAll('_', ' ')[0].toUpperCase()}${booking.status.name.replaceAll('_', ' ').substring(1).toLowerCase()}',
+                                    style: HeronFitTheme.textTheme.bodySmall
+                                        ?.copyWith(
+                                          color:
+                                              booking.status.name == 'confirmed'
+                                                  ? Colors.green
+                                                  : Colors.orange,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                   ),
                                   const SizedBox(height: 8.0),
                                   Row(
                                     children: [
-                                      Icon(Icons.qr_code, color: HeronFitTheme.textSecondary, size: 16),
+                                      Icon(
+                                        Icons.qr_code,
+                                        color: HeronFitTheme.textSecondary,
+                                        size: 16,
+                                      ),
                                       const SizedBox(width: 8.0),
                                       Expanded(
                                         child: Text(
                                           'Ref: ${booking.bookingReferenceId ?? "N/A"}',
-                                          style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                            letterSpacing: 0.0,
-                                            color: HeronFitTheme.textSecondary,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
+                                          style: HeronFitTheme
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                letterSpacing: 0.0,
+                                                color:
+                                                    HeronFitTheme.textSecondary,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
                                         ),
                                       ),
                                     ],
@@ -162,37 +196,58 @@ class MyBookingsWidget extends ConsumerWidget {
                                     child: Row(
                                       children: [
                                         Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
                                               'Ticket ID: $ticketIdDisplay',
-                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                letterSpacing: 0.0,
-                                                color: HeronFitTheme.textSecondary,
-                                              ),
+                                              style: HeronFitTheme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    letterSpacing: 0.0,
+                                                    color:
+                                                        HeronFitTheme
+                                                            .textSecondary,
+                                                  ),
                                             ),
                                             Text(
                                               'Date: $formattedSessionDate',
-                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                letterSpacing: 0.0,
-                                                color: HeronFitTheme.textSecondary,
-                                              ),
+                                              style: HeronFitTheme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    letterSpacing: 0.0,
+                                                    color:
+                                                        HeronFitTheme
+                                                            .textSecondary,
+                                                  ),
                                             ),
                                             Text(
                                               'Time: $formattedTimeRange',
-                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                letterSpacing: 0.0,
-                                                color: HeronFitTheme.textSecondary,
-                                              ),
+                                              style: HeronFitTheme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    letterSpacing: 0.0,
+                                                    color:
+                                                        HeronFitTheme
+                                                            .textSecondary,
+                                                  ),
                                             ),
                                             Text(
                                               'Booked on: $bookingTimeDisplay',
-                                              style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                                                fontSize: 10,
-                                                letterSpacing: 0.0,
-                                                color: HeronFitTheme.textMuted,
-                                              ),
+                                              style: HeronFitTheme
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    fontSize: 10,
+                                                    letterSpacing: 0.0,
+                                                    color:
+                                                        HeronFitTheme.textMuted,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -229,18 +284,14 @@ class MyBookingsWidget extends ConsumerWidget {
                 ],
               );
             },
-            loading: () => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            error: (error, stackTrace) => Center(
-              child: Text(
-                'Error: ${error.toString()}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.red,
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error:
+                (error, stackTrace) => Center(
+                  child: Text(
+                    'Error: ${error.toString()}',
+                    style: const TextStyle(fontSize: 16, color: Colors.red),
+                  ),
                 ),
-              ),
-            ),
           ),
         ),
       ),
