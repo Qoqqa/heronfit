@@ -153,17 +153,20 @@ class WorkoutCarouselSection extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8.0,
                     ), // Space between cards
-                    // Wrap WorkoutCard with GestureDetector for tap handling
-                    child: GestureDetector(
-                      onTap: () {
-                        // Navigate to start workout from template screen
-                        // Pass the selected workout template
-                        context.push(
-                          AppRoutes.workoutStartFromTemplate,
-                          extra: workout,
-                        );
-                      },
-                      child: WorkoutCard(workout: workout),
+                    child: SizedBox(
+                      // Wrap with SizedBox to enforce height
+                      height: 180, // Explicitly set height here
+                      child: GestureDetector(
+                        onTap: () {
+                          // Navigate to start workout from template screen
+                          // Pass the selected workout template
+                          context.push(
+                            AppRoutes.workoutStartFromTemplate,
+                            extra: workout,
+                          );
+                        },
+                        child: WorkoutCard(workout: workout),
+                      ),
                     ),
                   );
                 },

@@ -116,105 +116,88 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
               ),
               const SizedBox(height: 16.0),
 
-              // Details Section - No Card, just the Container for layout/shadow
+              // Details Section - Icons, labels, and values aligned vertically
               Container(
                 decoration: BoxDecoration(
-                  // Keep the shadow if desired, or remove if not needed
-                  boxShadow: HeronFitTheme.cardShadow,
-                  // Make background transparent or use background color
-                  color: Colors.transparent, // Or theme.colorScheme.background
+                  color:
+                      Theme.of(context)
+                          .colorScheme
+                          .surface, // Background color for the container
                   borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: HeronFitTheme.cardShadow, // Apply shadow here
                 ),
-                child: Row(
-                  // Changed Column back to Row
+                padding: const EdgeInsets.all(
+                  16.0,
+                ), // Add padding inside the container
+                child: Column(
+                  // Use a Column for vertical arrangement of detail rows
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // First Column
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow(
-                            Theme.of(context),
-                            HeronFitTheme.textTheme,
-                            SolarIconsOutline.target,
-                            'Target:', // Shorten label
-                            widget.exercise.primaryMuscle,
-                          ),
-                          const SizedBox(height: 8.0), // Spacing
-                          _buildDetailRow(
-                            Theme.of(context),
-                            HeronFitTheme.textTheme,
-                            SolarIconsOutline.dumbbellSmall,
-                            'Equipment:',
-                            widget.exercise.equipment,
-                          ),
-                          const SizedBox(height: 8.0),
-                          _buildDetailRow(
-                            Theme.of(context),
-                            HeronFitTheme.textTheme,
-                            SolarIconsOutline.layersMinimalistic,
-                            'Category:',
-                            widget.exercise.category,
-                          ),
-                          const SizedBox(height: 8.0),
-                          _buildDetailRow(
-                            Theme.of(context),
-                            HeronFitTheme.textTheme,
-                            SolarIconsOutline.ranking,
-                            'Level:',
-                            widget.exercise.level,
-                          ),
-                        ],
+                    // Build each detail row using the helper
+                    _buildDetailsRowContent(
+                      context,
+                      SolarIconsOutline.target,
+                      'Target:',
+                      _capitalizeWords(widget.exercise.primaryMuscle),
+                    ),
+                    const SizedBox(
+                      height: 8.0,
+                    ), // Adjusted spacing between rows
+                    _buildDetailsRowContent(
+                      context,
+                      SolarIconsOutline.dumbbellSmall,
+                      'Equipment:',
+                      _capitalizeWords(widget.exercise.equipment),
+                    ),
+                    const SizedBox(height: 8.0), // Adjusted spacing
+                    _buildDetailsRowContent(
+                      context,
+                      SolarIconsOutline.bolt,
+                      'Force:',
+                      _capitalizeWords(
+                        widget.exercise.force.isNotEmpty
+                            ? widget.exercise.force
+                            : 'N/A',
                       ),
                     ),
-                    const SizedBox(width: 16.0), // Space between columns
-                    // Second Column
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildDetailRow(
-                            Theme.of(context),
-                            HeronFitTheme.textTheme,
-                            SolarIconsOutline.bolt,
-                            'Force:',
-                            widget.exercise.force.isNotEmpty
-                                ? widget.exercise.force
-                                : 'N/A',
-                          ),
-                          const SizedBox(height: 8.0),
-                          // Only show Mechanic if it exists
-                          if (widget.exercise.mechanic != null &&
-                              widget.exercise.mechanic!.isNotEmpty)
-                            Padding(
-                              // Add padding to align with others when present
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: _buildDetailRow(
-                                Theme.of(context),
-                                HeronFitTheme.textTheme,
-                                SolarIconsOutline.tuning,
-                                'Mechanic:',
-                                widget.exercise.mechanic!,
-                              ),
-                            ),
-                          // Add SizedBox if Mechanic is not shown but Secondary is
-                          // This ensures consistent spacing below Force if Mechanic is absent
-                          if (widget.exercise.mechanic == null ||
-                              widget.exercise.mechanic!.isEmpty)
-                            const SizedBox(height: 8.0),
-                          _buildDetailRow(
-                            Theme.of(context),
-                            HeronFitTheme.textTheme,
-                            SolarIconsOutline.body,
-                            'Secondary:', // Shorten label
-                            widget.exercise.secondaryMuscles.isNotEmpty
-                                ? widget.exercise.secondaryMuscles.join(', ')
-                                : 'None',
-                            isList: true,
-                          ),
-                        ],
+                    const SizedBox(height: 8.0), // Adjusted spacing
+                    _buildDetailsRowContent(
+                      context,
+                      SolarIconsOutline.layersMinimalistic,
+                      'Category:',
+                      _capitalizeWords(widget.exercise.category),
+                    ),
+                    const SizedBox(height: 8.0), // Adjusted spacing
+                    _buildDetailsRowContent(
+                      context,
+                      SolarIconsOutline.ranking,
+                      'Level:',
+                      _capitalizeWords(widget.exercise.level),
+                    ),
+                    // Only show Mechanic if it exists, add spacing before and after it
+                    if (widget.exercise.mechanic != null &&
+                        widget.exercise.mechanic!.isNotEmpty) ...[
+                      const SizedBox(height: 8.0), // Adjusted spacing
+                      _buildDetailsRowContent(
+                        context,
+                        SolarIconsOutline.tuning,
+                        'Mechanic:',
+                        _capitalizeWords(widget.exercise.mechanic!),
                       ),
+                    ],
+                    const SizedBox(
+                      height: 8.0,
+                    ), // Adjusted spacing before Secondary
+                    _buildDetailsRowContent(
+                      context,
+                      SolarIconsOutline.body,
+                      'Secondary:',
+                      _capitalizeWords(
+                        widget.exercise.secondaryMuscles.isNotEmpty
+                            ? widget.exercise.secondaryMuscles.join(', ')
+                            : 'None',
+                      ),
+                      // isList: true, // No longer needed in helper with this layout
                     ),
                   ],
                 ),
@@ -340,46 +323,39 @@ class _ExerciseDetailsScreenState extends State<ExerciseDetailsScreen> {
     );
   }
 
-  // Helper method to build a detail row with label and value
-  Widget _buildDetailRow(
-    ThemeData theme,
-    TextTheme textTheme,
+  // Helper method to build a detail row with icon, label, and value
+  // Adjusted to align icon and label to the left, and value to the right
+  Widget _buildDetailsRowContent(
+    BuildContext context, // Added BuildContext to access Theme
     IconData icon,
     String label,
-    String value, {
-    bool isList = false, // Keep this parameter if needed elsewhere
-  }) {
+    String value,
+    // Removed isList as it's not used in this layout
+  ) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.center, // Center items vertically
+      crossAxisAlignment: CrossAxisAlignment.start, // Align items to the top
       children: [
         Padding(
-          padding: const EdgeInsets.only(right: 6.0), // Add padding after icon
-          child: Icon(
-            icon,
-            size: 18,
-            color: theme.colorScheme.primary,
-          ), // Smaller icon
+          padding: const EdgeInsets.only(right: 8.0), // Space after icon
+          child: Icon(icon, size: 18, color: theme.colorScheme.primary),
         ),
-        // Remove fixed width SizedBox for label to allow natural sizing
-        Padding(
-          padding: const EdgeInsets.only(right: 4.0), // Add padding after label
-          child: Text(
-            label,
-            style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
-            overflow: TextOverflow.ellipsis, // Prevent label overflow
-          ),
+        // Label text - takes only the space it needs
+        Text(
+          label,
+          style: textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+          // Removed overflow property here to let it wrap if necessary
         ),
+        const SizedBox(width: 4.0), // Small space between label and value
         Expanded(
-          child: Center(
-            // Center the value text within the expanded space
-            child: Text(
-              _capitalizeWords(value),
-              style: textTheme.labelSmall, // Use labelSmall for value
-              textAlign:
-                  TextAlign
-                      .center, // Ensure text itself is centered if it wraps
-              softWrap: true, // Explicitly allow wrapping
-            ),
+          // Allow the value text to take up the remaining space and push to the right
+          child: Text(
+            value,
+            style: textTheme.labelSmall, // Use labelSmall for value
+            textAlign: TextAlign.right, // Align value text to the right
+            softWrap: true, // Allow wrapping
           ),
         ),
       ],

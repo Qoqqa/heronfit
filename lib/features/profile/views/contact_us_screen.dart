@@ -1,16 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import flutter_riverpod
 import '../../../core/theme.dart';
+import '../controllers/feedback_controller.dart'; // Import the new controller
 
-class ContactUsWidget extends StatelessWidget {
-  const ContactUsWidget({super.key});
+class ContactUsScreen extends ConsumerStatefulWidget {
+  const ContactUsScreen({super.key});
 
   static String routeName = 'ContactUs';
   static String routePath = '/contactUs';
 
   @override
+  ConsumerState<ContactUsScreen> createState() => _ContactUsScreenState();
+}
+
+class _ContactUsScreenState extends ConsumerState<ContactUsScreen> {
+  final TextEditingController _feedbackController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    _feedbackController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final feedbackState = ref.watch(feedbackControllerProvider);
+
+    ref.listen<FeedbackState>(feedbackControllerProvider, (previous, next) {
+      if (next.status == FeedbackStatus.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Feedback sent successfully!'),
+            backgroundColor: HeronFitTheme.success,
+          ),
+        );
+        _feedbackController.clear();
+        ref.read(feedbackControllerProvider.notifier).resetState();
+      } else if (next.status == FeedbackStatus.error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(next.errorMessage ?? 'An unexpected error occurred.'),
+            backgroundColor: HeronFitTheme.error,
+          ),
+        );
+        ref.read(feedbackControllerProvider.notifier).resetState();
+      }
+    });
+
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
@@ -117,59 +156,56 @@ class ContactUsWidget extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
-                  autofocus: false,
-                  obscureText: false,
-                  decoration: InputDecoration(
-                    isDense: true,
-                    hintText:
-                        'Describe in detail what you want to let us know here...',
-                    hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
-                      color: HeronFitTheme.textMuted,
-                    ),
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: HeronFitTheme.primary,
-                        width: 2,
+                Form(
+                  key: _formKey,
+                  child: TextFormField(
+                    controller: _feedbackController,
+                    autofocus: false,
+                    obscureText: false,
+                    decoration: InputDecoration(
+                      isDense: true,
+                      hintText:
+                          'Describe in detail what you want to let us know here...',
+                      hintStyle: HeronFitTheme.textTheme.bodyMedium?.copyWith(
+                        color: HeronFitTheme.textMuted,
+                      ),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: HeronFitTheme.primary,
+                          width: 2,
+                        ),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(
+                          color: HeronFitTheme.primaryDark,
+                          width: 2,
+                        ),
                       ),
                     ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        color: HeronFitTheme.primaryDark,
-                        width: 2,
-                      ),
-                    ),
+                    style: HeronFitTheme.textTheme.bodyMedium,
+                    maxLines: null,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your feedback.';
+                      }
+                      return null;
+                    },
                   ),
-                  style: HeronFitTheme.textTheme.bodyMedium,
-                  maxLines: null,
                 ),
                 const SizedBox(height: 24),
 
                 // Send Feedback Button
                 ElevatedButton(
-                  onPressed: () {
-                    // Static content: No backend action
-                    showDialog(
-                      context: context,
-                      builder:
-                          (context) => AlertDialog(
-                            title: const Text('Feedback Received'),
-                            content: const Text(
-                              'Thank you for your feedback! We appreciate your input.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  if (context.mounted) {
-                                    context.pop(); // Pop after sending
-                                  }
-                                },
-                                child: const Text('OK'),
-                              ),
-                            ],
-                          ),
-                    );
-                  },
+                  onPressed:
+                      feedbackState.status == FeedbackStatus.loading
+                          ? null
+                          : () {
+                            if (_formKey.currentState!.validate()) {
+                              ref
+                                  .read(feedbackControllerProvider.notifier)
+                                  .sendFeedback(_feedbackController.text);
+                            }
+                          },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: HeronFitTheme.primaryDark,
                     foregroundColor: HeronFitTheme.bgLight,
@@ -178,13 +214,25 @@ class ContactUsWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: Text(
-                    'Send Feedback',
-                    style: HeronFitTheme.textTheme.titleSmall?.copyWith(
-                      color: HeronFitTheme.bgLight,
-                      letterSpacing: 0.0,
-                    ),
-                  ),
+                  child:
+                      feedbackState.status == FeedbackStatus.loading
+                          ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : Text(
+                            'Send Feedback',
+                            style: HeronFitTheme.textTheme.titleSmall?.copyWith(
+                              color: HeronFitTheme.bgLight,
+                              letterSpacing: 0.0,
+                            ),
+                          ),
                 ),
               ],
             ),

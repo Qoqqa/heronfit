@@ -47,88 +47,94 @@ class WorkoutCard extends StatelessWidget {
           },
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      SolarIconsOutline.dumbbellLarge, // Added icon
-                      color: HeronFitTheme.primary,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12.0),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            workout.name,
-                            style: HeronFitTheme.textTheme.titleMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: HeronFitTheme.textPrimary,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4.0),
-                          Text(
-                            '${workout.exercises.length} exercises · ${_formatDuration(workout.duration)}',
-                            style: HeronFitTheme.textTheme.bodySmall?.copyWith(
-                              color: HeronFitTheme.textMuted,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+            child: ClipRect(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        SolarIconsOutline.dumbbellLarge, // Added icon
+                        color: HeronFitTheme.primary,
+                        size: 24,
                       ),
-                    ),
-                  ],
-                ),
-                if (workout.exercises.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: 12.0,
-                    ), // Add padding above chips
-                    child: Wrap(
-                      spacing: 6.0,
-                      runSpacing: 4.0,
-                      children:
-                          workout.exercises
-                              .take(3)
-                              .map(
-                                (exercise) => Chip(
-                                  // Changed variable name
-                                  label: Text(
-                                    exercise.name,
-                                  ), // Access name property
-                                  labelStyle: HeronFitTheme.textTheme.labelSmall
-                                      ?.copyWith(
-                                        fontSize: 10,
-                                        color: HeronFitTheme.textPrimary
-                                            .withAlpha(204),
-                                      ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
+                      const SizedBox(width: 12.0),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              workout.name,
+                              style: HeronFitTheme.textTheme.titleMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: HeronFitTheme.textPrimary,
                                   ),
-                                  backgroundColor: HeronFitTheme.bgSecondary
-                                      .withAlpha(178),
-                                  side: BorderSide.none,
-                                  visualDensity: VisualDensity.compact,
-                                ),
-                              )
-                              .toList(),
-                    ),
-                  )
-                else
-                  const SizedBox(
-                    height: 32, // Adjusted placeholder height
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4.0),
+                            Text(
+                              '${workout.exercises.length} exercises · ${_formatDuration(workout.duration)}',
+                              style: HeronFitTheme.textTheme.bodySmall
+                                  ?.copyWith(color: HeronFitTheme.textMuted),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-              ],
+                  if (workout.exercises.isNotEmpty)
+                    Flexible(
+                      fit: FlexFit.loose,
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          top: 12.0,
+                        ), // Add padding above chips
+                        child: Wrap(
+                          spacing: 6.0,
+                          runSpacing: 4.0,
+                          children:
+                              workout.exercises
+                                  .take(3)
+                                  .map(
+                                    (exercise) => Chip(
+                                      // Changed variable name
+                                      label: Text(
+                                        exercise.name,
+                                      ), // Access name property
+                                      labelStyle: HeronFitTheme
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontSize: 10,
+                                            color: HeronFitTheme.textPrimary
+                                                .withAlpha(204),
+                                          ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      backgroundColor: HeronFitTheme.bgSecondary
+                                          .withAlpha(178),
+                                      side: BorderSide.none,
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  )
+                                  .toList(),
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(
+                      height: 32, // Adjusted placeholder height
+                    ),
+                ],
+              ),
             ),
           ),
         ),
