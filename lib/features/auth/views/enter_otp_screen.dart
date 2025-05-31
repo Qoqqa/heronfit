@@ -102,21 +102,22 @@ class _EnterOtpScreenState extends ConsumerState<EnterOtpScreen> {
     return Scaffold(
       backgroundColor: HeronFitTheme.bgLight,
       appBar: AppBar(
-        title: Text(
-          'Enter Verification Code',
-          style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-            color: HeronFitTheme.textWhite,
-          ),
-        ),
-        backgroundColor: HeronFitTheme.primary,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            SolarIconsOutline.altArrowLeft,
-            color: HeronFitTheme.textWhite,
+            Icons.chevron_left_rounded,
+            color: HeronFitTheme.primary,
+            size: 30,
           ),
           onPressed: () => context.pop(),
+        ),
+        title: Text(
+          'Enter Verification Code',
+          style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+            color: HeronFitTheme.primary,
+          ),
         ),
       ),
       body: SingleChildScrollView(

@@ -122,21 +122,22 @@ class RequestOtpScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: HeronFitTheme.bgLight,
       appBar: AppBar(
-        title: Text(
-          'Password Recovery',
-          style: HeronFitTheme.textTheme.titleLarge?.copyWith(
-            color: HeronFitTheme.textWhite,
-          ),
-        ),
-        backgroundColor: HeronFitTheme.primary,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(
-            SolarIconsOutline.altArrowLeft,
-            color: HeronFitTheme.textWhite,
+            Icons.chevron_left_rounded,
+            color: HeronFitTheme.primary,
+            size: 30,
           ),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).maybePop(),
+        ),
+        title: Text(
+          'Password Recovery',
+          style: HeronFitTheme.textTheme.titleLarge?.copyWith(
+            color: HeronFitTheme.primary,
+          ),
         ),
       ),
       body: SingleChildScrollView(
