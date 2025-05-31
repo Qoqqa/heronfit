@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Import the intl package for DateFormat
 
-enum SessionStatus {
-  available,
-  full,
-}
+enum SessionStatus { available, full }
 
 class Session {
   final String id;
   final String dayOfWeek; // e.g., "Monday", "Tuesday"
   final TimeOfDay startTime; // Parsed from "HH:mm:ss"
-  final TimeOfDay endTime;   // Parsed from "HH:mm:ss"
-  final String category;    // e.g., "Student", "Faculty/Employee"
+  final TimeOfDay endTime; // Parsed from "HH:mm:ss"
+  final String category; // e.g., "Student", "Faculty/Employee"
   final int capacity;
   final int bookedSlots;
   final bool isActive;
+  final DateTime date; // Added session date
   final DateTime? overrideDate; // Nullable
-  final String? notes;          // Nullable
+  final String? notes; // Nullable
 
   Session({
     required this.id,
@@ -27,6 +25,7 @@ class Session {
     required this.capacity,
     required this.bookedSlots,
     required this.isActive,
+    required this.date, // Added session date to constructor
     this.overrideDate,
     this.notes,
   });
@@ -48,9 +47,11 @@ class Session {
       capacity: json['capacity'] as int,
       bookedSlots: json['booked_slots'] as int,
       isActive: json['is_active'] as bool,
-      overrideDate: json['override_date'] == null
-          ? null
-          : DateTime.parse(json['override_date'] as String),
+      date: DateTime.parse(json['date'] as String), // Parse session date
+      overrideDate:
+          json['override_date'] == null
+              ? null
+              : DateTime.parse(json['override_date'] as String),
       notes: json['notes'] as String?,
     );
   }
@@ -63,9 +64,12 @@ class Session {
     }
 
     // Provide default values for potentially missing string fields from RPC response
-    final String id = map['id'] as String? ?? 'unknown_id'; // Should always be present from RPC
-    final String dayOfWeek = map['day_of_week'] as String? ?? 'N/A'; 
-    final String startTimeStr = map['start_time_of_day'] as String? ?? '00:00:00';
+    final String id =
+        map['id'] as String? ??
+        'unknown_id'; // Should always be present from RPC
+    final String dayOfWeek = map['day_of_week'] as String? ?? 'N/A';
+    final String startTimeStr =
+        map['start_time_of_day'] as String? ?? '00:00:00';
     final String endTimeStr = map['end_time_of_day'] as String? ?? '00:00:00';
     final String category = map['category'] as String? ?? 'General';
     final bool isActive = map['is_active'] as bool? ?? false;
@@ -77,11 +81,15 @@ class Session {
       endTime: _parseTimeOfDay(endTimeStr),
       capacity: map['capacity'] as int? ?? 0, // Default to 0 if null
       bookedSlots: map['booked_slots'] as int? ?? 0, // Default to 0 if null
-      category: category, 
+      category: category,
       isActive: isActive,
-      overrideDate: map['override_date'] == null
-          ? null
-          : DateTime.parse(map['override_date'] as String),
+      date: DateTime.parse(
+        map['date'] as String? ?? DateTime.now().toIso8601String(),
+      ), // Parse session date with fallback
+      overrideDate:
+          map['override_date'] == null
+              ? null
+              : DateTime.parse(map['override_date'] as String),
       notes: map['notes'] as String?,
     );
   }
@@ -101,7 +109,11 @@ class Session {
       'capacity': capacity,
       'booked_slots': bookedSlots,
       'is_active': isActive,
-      'override_date': overrideDate?.toIso8601String().substring(0, 10), // Format as YYYY-MM-DD
+      'date': date.toIso8601String().substring(0, 10), // Format as YYYY-MM-DD
+      'override_date': overrideDate?.toIso8601String().substring(
+        0,
+        10,
+      ), // Format as YYYY-MM-DD
       'notes': notes,
     };
   }
@@ -115,9 +127,11 @@ class Session {
     int? capacity,
     int? bookedSlots,
     bool? isActive,
+    DateTime? date, // Added date to copyWith
     DateTime? overrideDate,
     String? notes,
-    bool setOverrideDateToNull = false, // To explicitly set overrideDate to null
+    bool setOverrideDateToNull =
+        false, // To explicitly set overrideDate to null
     bool setNotesToNull = false, // To explicitly set notes to null
   }) {
     return Session(
@@ -129,7 +143,9 @@ class Session {
       capacity: capacity ?? this.capacity,
       bookedSlots: bookedSlots ?? this.bookedSlots,
       isActive: isActive ?? this.isActive,
-      overrideDate: setOverrideDateToNull ? null : overrideDate ?? this.overrideDate,
+      date: date ?? this.date, // Updated copyWith
+      overrideDate:
+          setOverrideDateToNull ? null : overrideDate ?? this.overrideDate,
       notes: setNotesToNull ? null : notes ?? this.notes,
     );
   }
@@ -142,6 +158,7 @@ class Session {
       final dt = DateTime(now.year, now.month, now.day, time.hour, time.minute);
       return DateFormat('h:mm a').format(dt); // e.g., 8:00 AM
     }
+
     return '${_formatTime(startTime)} - ${_formatTime(endTime)}';
   }
 
@@ -156,39 +173,54 @@ class Session {
     return SessionStatus.available;
   }
 
+  // Add a getter to check if the session is in the past
+  bool get isPast {
+    final now = DateTime.now();
+    final sessionEndDateTime = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      endTime.hour,
+      endTime.minute,
+    );
+    return sessionEndDateTime.isBefore(now);
+  }
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
 
     return other is Session &&
-      other.id == id &&
-      other.dayOfWeek == dayOfWeek &&
-      other.startTime == startTime &&
-      other.endTime == endTime &&
-      other.category == category &&
-      other.capacity == capacity &&
-      other.bookedSlots == bookedSlots &&
-      other.isActive == isActive &&
-      other.overrideDate == overrideDate &&
-      other.notes == notes;
+        other.id == id &&
+        other.dayOfWeek == dayOfWeek &&
+        other.startTime == startTime &&
+        other.endTime == endTime &&
+        other.category == category &&
+        other.capacity == capacity &&
+        other.bookedSlots == bookedSlots &&
+        other.isActive == isActive &&
+        other.date == date &&
+        other.overrideDate == overrideDate &&
+        other.notes == notes;
   }
 
   @override
   int get hashCode {
     return id.hashCode ^
-      dayOfWeek.hashCode ^
-      startTime.hashCode ^
-      endTime.hashCode ^
-      category.hashCode ^
-      capacity.hashCode ^
-      bookedSlots.hashCode ^
-      isActive.hashCode ^
-      overrideDate.hashCode ^
-      notes.hashCode;
+        dayOfWeek.hashCode ^
+        startTime.hashCode ^
+        endTime.hashCode ^
+        category.hashCode ^
+        capacity.hashCode ^
+        bookedSlots.hashCode ^
+        isActive.hashCode ^
+        date.hashCode ^
+        overrideDate.hashCode ^
+        notes.hashCode;
   }
 
   @override
   String toString() {
-    return 'Session(id: $id, dayOfWeek: $dayOfWeek, startTime: ${startTime.hour}:${startTime.minute.toString().padLeft(2, '0')}, endTime: ${endTime.hour}:${endTime.minute.toString().padLeft(2, '0')}, category: $category, capacity: $capacity, bookedSlots: $bookedSlots, isActive: $isActive, overrideDate: $overrideDate, notes: $notes)';
+    return 'Session(id: $id, dayOfWeek: $dayOfWeek, startTime: ${startTime.hour}:${startTime.minute.toString().padLeft(2, '0')}, endTime: ${endTime.hour}:${endTime.minute.toString().padLeft(2, '0')}, category: $category, capacity: $capacity, bookedSlots: $bookedSlots, isActive: $isActive, date: $date, overrideDate: $overrideDate, notes: $notes)';
   }
 }

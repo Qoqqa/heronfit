@@ -26,6 +26,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _weightController;
   late TextEditingController _birthdayController;
   late TextEditingController _contactController;
+  late TextEditingController _emailController; // Added email controller
 
   UserModel? _initialUserData;
   XFile? _pickedImage; // State variable to hold the picked image file
@@ -39,6 +40,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _weightController = TextEditingController();
     _birthdayController = TextEditingController();
     _contactController = TextEditingController();
+    _emailController = TextEditingController(); // Initialize email controller
 
     // Initialize controllers when initial data is available
     // We use listen to handle the async nature of the provider
@@ -57,8 +59,24 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         userData.last_name ?? ''; // Changed from lastName
     _heightController.text = userData.height?.toString() ?? '';
     _weightController.text = userData.weight?.toString() ?? '';
-    _birthdayController.text = userData.birthday ?? '';
+
+    // Format birthday to yyyy-MM-dd for display
+    if (userData.birthday != null && userData.birthday!.isNotEmpty) {
+      try {
+        final parsedDate = DateTime.parse(userData.birthday!);
+        _birthdayController.text = DateFormat('yyyy-MM-dd').format(parsedDate);
+      } catch (e) {
+        debugPrint(
+          'Error parsing birthday from UserModel: ${userData.birthday} - $e',
+        );
+        _birthdayController.text = ''; // Clear if parsing fails
+      }
+    } else {
+      _birthdayController.text = '';
+    }
+
     _contactController.text = userData.contact ?? '';
+    _emailController.text = userData.email_address ?? ''; // Set email
   }
 
   @override
@@ -69,18 +87,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     _weightController.dispose();
     _birthdayController.dispose();
     _contactController.dispose();
+    _emailController.dispose(); // Dispose email controller
     super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
     DateTime initialDate;
     try {
+      // Parse the text field value for initial date, which is already in yyyy-MM-dd format
       initialDate =
           _birthdayController.text.isNotEmpty
               ? DateFormat('yyyy-MM-dd').parse(_birthdayController.text)
               : DateTime.now();
     } catch (e) {
-      initialDate = DateTime.now(); // Fallback if parsing fails
+      // Fallback if parsing fails (e.g., initial state had unparseable value)
+      initialDate = DateTime.now();
+      debugPrint('Error parsing initial date for date picker: ${e}');
     }
 
     final DateTime? picked = await showDatePicker(
@@ -475,6 +497,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   List<Widget> _buildProfileFields(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     return [
+      const SizedBox(height: 16),
+      // Email Field (Non-editable)
+      TextFormField(
+        controller: _emailController,
+        decoration: InputDecoration(labelText: 'Email'),
+        readOnly: true, // Make it non-editable
+        style: textTheme.bodyLarge,
+      ),
       const SizedBox(height: 16),
       TextFormField(
         controller: _firstNameController,

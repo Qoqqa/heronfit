@@ -189,10 +189,10 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: 24.0),
                 _buildAccountSection(context),
                 const SizedBox(height: 16.0),
-                _buildNotificationSection(context, isSingle: true),
-                const SizedBox(height: 16.0),
+                // _buildNotificationSection(context, isSingle: true),
+                // const SizedBox(height: 16.0),
                 _buildOtherSection(context),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 24.0),
                 ElevatedButton.icon(
                   onPressed: () async {
                     try {

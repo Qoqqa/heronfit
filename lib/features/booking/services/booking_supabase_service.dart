@@ -281,6 +281,7 @@ class BookingSupabaseService {
           'id': sessionId,
           'capacity': capacity,
           'booked_slots': bookedSlots,
+          'date': occ['date'],
         });
         mergedSessions.add(session);
       }
@@ -493,7 +494,8 @@ class BookingSupabaseService {
             .from('user_tickets')
             .update({
               'status': TicketStatus.used.name,
-              'activation_date': DateTime.now().toIso8601String(), // Add activation_date
+              'activation_date':
+                  DateTime.now().toIso8601String(), // Add activation_date
             })
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);
@@ -606,11 +608,12 @@ class BookingSupabaseService {
         .eq('id', bookingId);
 
     // 2. Decrement booked_slots in session_occurrences
-    final occurrence = await _supabaseClient
-        .from('session_occurrences')
-        .select('booked_slots')
-        .eq('id', sessionOccurrenceId)
-        .maybeSingle();
+    final occurrence =
+        await _supabaseClient
+            .from('session_occurrences')
+            .select('booked_slots')
+            .eq('id', sessionOccurrenceId)
+            .maybeSingle();
     if (occurrence != null && occurrence['booked_slots'] != null) {
       final int currentSlots = occurrence['booked_slots'] as int;
       final int newSlots = currentSlots > 0 ? currentSlots - 1 : 0;
