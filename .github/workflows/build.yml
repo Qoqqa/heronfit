@@ -1,0 +1,51 @@
+# .github/workflows/build.yml
+name: Flutter Build Release
+
+on:
+  workflow_dispatch: # Trigger manually from the GitHub Actions tab
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Use a Linux runner for Android build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Use the stable Flutter channel
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      # You would typically need a macOS runner for building iOS release versions
+      # and proper code signing setup (certificates, provisioning profiles)
+      # - name: Build iOS Release (requires macOS runner and codesigning)
+      #   runs-on: macos-latest
+      #   steps:
+      #     - name: Checkout code
+      #       uses: actions/checkout@v4
+      #     - name: Set up Flutter
+      #       uses: subosito/flutter-action@v2
+      #       with:
+      #         channel: 'stable'
+      #     - name: Get dependencies
+      #       run: flutter pub get
+      #     - name: Build iOS Release
+      #       run: flutter build ios --release --no-codesign # --no-codesign is for basic build, full release needs signing
+      #     - name: Upload iOS Artifact
+      #       uses: actions/upload-artifact@v4
+      #       with:
+      #         name: release-ios
+      #         path: build/ios/iphoneos/
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/apk/release/app-release.apk 
