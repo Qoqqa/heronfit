@@ -159,10 +159,7 @@ class MyBookingsWidget extends ConsumerWidget {
                                     'Status: ${booking.status.name.replaceAll('_', ' ')[0].toUpperCase()}${booking.status.name.replaceAll('_', ' ').substring(1).toLowerCase()}',
                                     style: HeronFitTheme.textTheme.bodySmall
                                         ?.copyWith(
-                                          color:
-                                              booking.status.name == 'confirmed'
-                                                  ? Colors.green
-                                                  : Colors.orange,
+                                          color: _getStatusColor(booking.status.name),
                                           fontWeight: FontWeight.w600,
                                         ),
                                   ),
@@ -296,5 +293,18 @@ class MyBookingsWidget extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+Color _getStatusColor(String status) {
+  switch (status) {
+    case 'confirmed':
+      return Colors.green;
+    case 'cancelled_by_user':
+    case 'cancelled_by_admin':
+    case 'no_show':
+      return Colors.red;
+    default:
+      return Colors.orange;
   }
 }
