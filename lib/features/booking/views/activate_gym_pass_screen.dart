@@ -23,6 +23,7 @@ class ActivateGymPassScreen extends ConsumerStatefulWidget {
 class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
   final TextEditingController _ticketCodeController = TextEditingController();
   bool _noTicketMode = false;
+  bool _showTestModeCheckbox = true;
   bool _isLoadingCheck = true;
   Session? _session;
   DateTime? _selectedDay;
@@ -45,9 +46,10 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
       sessionId = extra['sessionId'] as String?;
       selectedDayStr = extra['selectedDay'] as String?;
       _noTicketMode = extra['noTicketMode'] as bool? ?? false;
+      _showTestModeCheckbox = extra['showTestModeCheckbox'] as bool? ?? true;
     }
     debugPrint(
-      '[ActivateGymPassScreen] _loadSessionAndDate: sessionId=$sessionId, selectedDayStr=$selectedDayStr, noTicketMode=$_noTicketMode',
+      '[ActivateGymPassScreen] _loadSessionAndDate: sessionId=$sessionId, selectedDayStr=$selectedDayStr, noTicketMode=$_noTicketMode, showTestModeCheckbox=$_showTestModeCheckbox',
     );
     if (sessionId == null || selectedDayStr == null) {
       debugPrint(
@@ -219,6 +221,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 'selectedDay': _selectedDay!,
                 'activatedTicket': ticket,
                 'noTicketMode': false,
+                'showTestModeCheckbox': _showTestModeCheckbox,
               },
             );
           }
@@ -304,22 +307,24 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 ),
               ),
               const SizedBox(height: 28),
-              CheckboxListTile(
-                title: Text(
-                  "Proceed without Receipt Number (Test Mode)",
-                  style: Theme.of(context).textTheme.bodyMedium,
+              if (_showTestModeCheckbox)
+                CheckboxListTile(
+                  title: Text(
+                    "Proceed without Receipt Number (Test Mode)",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  value: _noTicketMode,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _noTicketMode = value ?? false;
+                    });
+                  },
+                  controlAffinity: ListTileControlAffinity.leading,
+                  activeColor: Theme.of(context).colorScheme.primary,
+                  contentPadding: EdgeInsets.zero,
                 ),
-                value: _noTicketMode,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _noTicketMode = value ?? false;
-                  });
-                },
-                controlAffinity: ListTileControlAffinity.leading,
-                activeColor: Theme.of(context).colorScheme.primary,
-                contentPadding: EdgeInsets.zero,
-              ),
-              const SizedBox(height: 20),
+              if (_showTestModeCheckbox) const SizedBox(height: 20),
+              if (!_showTestModeCheckbox) const SizedBox(height: 0),
               TextFormField(
                 controller: _ticketCodeController,
                 enabled: !_noTicketMode,
@@ -381,6 +386,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                                 'selectedDay': _selectedDay!,
                                 'activatedTicket': null,
                                 'noTicketMode': true,
+                                'showTestModeCheckbox': _showTestModeCheckbox,
                               },
                             );
                           } else {
