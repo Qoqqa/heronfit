@@ -10,6 +10,7 @@ import 'package:heronfit/core/router/app_routes.dart';
 import 'package:heronfit/features/booking/providers/booking_providers.dart';
 import 'package:heronfit/features/booking/models/booking_model.dart';
 import 'package:heronfit/features/booking/services/booking_supabase_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Session;
 
 class ActivateGymPassScreen extends ConsumerStatefulWidget {
   final Object? extra;
@@ -369,7 +370,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                         textStyle: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      onPressed: () {
+                      onPressed: () async {
                         FocusScope.of(context).unfocus();
                         debugPrint(
                           '[ActivateGymPassScreen] Button pressed. _noTicketMode=$_noTicketMode, _session=$_session, _selectedDay=$_selectedDay',
@@ -400,12 +401,55 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                             '[ActivateGymPassScreen] Normal mode: ticketCode="$ticketCode"',
                           );
                           if (ticketCode.isNotEmpty) {
-                            debugPrint(
-                              '[ActivateGymPassScreen] Normal mode: activating and finding sessions.',
-                            );
-                            activateNotifier.activateAndFindSessions(
-                              ticketCode,
-                            );
+                            // Check if bookingId is present in widget.extra
+                            final extra = widget.extra;
+                            String? bookingId;
+                            String? sessionId;
+                            String? selectedDayStr;
+                            String? sessionStartTime;
+                            String? sessionEndTime;
+                            String? sessionCategory;
+                            String _formatTimeOfDay(TimeOfDay t) =>
+                                '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}:00';
+                            if (extra is Map) {
+                              bookingId = extra['bookingId'] as String?;
+                              sessionId = extra['sessionId'] as String?;
+                              selectedDayStr = extra['selectedDay'] as String?;
+                              sessionStartTime = _session != null ? _formatTimeOfDay(_session!.startTime) : null;
+                              sessionEndTime = _session != null ? _formatTimeOfDay(_session!.endTime) : null;
+                              sessionCategory = _session?.category;
+                            }
+                            if (bookingId != null && sessionId != null && selectedDayStr != null && sessionStartTime != null && sessionEndTime != null && sessionCategory != null) {
+                              debugPrint('[ActivateGymPassScreen] Confirming receipt for existing booking: bookingId=$bookingId');
+                              await activateNotifier.confirmReceiptForExistingBooking(
+                                ticketCode: ticketCode,
+                                bookingId: bookingId,
+                                sessionId: sessionId,
+                                sessionDate: selectedDayStr,
+                                sessionStartTime: sessionStartTime,
+                                sessionEndTime: sessionEndTime,
+                                sessionCategory: sessionCategory,
+                              );
+                              // Fetch the updated booking and navigate to details
+                              final supabase = Supabase.instance.client;
+                              final updatedBooking = await supabase
+                                .from('bookings')
+                                .select()
+                                .eq('id', bookingId)
+                                .maybeSingle();
+                              if (updatedBooking != null) {
+                                if (!mounted) return;
+                                context.goNamed(
+                                  AppRoutes.bookingDetails,
+                                  extra: updatedBooking,
+                                );
+                              }
+                            } else {
+                              debugPrint('[ActivateGymPassScreen] Normal mode: activating and finding sessions.');
+                              activateNotifier.activateAndFindSessions(
+                                ticketCode,
+                              );
+                            }
                           } else {
                             debugPrint(
                               '[ActivateGymPassScreen] Normal mode: ticketCode is empty, showing snackbar.',

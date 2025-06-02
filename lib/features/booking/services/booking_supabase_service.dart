@@ -310,9 +310,10 @@ class BookingSupabaseService {
     required String sessionStartTime, // Expected format: 'HH:mm:ss' or 'HH:mm'
     required String sessionEndTime, // Expected format: 'HH:mm:ss' or 'HH:mm'
     required String sessionCategory,
+    String? bookingId, // NEW: Optional bookingId for updating existing booking
   }) async {
     print(
-      '[BookingSupabaseService] Attempting to book session. UserID: $userId, SessionID: $sessionId, Date: $sessionDate, Start: $sessionStartTime, End: $sessionEndTime, Category: $sessionCategory, TicketID: $activatedTicketId',
+      '[BookingSupabaseService] Attempting to book session. UserID: $userId, SessionID: $sessionId, Date: $sessionDate, Start: $sessionStartTime, End: $sessionEndTime, Category: $sessionCategory, TicketID: $activatedTicketId, BookingID: $bookingId',
     );
 
     // 1. Check for existing active bookings (only confirmed bookings block new bookings)
@@ -427,14 +428,16 @@ class BookingSupabaseService {
           );
           throw Exception('Session is full. Cannot book.');
         }
-        // Increment booked_slots
-        await _supabaseClient
-            .from('session_occurrences')
-            .update({'booked_slots': bookedSlots + 1})
-            .eq('id', occurrenceId);
-        print(
-          '[BookingSupabaseService] Incremented booked_slots for occurrence $occurrenceId.',
-        );
+        // Only increment booked_slots if this is a new booking (not an update)
+        if (bookingId == null) {
+          await _supabaseClient
+              .from('session_occurrences')
+              .update({'booked_slots': bookedSlots + 1})
+              .eq('id', occurrenceId);
+          print(
+            '[BookingSupabaseService] Incremented booked_slots for occurrence $occurrenceId.',
+          );
+        }
       } else {
         // Occurrence does not exist, create it
         final sessionData =
@@ -461,10 +464,75 @@ class BookingSupabaseService {
         );
       }
 
+      // --- NEW: If bookingId is provided, update the existing booking instead of inserting ---
+      if (bookingId != null) {
+        print('[BookingSupabaseService] Updating existing booking with ID: $bookingId');
+        // Fetch the booking to ensure it is pending_receipt_number and belongs to this user/session/date
+        final existingBooking = await _supabaseClient
+            .from('bookings')
+            .select()
+            .eq('id', bookingId)
+            .eq('user_id', userId)
+            .eq('session_id', sessionId)
+            .eq('session_date', sessionDate)
+            .maybeSingle();
+        if (existingBooking == null) {
+          throw Exception('Booking not found or does not match session/user/date.');
+        }
+        if (existingBooking['status'] != BookingStatus.pending_receipt_number.name) {
+          throw Exception('Booking is not in pending_receipt_number status.');
+        }
+        // Update the booking (do NOT increment booked_slots here)
+        final updatedBooking = await _supabaseClient
+            .from('bookings')
+            .update({
+              'user_ticket_id': activatedTicketId,
+              'status': BookingStatus.pending_attendance.name,
+            })
+            .eq('id', bookingId)
+            .select()
+            .single();
+        print('[BookingSupabaseService] Booking updated to pending_attendance: $updatedBooking');
+
+        // Update the user_tickets table if a ticket was used
+        if (activatedTicketId != null) {
+          print('[BookingSupabaseService] Updating ticket $activatedTicketId status to used and setting activation_date...');
+          await _supabaseClient
+              .from('user_tickets')
+              .update({
+                'status': TicketStatus.used.name,
+                'activation_date': DateTime.now().toUtc().toIso8601String(),
+              })
+              .eq('id', activatedTicketId)
+              .eq('status', TicketStatus.pending_booking.name);
+          print('[BookingSupabaseService] Ticket $activatedTicketId status updated to used and activation_date set.');
+        }
+        return updatedBooking;
+      }
+      // --- END NEW ---
+
+      // --- PREVENT DUPLICATE pending_receipt_number BOOKINGS ---
+      if (activatedTicketId == null) {
+        // Only check for duplicates if booking is pending_receipt_number (no ticket yet)
+        final existingPendingBooking = await _supabaseClient
+            .from('bookings')
+            .select()
+            .eq('user_id', userId)
+            .eq('session_id', sessionId)
+            .eq('session_date', sessionDate)
+            .eq('status', BookingStatus.pending_receipt_number.name)
+            .maybeSingle();
+        if (existingPendingBooking != null) {
+          print('[BookingSupabaseService] Found existing pending_receipt_number booking, returning it instead of creating a new one.');
+          return existingPendingBooking;
+        }
+      }
+      // --- END PREVENT DUPLICATE ---
+
       // 2. Create a booking record in the bookings table with status 'pending'
       print('[BookingSupabaseService] Creating booking record...');
       final bookingStatus = activatedTicketId != null
-          ? BookingStatus.pending_receipt_number.name
+          ? BookingStatus.pending_attendance.name
           : BookingStatus.pending_receipt_number.name;
       final bookingResponse =
           await _supabaseClient
@@ -484,7 +552,7 @@ class BookingSupabaseService {
               .select()
               .single();
       print(
-        '[BookingSupabaseService] Booking record created: ${bookingResponse['id']}',
+        '[BookingSupabaseService] Booking record created: \\${bookingResponse['id']}\\',
       );
 
       // 3. Update the user_tickets table if a ticket was used
