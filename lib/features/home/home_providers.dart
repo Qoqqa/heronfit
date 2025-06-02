@@ -28,7 +28,7 @@ final upcomingSessionProvider = FutureProvider.autoDispose<
         await supabaseClient
             .from('bookings')
             .select(
-              'session_id, session_date, session_start_time, session_end_time',
+              'session_id, session_date, session_start_time, session_end_time, status',
             )
             .eq('user_id', user.id)
             .inFilter('status', [
@@ -83,6 +83,7 @@ final upcomingSessionProvider = FutureProvider.autoDispose<
       'session_start_time': bookingResponse['session_start_time'],
       'session_end_time': bookingResponse['session_end_time'],
       'category': sessionDetailsResponse['category'],
+      'status': bookingResponse['status'],
       // Add other necessary fields from sessionDetailsResponse if the card uses them
       // e.g., 'day_of_week': sessionDetailsResponse['day_of_week'],
     };

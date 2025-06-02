@@ -105,12 +105,20 @@ class UpcomingSessionCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 if (session != null) ...[
+                  HomeInfoRow(
+                    icon: Icons.info_outline,
+                    text: 'Status: ' + _formatStatus(session['status']),
+                    iconColor: Colors.white,
+                    textColor: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  const SizedBox(height: 8),
                   HomeInfoRow(
                     icon: SolarIconsOutline.calendar,
                     text: DateFormat('EEEE, MMMM d').format(
-                      DateTime.parse(session['session_date'] as String), 
+                      DateTime.parse(session['session_date'] as String),
                     ),
                     iconColor: Colors.white,
                     textColor: Colors.white,
@@ -175,5 +183,23 @@ String _formatSessionTime(String startTimeStr, String endTimeStr, String dateStr
     print('Error formatting session time: $e');
     // Fallback to raw strings if parsing/formatting fails
     return '$startTimeStr - $endTimeStr';
+  }
+}
+
+String _formatStatus(String status) {
+  final formatted = status.replaceAll('_', ' ');
+  return formatted[0].toUpperCase() + formatted.substring(1).toLowerCase();
+}
+
+Color _getStatusColor(String status) {
+  switch (status) {
+    case 'confirmed':
+      return Colors.green;
+    case 'cancelled_by_user':
+    case 'cancelled_by_admin':
+    case 'no_show':
+      return Colors.red;
+    default:
+      return Colors.orange;
   }
 }
