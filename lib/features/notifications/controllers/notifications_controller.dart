@@ -13,6 +13,7 @@ class Notification {
   final DateTime createdAt;
   bool isRead;
   final NotificationType type;
+  final DateTime scheduledTime; // NEW: scheduled time for notification/announcement
 
   Notification({
     required this.id,
@@ -22,31 +23,40 @@ class Notification {
     required this.createdAt,
     required this.isRead,
     required this.type,
+    required this.scheduledTime, // NEW
   });
 
   // Factory for user notification
   factory Notification.fromMap(Map<String, dynamic> map) {
+    final publishedAtStr = map['published_at'] as String?;
+    final createdAt = DateTime.parse(map['created_at'] as String);
+    final publishedAt = publishedAtStr != null ? DateTime.parse(publishedAtStr) : createdAt;
     return Notification(
       id: map['id'] as String,
       userId: map['user_id'] as String,
       title: map['title'] as String,
       body: map['body'] as String,
-      createdAt: DateTime.parse(map['created_at'] as String),
+      createdAt: createdAt,
       isRead: map['is_read'] as bool? ?? false,
       type: NotificationType.user,
+      scheduledTime: publishedAt, // Use published_at for scheduling
     );
   }
 
   // Factory for announcement
   factory Notification.fromAnnouncement(Map<String, dynamic> map) {
+    final publishedAtStr = map['published_at'] as String?;
+    final createdAt = DateTime.parse(map['created_at'] as String);
+    final publishedAt = publishedAtStr != null ? DateTime.parse(publishedAtStr) : createdAt;
     return Notification(
       id: map['id'] as String,
       userId: '',
       title: map['title'] as String,
       body: map['content'] as String, // FIXED: use 'content' for announcements
-      createdAt: DateTime.parse(map['created_at'] as String),
+      createdAt: createdAt,
       isRead: true, // Announcements are always read
       type: NotificationType.announcement,
+      scheduledTime: publishedAt, // Use published_at for scheduling
     );
   }
 }
@@ -71,7 +81,7 @@ class NotificationsNotifier
   Future<void> _fetchNotifications() async {
     try {
       final currentUser = supabase.auth.currentUser;
-      // Fetch user notifications
+      final now = DateTime.now().toUtc(); // Use UTC for consistency
       List<Notification> notifications = [];
       if (currentUser != null) {
         final response = await supabase
@@ -82,9 +92,9 @@ class NotificationsNotifier
         final List<dynamic> data = response as List<dynamic>;
         notifications = data
             .map((item) => Notification.fromMap(item as Map<String, dynamic>))
+            .where((n) => n.scheduledTime.toUtc().isBefore(now) || n.scheduledTime.toUtc().isAtSameMomentAs(now))
             .toList();
       }
-      // Fetch announcements (public, for all users)
       final announcementResponse = await supabase
           .from('announcements')
           .select()
@@ -92,10 +102,10 @@ class NotificationsNotifier
       final List<dynamic> announcementData = announcementResponse as List<dynamic>;
       final announcements = announcementData
           .map((item) => Notification.fromAnnouncement(item as Map<String, dynamic>))
+          .where((n) => n.scheduledTime.toUtc().isBefore(now) || n.scheduledTime.toUtc().isAtSameMomentAs(now))
           .toList();
-      // Merge and sort by createdAt descending
       final allItems = [...notifications, ...announcements];
-      allItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      allItems.sort((a, b) => b.scheduledTime.compareTo(a.scheduledTime));
       state = AsyncValue.data(allItems);
     } catch (e) {
       print('Error fetching notifications/announcements: $e');
@@ -119,6 +129,7 @@ class NotificationsNotifier
                 createdAt: notification.createdAt,
                 isRead: true, // Mark as read
                 type: notification.type, // Preserve the type
+                scheduledTime: notification.scheduledTime, // Preserve the scheduled time
               );
             } else {
               return notification;
@@ -133,7 +144,7 @@ class NotificationsNotifier
           .from('notifications')
           .update({'is_read': true})
           .eq('id', notificationId);
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error marking notification as read: $e');
       // TODO: Handle error (e.g., revert optimistic update, show error message)
       // For now, just print the error
@@ -157,7 +168,7 @@ class NotificationsNotifier
     try {
       // Delete from Supabase
       await supabase.from('notifications').delete().eq('id', notificationId);
-    } catch (e, stackTrace) {
+    } catch (e) {
       print('Error deleting notification: $e');
       // TODO: Handle error (e.g., revert optimistic update, show error message)
       // For now, just print the error
