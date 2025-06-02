@@ -26,7 +26,17 @@ class _BookingScreenState extends State<BookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Check if the current day is a weekend
+    final now = DateTime.now();
+    final isWeekend = now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+
     // This is a temporary screen that will be replaced by the new flow
-    return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      body: Center(
+        child: isWeekend
+            ? const Text('Gym is closed on weekends!')
+            : const CircularProgressIndicator(),
+      ),
+    );
   }
 }

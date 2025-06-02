@@ -8,6 +8,8 @@ import 'package:heronfit/features/booking/models/active_booking_exists_exception
 import 'package:heronfit/features/home/home_providers.dart'; // Import home_providers
 import 'package:intl/intl.dart'; // For date formatting
 import 'package:heronfit/features/booking/models/booking_model.dart';
+import 'package:heronfit/features/booking/models/booking_status.dart';
+import 'package:heronfit/features/booking/views/my_bookings.dart';
 
 // Assuming a supabaseClientProvider exists, e.g., in lib/core/providers/supabase_providers.dart
 // For this example, let's define a simple one if it's not globally available.
@@ -111,13 +113,46 @@ Future<Booking?> _fetchActiveBooking(String userId) async {
   final todayDateString = DateFormat('yyyy-MM-dd').format(now);
 
   try {
+    // 1. Mark any expired pending bookings as no_show
+    final pendingBookings = await supabase
+        .from('bookings')
+        .select()
+        .eq('user_id', userId)
+        .eq('status', BookingStatus.pending.name)
+        .gte('session_date', todayDateString);
+    for (final bookingData in pendingBookings) {
+      try {
+        final booking = Booking.fromJson(bookingData);
+        final sessionEndTimeParts = booking.sessionEndTime.split(':');
+        final sessionEndDateTime = DateTime(
+          booking.sessionDate.year,
+          booking.sessionDate.month,
+          booking.sessionDate.day,
+          int.parse(sessionEndTimeParts[0]),
+          int.parse(sessionEndTimeParts[1]),
+          sessionEndTimeParts.length > 2 ? int.parse(sessionEndTimeParts[2]) : 0,
+        );
+        if (sessionEndDateTime.isBefore(now)) {
+          await supabase
+              .from('bookings')
+              .update({'status': BookingStatus.no_show.name})
+              .eq('id', booking.id);
+        }
+      } catch (_) {}
+    }
+
+    // 2. Fetch the user's next active booking (confirmed, pending_attendance, pending_receipt_number)
     final response =
         await supabase
             .from('bookings')
             .select()
             .eq('user_id', userId)
-            // Only consider bookings with status 'confirmed' (not cancelled, not completed, etc.)
-            .eq('status', BookingStatus.confirmed.name)
+            // Consider bookings with status 'confirmed', 'pending_attendance', or 'pending_receipt_number'
+            .inFilter('status', [
+              BookingStatus.confirmed.name,
+              BookingStatus.pending_attendance.name,
+              BookingStatus.pending_receipt_number.name,
+            ])
             .gte(
               'session_date',
               todayDateString,
@@ -247,10 +282,11 @@ class ConfirmBookingNotifier
       );
       state = AsyncValue.data(bookingDetails);
       print(
-        '[ConfirmBookingNotifier] Successfully booked session: ${bookingDetails['id']}',
+        '[ConfirmBookingNotifier] Successfully booked session: \\${bookingDetails['id']}',
       );
 
       _ref.invalidate(upcomingSessionProvider);
+      _ref.invalidate(myBookingsProvider); // Refresh bookings list after booking
     } on ActiveBookingExistsException catch (e, s) {
       print(
         '[ConfirmBookingNotifier] Error booking session: ActiveBookingExistsException: ${e.message}\n$s',

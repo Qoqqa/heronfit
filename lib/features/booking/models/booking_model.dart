@@ -1,14 +1,6 @@
 // lib/features/booking/models/booking_model.dart
 import 'package:intl/intl.dart'; // Added import for DateFormat
-
-enum BookingStatus {
-  confirmed,    // Booking is active and confirmed.
-  cancelled_by_user, // User cancelled the booking.
-  cancelled_by_admin, // Admin cancelled the booking.
-  attended,       // User attended the session.
-  no_show,        // User did not attend the session.
-  // 'waitlisted' status will be handled by the WaitlistEntry model
-}
+import 'package:heronfit/features/booking/models/booking_status.dart';
 
 class Booking {
   final String id; // UUID from Supabase
@@ -63,7 +55,7 @@ class Booking {
       bookingTime: DateTime.parse(json['booking_time'] as String),
       status: BookingStatus.values.firstWhere(
         (e) => e.name == json['status'],
-        orElse: () => BookingStatus.confirmed, // Default status
+        orElse: () => BookingStatus.pending, // Default status set to pending
       ),
       bookingReferenceId: json['booking_reference_id'] as String?,
       sessionOccurrenceId: json['session_occurrence_id'] as String?, // Add this line
