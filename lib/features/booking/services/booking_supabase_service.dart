@@ -473,7 +473,7 @@ class BookingSupabaseService {
                 'user_id': userId,
                 'session_id': sessionId,
                 'user_ticket_id': activatedTicketId,
-                'booking_time': DateTime.now().toIso8601String(),
+                'booking_time': DateTime.now().toUtc().toIso8601String(),
                 'status': bookingStatus, // Set status based on ticket
                 'session_date': sessionDate,
                 'session_start_time': sessionStartTime,
@@ -496,7 +496,7 @@ class BookingSupabaseService {
             .from('user_tickets')
             .update({
               'status': TicketStatus.used.name,
-              'activation_date': DateTime.now().toIso8601String(),
+              'activation_date': DateTime.now().toUtc().toIso8601String(),
             })
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);

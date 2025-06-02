@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'home_info_row.dart'; 
 import '../../../core/theme.dart'; 
 import 'package:heronfit/features/booking/controllers/booking_providers.dart';
+import 'package:heronfit/features/booking/models/booking_model.dart';
 
 class UpcomingSessionCard extends ConsumerWidget { 
   const UpcomingSessionCard({super.key});
@@ -18,7 +19,7 @@ class UpcomingSessionCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) { 
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
-    final upcomingSessionAsync = ref.watch(upcomingSessionProvider); 
+    final activeBookingAsync = ref.watch(userActiveBookingProvider);
 
     return Container(
       width: double.infinity,
@@ -29,7 +30,7 @@ class UpcomingSessionCard extends ConsumerWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: upcomingSessionAsync.when(
+        child: activeBookingAsync.when(
           loading: () => const Center(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -41,7 +42,7 @@ class UpcomingSessionCard extends ConsumerWidget {
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          data: (session) {
+          data: (booking) {
             return Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -52,39 +53,10 @@ class UpcomingSessionCard extends ConsumerWidget {
                   hoverColor: Colors.transparent,
                   highlightColor: Colors.transparent,
                   onTap: () async {
-                    // Check for active booking before navigating
-                    final activeBooking = await ref.read(userActiveBookingProvider.future);
-                    if (activeBooking != null) {
-                      if (context.mounted) {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext dialogContext) {
-                            return AlertDialog(
-                              title: const Text('Active Booking Found'),
-                              content: const Text(
-                                'You already have an active booking. Please cancel your current booking or wait for it to complete before booking another session.',
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text('View Booking Details'),
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop();
-                                    context.push(AppRoutes.bookingDetails, extra: activeBooking.toJson());
-                                  },
-                                ),
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      }
+                    if (booking != null) {
+                      context.push(AppRoutes.bookingDetails, extra: booking.toJson());
                     } else {
-                      context.go(AppRoutes.booking); // Proceed to booking if no active booking
+                      context.go(AppRoutes.booking);
                     }
                   },
                   child: Row(
@@ -106,10 +78,10 @@ class UpcomingSessionCard extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                if (session != null) ...[
+                if (booking != null) ...[
                   HomeInfoRow(
                     icon: Icons.info_outline,
-                    text: 'Status: ' + _formatStatus(session['status']),
+                    text: 'Status: ' + _formatStatus(booking.status.name),
                     iconColor: Colors.white,
                     textColor: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -117,9 +89,7 @@ class UpcomingSessionCard extends ConsumerWidget {
                   const SizedBox(height: 8),
                   HomeInfoRow(
                     icon: SolarIconsOutline.calendar,
-                    text: DateFormat('EEEE, MMMM d').format(
-                      DateTime.parse(session['session_date'] as String),
-                    ),
+                    text: DateFormat('EEEE, MMMM d').format(booking.sessionDate),
                     iconColor: Colors.white,
                     textColor: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -127,7 +97,7 @@ class UpcomingSessionCard extends ConsumerWidget {
                   const SizedBox(height: 8),
                   HomeInfoRow(
                     icon: SolarIconsOutline.clockCircle,
-                    text: _formatSessionTime(session['session_start_time'] as String, session['session_end_time'] as String, session['session_date'] as String),
+                    text: _formatSessionTime(booking.sessionStartTime, booking.sessionEndTime, booking.sessionDate.toIso8601String()),
                     iconColor: Colors.white,
                     textColor: Colors.white,
                     fontWeight: FontWeight.bold,
