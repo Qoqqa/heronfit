@@ -123,7 +123,7 @@ class _BookingSuccessSummaryWidgetState
                           const SizedBox(height: 8),
                           _buildDetailRow(
                             icon: Icons.confirmation_number,
-                            label: 'Ticket:',
+                            label: 'Receipt Number:',
                             value: widget.ticketId.isNotEmpty ? widget.ticketId : 'N/A',
                           ),
                           const SizedBox(height: 8),

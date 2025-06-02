@@ -27,7 +27,7 @@ class NotificationDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              _formatDate(notification.createdAt),
+              _formatDate(notification.scheduledTime.toLocal()), // Convert to local time
               style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onBackground.withOpacity(0.6)),
             ),
             const Divider(height: 32),
@@ -46,9 +46,12 @@ class NotificationDetailsScreen extends StatelessWidget {
   }
 
   String _formatDate(DateTime dateTime) {
-    // Simple date formatting (e.g., May 30, 2025, 10:00 AM)
+    // 12-hour format with AM/PM (e.g., May 30, 2025, 10:00 AM)
+    final hour = dateTime.hour % 12 == 0 ? 12 : dateTime.hour % 12;
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    final ampm = dateTime.hour >= 12 ? 'PM' : 'AM';
     return '${dateTime.day} ${_monthName(dateTime.month)} ${dateTime.year}, '
-        '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+        '$hour:$minute $ampm';
   }
 
   String _monthName(int month) {

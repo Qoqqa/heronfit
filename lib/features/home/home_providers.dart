@@ -23,7 +23,7 @@ final upcomingSessionProvider = FutureProvider.autoDispose<
     final now = DateTime.now();
     final todayDate = DateTime(now.year, now.month, now.day).toIso8601String();
 
-    // 1. Fetch the earliest confirmed booking for the user
+    // 1. Fetch the earliest active booking for the user (confirmed, pending_attendance, pending_receipt_number)
     final bookingResponse =
         await supabaseClient
             .from('bookings')
@@ -31,9 +31,12 @@ final upcomingSessionProvider = FutureProvider.autoDispose<
               'session_id, session_date, session_start_time, session_end_time',
             )
             .eq('user_id', user.id)
-            .eq('status', BookingStatus.confirmed.name)
+            .inFilter('status', [
+              BookingStatus.confirmed.name,
+              BookingStatus.pending_attendance.name,
+              BookingStatus.pending_receipt_number.name,
+            ])
             .gte('session_date', todayDate) // Sessions from today onwards
-            // Additional check for end time might be needed if sessions can span midnight or if we want to exclude past sessions on the same day
             .order('session_date', ascending: true)
             .order('session_start_time', ascending: true)
             .limit(1)

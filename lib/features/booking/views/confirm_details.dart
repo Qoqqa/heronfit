@@ -27,42 +27,45 @@ class _ReviewBookingDetailsScreenState
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
   Future<void> _insertBookingDetails() async {
-  try {
-    final user = Supabase.instance.client.auth.currentUser;
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
 
-    if (user == null) {
-      throw Exception('User not authenticated');
-    }
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
 
-    final response = await Supabase.instance.client.from('sessions').insert({
-      'time': widget.time,
-      'date': widget.date?.toIso8601String(),
-      'user_id': user.id,
-      'email': widget.email,
-      'ticket_id': widget.ticketId,
-      'ticket_status': 'confirmed', // Default status
-    }).select();
+      // Insert booking with status based on receipt number presence
+      final hasReceipt = widget.ticketId.isNotEmpty;
+      final status = hasReceipt ? 'pending_attendance' : 'pending_receipt_number';
+      final response = await Supabase.instance.client.from('sessions').insert({
+        'time': widget.time,
+        'date': widget.date?.toIso8601String(),
+        'user_id': user.id,
+        'email': widget.email,
+        'ticket_id': widget.ticketId,
+        'ticket_status': status, // Set to correct status
+      }).select();
 
-    if (response == null || response.isEmpty) {
-      throw Exception('Failed to insert booking: No response from server.');
-    }
+      if (response.isEmpty) {
+        throw Exception('Failed to insert booking: No response from server.');
+      }
 
-    // Navigate to the success screen after successful insertion
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BookingSuccessSummaryWidget(
-          ticketId: widget.ticketId,
-          date: widget.date,
-          time: widget.time,
-          email: widget.email,
+      // Navigate to the success screen after successful insertion
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingSuccessSummaryWidget(
+            ticketId: widget.ticketId,
+            date: widget.date,
+            time: widget.time,
+            email: widget.email,
+          ),
         ),
-      ),
-    );
-  } catch (e) {
-    _showErrorDialog('Error', e.toString());
+      );
+    } catch (e) {
+      _showErrorDialog('Error', e.toString());
+    }
   }
-}
 
   void _showErrorDialog(String title, String message) {
     showDialog(
@@ -160,7 +163,7 @@ class _ReviewBookingDetailsScreenState
                             children: [
                               _buildDetailRow(
                                 icon: Icons.confirmation_number,
-                                label: 'Ticket ID:',
+                                label: 'Receipt Number:',
                                 value: widget.ticketId,
                               ),
                               const SizedBox(height: 8),

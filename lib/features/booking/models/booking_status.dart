@@ -14,4 +14,13 @@ enum BookingStatus {
 
   /// The session was completed by the user.
   completed,
+
+  /// The booking is pending admin confirmation.
+  pending,
+
+  /// The booking is pending attendance confirmation at the gym.
+  pending_attendance,
+
+  /// The booking is pending receipt number input from the user.
+  pending_receipt_number,
 }

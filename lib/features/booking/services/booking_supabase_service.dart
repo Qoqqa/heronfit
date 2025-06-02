@@ -315,7 +315,7 @@ class BookingSupabaseService {
       '[BookingSupabaseService] Attempting to book session. UserID: $userId, SessionID: $sessionId, Date: $sessionDate, Start: $sessionStartTime, End: $sessionEndTime, Category: $sessionCategory, TicketID: $activatedTicketId',
     );
 
-    // 1. Check for existing active bookings
+    // 1. Check for existing active bookings (only confirmed bookings block new bookings)
     try {
       print(
         '[BookingSupabaseService] Checking for existing active bookings for user $userId...',
@@ -327,7 +327,6 @@ class BookingSupabaseService {
           .from('bookings')
           .select('id, session_date, session_end_time, status')
           .eq('user_id', userId)
-          // Only consider bookings with status 'confirmed' (not cancelled, not completed, etc.)
           .eq('status', BookingStatus.confirmed.name);
 
       print(
@@ -462,8 +461,11 @@ class BookingSupabaseService {
         );
       }
 
-      // 2. Create a booking record in the bookings table
+      // 2. Create a booking record in the bookings table with status 'pending'
       print('[BookingSupabaseService] Creating booking record...');
+      final bookingStatus = activatedTicketId != null
+          ? BookingStatus.pending_receipt_number.name
+          : BookingStatus.pending_receipt_number.name;
       final bookingResponse =
           await _supabaseClient
               .from('bookings')
@@ -472,7 +474,7 @@ class BookingSupabaseService {
                 'session_id': sessionId,
                 'user_ticket_id': activatedTicketId,
                 'booking_time': DateTime.now().toIso8601String(),
-                'status': BookingStatus.confirmed.name,
+                'status': bookingStatus, // Set status based on ticket
                 'session_date': sessionDate,
                 'session_start_time': sessionStartTime,
                 'session_end_time': sessionEndTime,
@@ -494,8 +496,7 @@ class BookingSupabaseService {
             .from('user_tickets')
             .update({
               'status': TicketStatus.used.name,
-              'activation_date':
-                  DateTime.now().toIso8601String(), // Add activation_date
+              'activation_date': DateTime.now().toIso8601String(),
             })
             .eq('id', activatedTicketId)
             .eq('status', TicketStatus.pending_booking.name);

@@ -115,7 +115,7 @@ class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
       barrierDismissible: false, // User must tap a button to dismiss
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Active Booking Exists'),
+          title: const Text('Active Booking Found'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -133,10 +133,10 @@ class _SelectSessionScreenState extends ConsumerState<SelectSessionScreen> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('View My Bookings'),
+              child: const Text('View Booking Details'),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.push(AppRoutes.bookings);
+                context.push(AppRoutes.bookingDetails, extra: activeBooking.toJson());
               },
             ),
             TextButton(

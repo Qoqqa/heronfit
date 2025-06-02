@@ -202,7 +202,7 @@ class MyBookingsWidget extends ConsumerWidget {
                                               MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
-                                              'Ticket ID: $ticketIdDisplay',
+                                              'Receipt Number: $ticketIdDisplay',
                                               style: HeronFitTheme
                                                   .textTheme
                                                   .bodySmall

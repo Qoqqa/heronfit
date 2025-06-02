@@ -141,7 +141,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Text(
-                    'Enter Ticket ID',
+                    'Enter Receipt Number',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
@@ -150,7 +150,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                     focusNode: ticketIdFocusNode,
                     enabled: !_noTicket,
                     decoration: InputDecoration(
-                      hintText: 'Enter Ticket ID',
+                      hintText: 'Enter Receipt Number',
                       filled: true,
                       fillColor: const Color(0xFFF3F4F6),
                       prefixIcon: const Icon(
@@ -183,7 +183,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                           });
                         },
                       ),
-                      const Text('I don\'t have a ticket'),
+                      const Text('I don\'t have a receipt'),
                     ],
                   ),
                 ],
@@ -212,7 +212,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                             ),
                           );
                         } else {
-                          _showErrorDialog(context, 'Invalid Ticket!');
+                          _showErrorDialog(context, 'Invalid Receipt!');
                         }
                       },
                       style: ElevatedButton.styleFrom(

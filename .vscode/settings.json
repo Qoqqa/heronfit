@@ -8,5 +8,6 @@
         {
             "file": "docs/commit_message_instructions.md"
         }
-    ]
+    ],
+    "cmake.sourceDirectory": "C:/Users/colar/Desktop/heronfit/windows"
 }

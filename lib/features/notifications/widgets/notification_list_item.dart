@@ -16,7 +16,7 @@ class NotificationListItem extends ConsumerWidget {
 
     // Assuming 'title', 'body', 'created_at', and 'is_read' keys exist
     final title = notification.title;
-    final timestamp = notification.createdAt;
+    final timestamp = notification.scheduledTime; // Use published_at for display
     final isRead = notification.isRead;
 
     // Determine icon and style based on notification type

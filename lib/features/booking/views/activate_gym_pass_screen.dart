@@ -126,7 +126,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
         return AlertDialog(
           title: const Text('Active Booking Found'),
           content: Text(
-            'You already have an active booking for ${activeBooking.sessionCategory} on ${DateFormat('MMM d, yyyy').format(activeBooking.sessionDate)} at ${activeBooking.sessionTimeRangeShort}.\n\nWould you like to view it or go home?',
+            'You already have an active booking for ${activeBooking.sessionCategory} on ${DateFormat('MMM d, yyyy').format(activeBooking.sessionDate)} at ${activeBooking.sessionTimeRangeShort}.\n\nPlease cancel your current booking or wait for it to complete before booking another session.',
           ),
           actions: <Widget>[
             TextButton(
@@ -137,10 +137,10 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               },
             ),
             FilledButton(
-              child: const Text('View My Bookings'),
+              child: const Text('View Booking Details'),
               onPressed: () {
                 Navigator.of(dialogContext).pop();
-                context.push(AppRoutes.bookings);
+                context.push(AppRoutes.bookingDetails, extra: activeBooking.toJson());
               },
             ),
           ],
@@ -288,7 +288,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                'Enter Your Gym Pass ID',
+                'Enter Your Receipt Number',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: Theme.of(context).colorScheme.onBackground,
@@ -297,7 +297,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                'Please enter your 7-digit Ticket ID to book your session at the UMak HPSB 11th Floor Gym.',
+                'Please enter your 7-digit Receipt Number to book your session at the UMak HPSB 11th Floor Gym.',
                 textAlign: TextAlign.start,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -306,7 +306,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               const SizedBox(height: 28),
               CheckboxListTile(
                 title: Text(
-                  "Proceed without Ticket ID (Test Mode)",
+                  "Proceed without Receipt Number (Test Mode)",
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 value: _noTicketMode,
@@ -324,7 +324,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                 controller: _ticketCodeController,
                 enabled: !_noTicketMode,
                 decoration: InputDecoration(
-                  hintText: 'Enter your 7-digit Ticket ID',
+                  hintText: 'Enter your 7-digit Receipt Number',
                   prefixIcon: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12.0),
                     child: Icon(
@@ -406,7 +406,7 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Please enter a Ticket ID.'),
+                                content: Text('Please enter a Receipt Number.'),
                                 backgroundColor: Colors.orangeAccent,
                               ),
                             );
