@@ -309,21 +309,21 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
               ),
               const SizedBox(height: 28),
               if (_showTestModeCheckbox)
-                CheckboxListTile(
-                  title: Text(
-                    "Proceed without Receipt Number (Test Mode)",
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  value: _noTicketMode,
-                  onChanged: (bool? value) {
-                    setState(() {
-                      _noTicketMode = value ?? false;
-                    });
-                  },
-                  controlAffinity: ListTileControlAffinity.leading,
-                  activeColor: Theme.of(context).colorScheme.primary,
-                  contentPadding: EdgeInsets.zero,
+              CheckboxListTile(
+                title: Text(
+                    "Proceed without Receipt Number",
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
+                value: _noTicketMode,
+                onChanged: (bool? value) {
+                  setState(() {
+                    _noTicketMode = value ?? false;
+                  });
+                },
+                controlAffinity: ListTileControlAffinity.leading,
+                activeColor: Theme.of(context).colorScheme.primary,
+                contentPadding: EdgeInsets.zero,
+              ),
               if (_showTestModeCheckbox) const SizedBox(height: 20),
               if (!_showTestModeCheckbox) const SizedBox(height: 0),
               TextFormField(
@@ -446,9 +446,9 @@ class _ActivateGymPassScreenState extends ConsumerState<ActivateGymPassScreen> {
                               }
                             } else {
                               debugPrint('[ActivateGymPassScreen] Normal mode: activating and finding sessions.');
-                              activateNotifier.activateAndFindSessions(
-                                ticketCode,
-                              );
+                            activateNotifier.activateAndFindSessions(
+                              ticketCode,
+                            );
                             }
                           } else {
                             debugPrint(
