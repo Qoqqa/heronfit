@@ -198,17 +198,42 @@ class MyBookingsWidget extends ConsumerWidget {
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: [
-                                            Text(
-                                              'Receipt Number: $ticketIdDisplay',
-                                              style: HeronFitTheme
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  'Receipt Number: ',
+                                                  style: HeronFitTheme.textTheme.bodySmall?.copyWith(
                                                     letterSpacing: 0.0,
-                                                    color:
-                                                        HeronFitTheme
-                                                            .textSecondary,
+                                                    color: HeronFitTheme.textSecondary,
                                                   ),
+                                                ),
+                                                if (booking.userTicketId != null && booking.userTicketId!.isNotEmpty)
+                                                  FutureBuilder<Map<String, dynamic>?>(
+                                                    future: Supabase.instance.client
+                                                        .from('user_tickets')
+                                                        .select('ticket_code')
+                                                        .eq('id', booking.userTicketId!)
+                                                        .maybeSingle(),
+                                                    builder: (context, snapshot) {
+                                                      if (snapshot.connectionState == ConnectionState.waiting) {
+                                                        return const Text('Loading...', style: TextStyle(fontSize: 12, color: Colors.grey));
+                                                      }
+                                                      if (snapshot.hasError || snapshot.data == null || snapshot.data!['ticket_code'] == null) {
+                                                        return const Text('N/A', style: TextStyle(fontSize: 12, color: Colors.grey));
+                                                      }
+                                                      return Text(
+                                                        snapshot.data!['ticket_code'],
+                                                        style: HeronFitTheme.textTheme.bodySmall?.copyWith(
+                                                          letterSpacing: 0.0,
+                                                          color: HeronFitTheme.textSecondary,
+                                                          fontWeight: FontWeight.w600,
+                                                        ),
+                                                      );
+                                                    },
+                                                  )
+                                                else
+                                                  const Text('N/A', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                                              ],
                                             ),
                                             Text(
                                               'Date: $formattedSessionDate',

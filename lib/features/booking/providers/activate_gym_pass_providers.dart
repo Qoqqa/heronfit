@@ -66,6 +66,42 @@ class ActivateGymPassNotifier extends StateNotifier<AsyncValue<UserTicket?>> {
     }
     super.dispose();
   }
+
+  // Add this method for confirming receipt number for an existing booking
+  Future<void> confirmReceiptForExistingBooking({
+    required String ticketCode,
+    required String bookingId,
+    required String sessionId,
+    required String sessionDate,
+    required String sessionStartTime,
+    required String sessionEndTime,
+    required String sessionCategory,
+  }) async {
+    state = const AsyncValue.loading();
+    print('[ActivateGymPassNotifier] Confirming receipt for existing booking: $bookingId, ticket: $ticketCode');
+    try {
+      // Validate the ticket (this will also set it to pending_booking)
+      final ticket = await _bookingService.validateAndPrepareTicketForBooking(ticketCode, _userId);
+      _activatedTicket = ticket;
+      print('[ActivateGymPassNotifier] Ticket validated for existing booking: \\${ticket.toJson()}\\');
+      // Call bookSession with bookingId to update the booking
+      await _bookingService.bookSession(
+        sessionId: sessionId,
+        userId: _userId,
+        activatedTicketId: ticket.id,
+        sessionDate: sessionDate,
+        sessionStartTime: sessionStartTime,
+        sessionEndTime: sessionEndTime,
+        sessionCategory: sessionCategory,
+        bookingId: bookingId,
+      );
+      state = AsyncValue.data(ticket);
+    } catch (e, s) {
+      print('[ActivateGymPassNotifier] ERROR during confirmReceiptForExistingBooking: \\${e.toString()}\\');
+      print('[ActivateGymPassNotifier] Stack Trace: $s');
+      state = AsyncValue.error(e, s);
+    }
+  }
 }
 
 // Provider for ActivateGymPassNotifier

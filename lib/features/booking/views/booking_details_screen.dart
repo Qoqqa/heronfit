@@ -28,6 +28,47 @@ class BookingDetailsScreen extends ConsumerStatefulWidget {
 
 class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
   bool _isCancelling = false;
+  Map<String, dynamic>? _ticketData; // Store fetched ticket data
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTicketData();
+  }
+
+  Future<void> _fetchTicketData() async {
+    if (widget.booking.userTicketId != null && widget.booking.userTicketId!.isNotEmpty) {
+      final data = await Supabase.instance.client
+        .from('user_tickets')
+        .select('ticket_code')
+        .eq('id', widget.booking.userTicketId!)
+        .maybeSingle();
+      setState(() {
+        _ticketData = data;
+      });
+    } else {
+      setState(() {
+        _ticketData = null;
+      });
+    }
+  }
+
+  Future<void> _refreshBookingDetails() async {
+    setState(() { _isRefreshing = true; });
+    // Fetch the latest booking details from Supabase
+    final updatedBooking = await Supabase.instance.client
+      .from('bookings')
+      .select()
+      .eq('id', widget.booking.id)
+      .maybeSingle();
+    if (updatedBooking != null) {
+      // Optionally, you could update the widget.booking if you want to support live updates
+      // For now, just refresh the ticket data
+      await _fetchTicketData();
+    }
+    setState(() { _isRefreshing = false; });
+  }
 
   // Convert UTC time to Manila time (UTC+8)
   DateTime toManilaTime(DateTime utcTime) {
@@ -202,16 +243,13 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
     final String sessionTime = '${formatSessionTime(widget.booking.sessionStartTime)} - ${formatSessionTime(widget.booking.sessionEndTime)}'; 
 
     // Determine the display value for the receipt number
-    String receiptNumberDisplay = 'N/A';
-    if (widget.booking.userTicketId != null && widget.booking.userTicketId!.isNotEmpty) {
-      // If userTicketId is a UUID, try to extract a human-friendly code if available
-      // For now, just show the last 4 digits if it's a UUID, otherwise show as is
-      final uuidRegex = RegExp(r'^[0-9a-fA-F-]{36} ?$');
-      if (uuidRegex.hasMatch(widget.booking.userTicketId!)) {
-        receiptNumberDisplay = 'N/A'; // Hide UUIDs as receipt numbers
-      } else {
-        receiptNumberDisplay = widget.booking.userTicketId!;
-      }
+    Widget receiptNumberWidget;
+    if (_ticketData != null && _ticketData!['ticket_code'] != null) {
+      receiptNumberWidget = Text(_ticketData!['ticket_code'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins', color: HeronFitTheme.textPrimary, fontWeight: FontWeight.w600));
+    } else if (widget.booking.userTicketId != null && widget.booking.userTicketId!.isNotEmpty) {
+      receiptNumberWidget = const Text('Loading...');
+    } else {
+      receiptNumberWidget = const Text('N/A');
     }
     // Booking Reference ID: show bookingReferenceId if present, else booking.id
     final String bookingRefIdDisplay = (widget.booking.bookingReferenceId != null && widget.booking.bookingReferenceId!.isNotEmpty)
@@ -252,127 +290,159 @@ class _BookingDetailsScreenState extends ConsumerState<BookingDetailsScreen> {
               ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Booking Summary Card
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-              color: Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.0),
-                  boxShadow: HeronFitTheme.cardShadow,
-                ),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _formatStatus(widget.booking.status.name),
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        color: HeronFitTheme.primary
+      body: RefreshIndicator(
+        onRefresh: _refreshBookingDetails,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Booking Summary Card
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                color: Colors.white,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.0),
+                    boxShadow: HeronFitTheme.cardShadow,
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _formatStatus(widget.booking.status.name),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                          color: HeronFitTheme.primary
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                     Text(
-                      'Session: ${widget.booking.sessionCategory}', 
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Poppins',
-                        color: HeronFitTheme.textSecondary,
+                      const SizedBox(height: 4),
+                       Text(
+                        'Session: ${widget.booking.sessionCategory}', 
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontFamily: 'Poppins',
+                          color: HeronFitTheme.textSecondary,
+                        ),
                       ),
-                    ),
-                    const Divider(height: 24, thickness: 1),
-                    _buildDetailRow(context, icon: SolarIconsOutline.calendar, label: 'Date', value: formattedDate),
-                    _buildDetailRow(context, icon: SolarIconsOutline.clockCircle, label: 'Time', value: sessionTime),
-                    _buildDetailRow(context, icon: SolarIconsOutline.mapPoint, label: 'Location', value: gymLocation),
-                    _buildDetailRow(context, icon: SolarIconsOutline.document, label: 'Booking Reference ID', value: bookingRefIdDisplay),
-                    _buildDetailRow(
-                      context,
-                      icon: SolarIconsOutline.clockCircle,
-                      label: 'Booked on',
-                      value: DateFormat('MMM d, yyyy, h:mm a').format(toManilaTime(widget.booking.bookingTime)),
-                    ),
-                    _buildDetailRow(context, icon: SolarIconsOutline.ticket, label: 'Receipt Number Used', value: receiptNumberDisplay),
-                    if (widget.booking.status != booking_status.BookingStatus.confirmed)
+                      const Divider(height: 24, thickness: 1),
+                      _buildDetailRow(context, icon: SolarIconsOutline.calendar, label: 'Date', value: formattedDate),
+                      _buildDetailRow(context, icon: SolarIconsOutline.clockCircle, label: 'Time', value: sessionTime),
+                      _buildDetailRow(context, icon: SolarIconsOutline.mapPoint, label: 'Location', value: gymLocation),
+                      _buildDetailRow(context, icon: SolarIconsOutline.document, label: 'Booking Reference ID', value: bookingRefIdDisplay),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 10.0),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(SolarIconsOutline.infoCircle, color: statusColor, size: 24),
+                            Icon(SolarIconsOutline.ticket, color: HeronFitTheme.primary, size: 24),
                             const SizedBox(width: 16),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Status',
+                                    'Receipt Number Used',
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                           fontFamily: 'Poppins',
                                           color: HeronFitTheme.textSecondary,
                                         ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    _formatStatus(widget.booking.status.name),
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          fontFamily: 'Poppins',
-                                          color: statusColor,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                  ),
+                                  // Always show the ticket_code, never the UUID
+                                  _ticketData != null && _ticketData!['ticket_code'] != null
+                                    ? Text(_ticketData!['ticket_code'], style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontFamily: 'Poppins', color: HeronFitTheme.textPrimary, fontWeight: FontWeight.w600))
+                                    : const Text('N/A'),
                                 ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Important Instructions Card
-            Card(
-              elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
-              color: Colors.white,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12.0),
-                  boxShadow: HeronFitTheme.cardShadow,
-                ),
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Important Instructions',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontFamily: 'Poppins',
-                        fontWeight: FontWeight.bold,
-                        color: HeronFitTheme.textPrimary
+                      _buildDetailRow(
+                        context,
+                        icon: SolarIconsOutline.clockCircle,
+                        label: 'Booked on',
+                        value: DateFormat('MMM d, yyyy, h:mm a').format(toManilaTime(widget.booking.bookingTime)),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildInstructionRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Show this booking confirmation (or your UMak ID) to the front desk upon arrival.'),
-                    _buildInstructionRow(context, icon: SolarIconsOutline.alarm, text: 'Please arrive at least 10 minutes before your session to check in.'),
-                    _buildInstructionRow(context, icon: SolarIconsOutline.dangerCircle, text: 'You can view or cancel this booking in \'My Bookings\' up to $cancellationHours hours before your session. Please check our cancellation policy for details.'),
-                  ],
+                      if (widget.booking.status != booking_status.BookingStatus.confirmed)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(SolarIconsOutline.infoCircle, color: statusColor, size: 24),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Status',
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            fontFamily: 'Poppins',
+                                            color: HeronFitTheme.textSecondary,
+                                          ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      _formatStatus(widget.booking.status.name),
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            fontFamily: 'Poppins',
+                                            color: statusColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 32),
-          ],
+              const SizedBox(height: 24),
+
+              // Important Instructions Card
+              Card(
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.0)),
+                color: Colors.white,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.0),
+                    boxShadow: HeronFitTheme.cardShadow,
+                  ),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Important Instructions',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.bold,
+                          color: HeronFitTheme.textPrimary
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildInstructionRow(context, icon: SolarIconsOutline.usersGroupRounded, text: 'Show this booking confirmation (or your UMak ID) to the front desk upon arrival.'),
+                      _buildInstructionRow(context, icon: SolarIconsOutline.alarm, text: 'Please arrive at least 10 minutes before your session to check in.'),
+                      _buildInstructionRow(context, icon: SolarIconsOutline.dangerCircle, text: 'You can view or cancel this booking in \'My Bookings\' up to $cancellationHours hours before your session. Please check our cancellation policy for details.'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
       // Floating action buttons for actions
